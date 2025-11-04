@@ -19,8 +19,10 @@
                     <option value="hotel">هتل</option>
                     <option value="villa">ویلا</option>
                     <option value="apartment">آپارتمان</option>
-                    <option value="ecolodge">بوم‌گردی</option>
+                    <option value="house">خانه</option>
                     <option value="suite">سوئیت</option>
+                    <option value="ecolodge">بوم‌گردی</option>
+                    <option value="motel">مسافرخانه</option>
                 </select>
             </div>
 

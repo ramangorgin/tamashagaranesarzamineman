@@ -6,6 +6,13 @@
 <div class="container mt-4">
     <h3>لیست اقامتگاه‌ها</h3>
     <a href="{{ route('stays.create') }}" class="btn btn-success mb-3">+ افزودن اقامتگاه جدید</a>
+    <form action="{{ route('stays.togglePeak') }}" method="POST" class="d-inline">
+        @csrf
+        <button class="btn btn-warning">
+            {{ \App\Models\Stay::where('is_peak', true)->exists() ? 'خروج از حالت پیک' : 'فعال‌سازی حالت پیک' }}
+        </button>
+    </form>
+
 
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>

@@ -129,4 +129,67 @@ class StayController extends Controller
         return back()->with('success', $msg);
     }
 
+    public function togglePeak()
+    {
+        // بررسی وضعیت فعلی (فرض: اگر حداقل یکی پیک باشد یعنی کل سیستم پیک است)
+        $isCurrentlyPeak = Stay::where('is_peak', true)->exists();
+
+        // برعکسش کن
+        $newStatus = !$isCurrentlyPeak;
+
+        // همه اقامتگاه‌ها را به وضعیت جدید تغییر بده
+        \App\Models\Stay::query()->update(['is_peak' => $newStatus]);
+
+        $msg = $newStatus ? 'قیمت‌ها در حالت پیک قرار گرفتند ✅' : 'قیمت‌ها از حالت پیک خارج شدند ❌';
+        return back()->with('success', $msg);
+    }
+    public function upload(Request $request, $stayId)
+    {
+        $request->validate([
+            'images.*' => 'required|image|max:4096',
+        ]);
+
+        $stay = \App\Models\Stay::findOrFail($stayId);
+        $uploadedImages = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $file) {
+                $path = $file->store('stays', 'public');
+                $image = $stay->images()->create([
+                    'image_path' => $path,
+                    'is_main' => false,
+                ]);
+
+                $uploadedImages[] = [
+                    'id' => $image->id,
+                    'url' => asset('storage/'.$path),
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'images' => $uploadedImages,
+        ]);
+    }
+
+    public function setMain($id)
+    {
+        $image = \App\Models\StayImage::findOrFail($id);
+        $stay = $image->stay;
+
+        // همه‌ی تصاویر این اقامتگاه رو غیرفعال کن
+        $stay->images()->update(['is_main' => false]);
+
+        // تصویر انتخابی رو اصلی کن
+        $image->update(['is_main' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تصویر اصلی با موفقیت تغییر کرد.',
+            'image_id' => $image->id,
+        ]);
+    }
+
+
 }

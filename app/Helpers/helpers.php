@@ -9,6 +9,8 @@ if (!function_exists('stayTypeToPersian')) {
             'apartment' => 'آپارتمان',
             'ecolodge' => 'بوم‌گردی',
             'suite' => 'سوئیت',
+            'motel' => 'مسافرخانه',
+            'house' => 'خانه',
             default => 'نامشخص',
         };
     }

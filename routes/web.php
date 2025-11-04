@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 
+use App\Http\Controllers\StayController;
+use App\Http\Controllers\StayImageController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -28,10 +31,24 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('admin')->middleware(['auth', 'isAdmin'])->group(function () {
-    Route::resource('stays', \App\Http\Controllers\Admin\StayController::class);
-    Route::delete('stay-images/{id}', [\App\Http\Controllers\Admin\StayImageController::class, 'destroy'])
-    ->name('stay-images.destroy');
-    Route::patch('stays/{stay}/toggle-status', [\App\Http\Controllers\Admin\StayController::class, 'toggleStatus'])
+    Route::resource('stays', StayController::class);
+    Route::patch('stays/{stay}/toggle-status', [StayController::class, 'toggleStatus'])
     ->name('stays.toggleStatus');
 
+    Route::delete('stay-images/{id}', [StayImageController::class, 'destroy'])
+    ->name('stay-images.destroy');
+
+    Route::post('stays/{stay}/upload-image', [StayImageController::class, 'upload'])
+    ->name('stay-images.upload');
+
+    Route::post('stay-images/{id}/set-main', [StayImageController::class, 'setMain'])
+    ->name('stay-images.setMain');
+
+
+
+    Route::post('stays/toggle-peak', [StayController::class, 'togglePeak'])
+    ->name('stays.togglePeak');
+
 });
+
+
