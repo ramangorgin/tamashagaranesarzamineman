@@ -1,0 +1,224 @@
+<style>
+/* ==============================
+   🎯 عمومی
+============================== */
+#bookingModal .modal-content {
+    border-radius: 1rem;
+    overflow: hidden;
+    animation: fadeInUp 0.35s ease;
+}
+
+#bookingModal .modal-header {
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+#bookingModal .modal-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+/* ==============================
+   📱 فرم و ورودی‌ها
+============================== */
+#bookingModal input.form-control {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    transition: all 0.25s ease;
+}
+
+#bookingModal input.form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.2);
+}
+
+#bookingModal input.is-valid {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 0.15rem rgba(34, 197, 94, 0.25);
+}
+
+#bookingModal input.is-invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 0.15rem rgba(239, 68, 68, 0.25);
+}
+
+#bookingModal .invalid-feedback {
+    font-size: 0.85rem;
+    color: #dc2626;
+}
+
+/* ==============================
+   💡 دکمه‌ها
+============================== */
+#bookingModal button.btn {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#bookingModal .btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border: none;
+}
+#bookingModal .btn-primary:hover {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    transform: translateY(-1px);
+}
+
+#bookingModal .btn-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border: none;
+}
+#bookingModal .btn-success:hover {
+    background: linear-gradient(135deg, #15803d, #16a34a);
+    transform: translateY(-1px);
+}
+
+#bookingModal .btn-outline-secondary {
+    color: #475569;
+    border-color: #cbd5e1;
+}
+#bookingModal .btn-outline-secondary:hover {
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+/* ==============================
+   ⏱️ تایمر OTP
+============================== */
+#otpTimer {
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+/* ==============================
+   💬 مرحله نتیجه
+============================== */
+#step-result h5 {
+    color: #065f46;
+}
+
+#step-result p {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* ==============================
+   🌈 افکت‌ها و انیمیشن‌ها
+============================== */
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==============================
+   📱 حالت موبایل
+============================== */
+@media (max-width: 768px) {
+    #bookingModal .modal-dialog {
+        margin: 1rem;
+    }
+    #bookingModal .modal-body {
+        padding: 1.5rem 1rem;
+    }
+    #bookingModal .modal-title {
+        font-size: 1rem;
+    }
+    #bookingModal button.btn {
+        font-size: 0.9rem;
+        padding: 9px 12px;
+    }
+    #bookingModal input.form-control {
+        font-size: 0.9rem;
+    }
+    #otpTimer {
+        font-size: 0.8rem;
+    }
+}
+
+/* حالت فوق‌العاده کوچک (موبایل باریک) */
+@media (max-width: 480px) {
+    #bookingModal .modal-dialog {
+        margin: 0.5rem;
+    }
+    #bookingModal .modal-content {
+        border-radius: 0.75rem;
+    }
+    #bookingModal .modal-header {
+        padding: 0.75rem 1rem;
+    }
+    #bookingModal .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* ==============================
+   🔄 Loading Overlay
+============================== */
+#loadingOverlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    border-radius: 1rem;
+    transition: opacity 0.3s ease;
+}
+
+#loadingOverlay.show {
+    display: flex !important;
+    opacity: 1;
+}
+
+#loadingOverlay.d-none {
+    opacity: 0;
+}
+
+#loadingOverlay .loading-spinner {
+    text-align: center;
+}
+
+#loadingOverlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* برای حالت موبایل */
+@media (max-width: 576px) {
+    #loadingOverlay .spinner-border {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+    #loadingOverlay p {
+        font-size: 0.9rem;
+    }
+}
+
+</style>

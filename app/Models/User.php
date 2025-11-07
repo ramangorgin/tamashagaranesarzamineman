@@ -11,11 +11,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = [
-        'name',
-        'phone',
-        'role',
-    ];
+     protected $fillable = ['full_name', 'national_id', 'phone'];
 
 
     protected $casts = [
@@ -43,4 +39,20 @@ class User extends Authenticatable
     {
         return $this->role === 'host';
     }
+    public function getOrganizationalDiscountAttribute()
+    {
+        $member = \App\Models\DiscountContractMember::where(function ($query) {
+            $query->where('full_name', $this->name)
+                ->orWhere('phone', $this->phone)
+                ->orWhere('national_id', $this->national_id ?? null);
+        })
+        ->whereHas('contract', function ($query) {
+            $query->where('start_date', '<=', now())
+                ->where('end_date', '>=', now());
+        })
+        ->first();
+
+        return $member ? $member->contract->discount_percent : 0;
+    }
+
 }

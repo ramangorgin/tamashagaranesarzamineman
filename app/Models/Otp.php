@@ -10,15 +10,8 @@ class Otp extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'phone',
-        'code',
-        'expires_at',
-    ];
-
-    protected $casts = [
-        'expires_at' => 'datetime',
-    ];
+    protected $fillable = ['phone', 'code', 'expires_at'];
+    protected $dates = ['expires_at'];
 
     /**
      * relations with user

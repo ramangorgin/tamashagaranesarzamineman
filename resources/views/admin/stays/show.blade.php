@@ -67,6 +67,9 @@
             {{ $stay->is_active ? 'غیرفعال‌سازی' : 'فعال‌سازی' }}
         </button>
     </form>
-
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookingModal">
+        <i class="bi bi-calendar-check"></i> رزرو / اجاره
+    </button>
 </div>
+
 @endsection

@@ -1,0 +1,54 @@
+body {
+  font-family: 'Vazirmatn', sans-serif;
+  background-color: #f9fafb;
+  color: #1e293b;
+}
+
+/* 🔹 هدر */
+.navbar .nav-link {
+  font-weight: 500;
+  color: #334155;
+}
+.navbar .nav-link.active, .navbar .nav-link:hover {
+  color: #0d6efd;
+}
+
+/* 🔹 بخش هیرو */
+.hero-section {
+  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+              url('/images/hero-bg.jpg') center/cover no-repeat;
+  height: 85vh;
+}
+.hero-section .fade-in {
+  animation: fadeInUp 1s ease;
+}
+.hero-section .fade-in-delay {
+  animation: fadeInUp 1.5s ease;
+}
+.search-box input {
+  border-radius: 0.75rem;
+}
+
+/* 🔹 ویژگی‌ها */
+.feature-card:hover {
+  transform: translateY(-4px);
+  transition: all 0.3s;
+}
+
+/* 🔹 CTA */
+.cta-section {
+  background: linear-gradient(135deg, #0d6efd, #2563eb);
+}
+
+/* 🔹 انیمیشن */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 🔹 موبایل */
+@media (max-width: 576px) {
+  .hero-section {
+    height: 70vh;
+  }
+}

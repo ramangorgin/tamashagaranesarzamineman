@@ -35,4 +35,21 @@ class Stay extends Model
         return round($this->price_per_night * (1 - $discount / 100), 0);
     }
 
+    public function getFinalPriceForUser($user)
+    {
+        // 1. Stay's discount
+        $discount = $this->dynamic_discount;
+
+        // 2. Contract's discount (if exists)
+        if ($user) {
+            $discount += $user->organizational_discount;
+        }
+
+        // should not be 100%
+        $discount = min($discount, 100);
+
+        // 3. calculating the Final Discount
+        return round($this->price_per_night * (1 - $discount / 100), 0);
+    }
+
 }

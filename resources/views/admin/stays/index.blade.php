@@ -3,7 +3,7 @@
 @section('title', 'لیست اقامت‌گاه‌ها')
 
 @section('content')
-<div class="container mt-4">
+<div  class="container-fluid">
     <h3>لیست اقامتگاه‌ها</h3>
     <a href="{{ route('stays.create') }}" class="btn btn-success mb-3">+ افزودن اقامتگاه جدید</a>
     <form action="{{ route('stays.togglePeak') }}" method="POST" class="d-inline">

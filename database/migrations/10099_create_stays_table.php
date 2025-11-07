@@ -30,7 +30,9 @@ return new class extends Migration
 
             
             $table->decimal('price_per_night', 12, 2)->default(0);
-            $table->decimal('discount_percent', 5, 2)->default(0);
+            $table->decimal('normal_discount', 5, 2)->default(0); // تخفیف عادی
+            $table->decimal('peak_discount', 5, 2)->default(0); // تخفیف در حالت پیک
+            $table->boolean('is_peak')->default(false); // آیا الان پیک است؟
             $table->decimal('final_price', 12, 2)->nullable();
 
     

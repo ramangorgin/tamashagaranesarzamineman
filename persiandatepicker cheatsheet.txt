@@ -1,0 +1,39 @@
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $("#start_date_display").persianDatepicker({
+        format: 'YYYY/MM/DD',
+        initialValue: false,
+        autoClose: true,
+        toolbox: { calendarSwitch: { enabled: false } },
+        onSelect: function(unix) {
+            let gregorian = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
+            gregorian = toEnglishDigits(gregorian);
+            $('#start_date').val(gregorian);
+        }
+    });
+
+    $("#end_date_display").persianDatepicker({
+        format: 'YYYY/MM/DD',
+        initialValue: false,
+        autoClose: true,
+        toolbox: { calendarSwitch: { enabled: false } },
+        onSelect: function(unix) {
+            let gregorian = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
+            gregorian = toEnglishDigits(gregorian);
+            $('#end_date').val(gregorian);
+        }
+    });
+
+    $('form').on('submit', function(e) {
+        const start = $('#start_date').val();
+        const end = $('#end_date').val();
+
+        if (!start || !end) {
+            e.preventDefault();
+            alert('لطفاً تاریخ شروع و پایان را انتخاب کنید.');
+        }
+    });
+});
+</script>
+@endpush
