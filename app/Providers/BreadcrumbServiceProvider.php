@@ -15,7 +15,7 @@ class BreadcrumbServiceProvider extends ServiceProvider
 
             $map = [
                 'admin.dashboard' => 'داشبورد ادمین',
-                'stays.index' => 'اقامتگاه‌ها',
+                'admin.stays.index' => 'اقامتگاه‌ها',
                 'stays.create' => 'ایجاد اقامتگاه جدید',
                 'stays.edit' => 'ویرایش اقامتگاه',
                 'stays.show' => 'نمایش اقامتگاه',

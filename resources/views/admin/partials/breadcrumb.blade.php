@@ -3,7 +3,7 @@
     $current = Route::currentRouteName();
     $backRoute = match(true) {
         str_contains($current, 'discount-contracts.') => route('discount-contracts.index'),
-        str_contains($current, 'stays.') => route('stays.index'),
+        str_contains($current, 'stays.') => route('admin.stays.index'),
         default => route('admin.dashboard'),
     };
 @endphp

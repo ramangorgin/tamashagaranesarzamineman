@@ -236,7 +236,7 @@
         <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <i class="bi bi-speedometer2"></i> داشبورد
         </a>
-        <a href="{{ route('stays.index') }}" class="{{ request()->routeIs('stays.*') ? 'active' : '' }}">
+        <a href="{{ route('admin.stays.index') }}" class="{{ request()->routeIs('stays.*') ? 'active' : '' }}">
             <i class="bi bi-house-door"></i> اقامت‌گاه‌ها
         </a>
         <a href="{{ route('discount-contracts.index') }}" class="{{ request()->routeIs('discount-contracts.*') ? 'active' : '' }}">
