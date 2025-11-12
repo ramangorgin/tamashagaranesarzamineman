@@ -1,115 +1,122 @@
 @extends('layouts.app')
-@section('title', 'نمایش اقامت‌گاه')
-@push('styles')
-<link rel="stylesheet" href="{{ asset('css/booking-modal.css') }}">
-@endpush
+@section('title', $stay->title)
+
 @section('content')
+<div class="container my-5">
 
+  {{-- Breadcrumb --}}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-transparent px-0 mb-4">
+      <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">خانه</a></li>
+      <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">{{ $stay->province }}</a></li>
+      <li class="breadcrumb-item active text-primary">{{ $stay->title }}</li>
+    </ol>
+  </nav>
 
-<!-- دکمه رزرو -->
-<button class="btn btn-primary btn-lg mt-3 w-100 shadow-sm"
-        data-bs-toggle="modal" data-bs-target="#bookingModal">
-    <i class="bi bi-calendar-check me-2"></i> رزرو و اجاره اقامت‌گاه
-</button>
+  {{-- عنوان و اطلاعات اصلی --}}
+  <div class="row g-4">
+    <div class="col-lg-8">
 
-<!-- Modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">
-          <i class="bi bi-door-open me-2"></i> رزرو اقامت‌گاه
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="fw-bold text-dark">{{ $stay->title }}</h2>
+        <span class="badge bg-primary fs-6 py-2 px-3 rounded-pill">
+          {{ ucfirst($stay->category) }}
+        </span>
+      </div>
+      <p class="text-muted mb-4">
+        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+        {{ $stay->city }}, {{ $stay->province }}
+      </p>
+
+      {{-- گالری تصاویر --}}
+      <div class="row g-2 mb-4">
+        @foreach($stay->images->take(5) as $index => $img)
+        <div class="col-{{ $index == 0 ? '12' : '6' }}">
+          <img src="{{ asset('storage/'.$img->path) }}" class="img-fluid rounded-4 shadow-sm hover-zoom" alt="">
+        </div>
+        @endforeach
       </div>
 
-      <div class="modal-body p-4">
-        <!-- مرحله 1: شماره موبایل -->
-        <div id="step-phone">
-          <h6 class="fw-bold text-dark mb-3">۱️⃣ وارد کردن شماره موبایل</h6>
-          <div class="mb-3">
-            <label class="form-label">شماره موبایل</label>
-            <input type="text" id="phoneInput" class="form-control" placeholder="مثلاً 09123456789">
-            <div id="phoneError" class="invalid-feedback"></div>
-          </div>
-          <button class="btn btn-primary w-100" id="sendOtpBtn">
-            ارسال کد تأیید <i class="bi bi-send ms-1"></i>
-          </button>
-          <!-- 🔄 Loading Overlay -->
-            <div id="loadingOverlay" class="d-none">
-                <div class="loading-spinner">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-3 fw-semibold text-primary">لطفاً صبر کنید...</p>
-                </div>
-            </div>
-
+      {{-- درباره اقامتگاه --}}
+      <div class="card border-0 shadow-sm mb-4 rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary me-2"></i> درباره اقامت‌گاه</h5>
+          <p class="text-muted lh-lg">{{ $stay->description ?? 'توضیحات ثبت نشده است.' }}</p>
         </div>
+      </div>
 
-        <!-- مرحله 2: کد تایید -->
-        <div id="step-otp" class="d-none">
-          <h6 class="fw-bold text-dark mb-3">۲️⃣ تأیید شماره موبایل</h6>
-          <div class="mb-3 text-center">
-            <input type="text" id="otpCode" class="form-control text-center fs-5 fw-bold"
-                   maxlength="6" placeholder="کد ۶ رقمی پیامک‌شده را وارد کنید">
-            <div id="otpError" class="invalid-feedback text-center"></div>
-          </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <span id="otpTimer" class="text-muted small"></span>
-            <button id="resendOtpBtn" class="btn btn-outline-secondary btn-sm" disabled>
-              ارسال مجدد <i class="bi bi-arrow-clockwise"></i>
-            </button>
-          </div>
-          <button class="btn btn-success w-100 mt-3" id="verifyOtpBtn">
-            بررسی کد <i class="bi bi-check-circle ms-1"></i>
-          </button>
-        </div>
-
-        <!-- مرحله 3: مشخصات -->
-        <div id="step-info" class="d-none">
-          <h6 class="fw-bold text-dark mb-3">۳️⃣ وارد کردن اطلاعات شخصی</h6>
-          <form id="bookingForm">
-            @csrf
-            <input type="hidden" name="stay_id" value="{{ $stay->id }}">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">نام</label>
-                <input type="text" name="first_name" class="form-control" required>
-                <div class="invalid-feedback">نام را وارد کنید.</div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">نام خانوادگی</label>
-                <input type="text" name="last_name" class="form-control" required>
-                <div class="invalid-feedback">نام خانوادگی را وارد کنید.</div>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">کد ملی</label>
-                <input type="text" name="national_id" class="form-control" required>
-                <div class="invalid-feedback">کد ملی را وارد کنید.</div>
+      {{-- امکانات --}}
+      <div class="card border-0 shadow-sm mb-4 rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3"><i class="bi bi-grid-1x2 text-success me-2"></i> امکانات اقامت‌گاه</h5>
+          <div class="row g-3">
+            @forelse($stay->facilities as $facility)
+            <div class="col-6 col-md-4">
+              <div class="d-flex align-items-center">
+                <i class="{{ $facility->icon ?? 'bi bi-check-circle' }} text-success me-2 fs-5"></i>
+                <span>{{ $facility->name }}</span>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mt-3">
-              بررسی تخفیف و مبلغ نهایی
-            </button>
-          </form>
+            @empty
+            <p class="text-muted">هیچ امکاناتی ثبت نشده است.</p>
+            @endforelse
+          </div>
         </div>
+      </div>
 
-        <!-- مرحله 4: نتیجه -->
-        <div id="step-result" class="d-none text-center">
-          <i class="bi bi-gift-fill text-success fs-1"></i>
-          <h5 class="mt-3 fw-bold text-dark" id="discountMsg"></h5>
-          <p class="fs-5 text-primary mt-2">مبلغ قابل پرداخت: <span id="finalPrice"></span> تومان</p>
-          <button id="goToPayment" class="btn btn-success w-100 mt-3">
-            پرداخت <i class="bi bi-credit-card ms-1"></i>
-          </button>
+      {{-- قوانین --}}
+      <div class="card border-0 shadow-sm mb-4 rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3"><i class="bi bi-card-checklist text-warning me-2"></i> قوانین اقامت‌گاه</h5>
+          <ul class="list-unstyled mb-0">
+            @forelse($stay->rules as $rule)
+            <li class="mb-2"><i class="bi bi-dot text-primary fs-4"></i> {{ $rule->rule_text }}</li>
+            @empty
+            <p class="text-muted">قوانینی ثبت نشده است.</p>
+            @endforelse
+          </ul>
         </div>
+      </div>
 
+      {{-- نقشه --}}
+      @if($stay->latitude && $stay->longitude)
+      <div class="card border-0 shadow-sm rounded-4 mb-5">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3"><i class="bi bi-geo text-danger me-2"></i> موقعیت مکانی</h5>
+          <div id="map" style="height: 300px;" class="rounded-4"></div>
+        </div>
+      </div>
+      @endif
+
+    </div>
+
+    {{-- ستون سمت راست (رزرو) --}}
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-lg rounded-4 sticky-top" style="top: 80px;">
+        <div class="card-body">
+          <h4 class="fw-bold text-dark mb-3">
+            <span class="text-primary">{{ number_format($stay->final_price) }}</span>
+            <small class="text-muted fs-6">تومان / هر شب</small>
+          </h4>
+          <ul class="list-unstyled text-muted small mb-4">
+            <li><i class="bi bi-person-fill text-primary me-1"></i> ظرفیت: {{ $stay->capacity }} نفر</li>
+            <li><i class="bi bi-house-door text-primary me-1"></i> متراژ: {{ $stay->area ?? 'نامشخص' }} متر</li>
+          </ul>
+
+          {{-- فقط برای کاربران عادی --}}
+          @guest('admin')
+          @guest('host')
+            @include('partials.booking-modal')
+          @else
+            <div class="alert alert-info text-center">فقط مسافران می‌توانند اقامت‌گاه رزرو کنند.</div>
+          @endguest
+          @endguest
+
+        </div>
       </div>
     </div>
   </div>
 </div>
-
-
-
 
 @push('scripts')
 <script>
@@ -225,6 +232,39 @@ function hideLoading() {
 }
 
 </script>
+
+{{-- نقشه --}}
+@if($stay->latitude && $stay->longitude)
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const map = L.map('map').setView([{{ $stay->latitude }}, {{ $stay->longitude }}], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  L.marker([{{ $stay->latitude }}, {{ $stay->longitude }}]).addTo(map);
+});
+</script>
+@endif
+
+@endpush
+
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/booking-modal.css') }}">
+<style>
+.hover-zoom { transition: transform 0.3s ease; }
+.hover-zoom:hover { transform: scale(1.03); }
+
+.card { transition: all .3s ease-in-out; }
+.card:hover { transform: translateY(-3px); }
+
+.sticky-top { z-index: 1020; }
+
+@media (max-width: 768px) {
+  .breadcrumb { font-size: 0.9rem; }
+  .card-body h5 { font-size: 1rem; }
+}
+</style>
 @endpush
 
 @endsection

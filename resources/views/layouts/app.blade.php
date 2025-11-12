@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="{{ asset('css/auth-modal.css') }}" rel="stylesheet">
     <link href="{{ asset('css/home.css') }}" rel="stylesheet">
 </head>
@@ -45,8 +46,8 @@
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#authModal">
                 ورود | ثبت‌نام
             </button>
-            <!-- <a href="{{ route('host.login') }}" class="btn btn-warning">
-                <i class="bi bi-house-door"></i> ورود میزبان -->
+            <a href="{{ route('host.login') }}" class="btn btn-warning">
+                 ورود میزبان
             </a>
             </div>
         </div>

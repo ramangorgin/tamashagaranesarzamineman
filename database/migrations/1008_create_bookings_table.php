@@ -13,14 +13,27 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+
             $table->foreignId('stay_id')->constrained()->cascadeOnDelete();
-            $table->decimal('price_per_night', 10, 0);
-            $table->decimal('discount_percent', 5, 2)->default(0);
-            $table->decimal('final_price', 10, 0);
+
+            $table->date('start_date');
+            $table->date('end_date');
+
+            $table->integer('guests')->default(1);
+
+            $table->decimal('base_price', 12, 0);
+            $table->decimal('extra_cost', 12, 0)->default(0);
+            $table->decimal('stay_discount', 5, 2)->default(0);
+            $table->decimal('org_discount', 5, 2)->default(0);
+            $table->decimal('final_price', 12, 0);
+
             $table->string('status')->default('pending'); // pending, paid, cancelled
+
             $table->timestamps();
         });
+
     }
 
     /**

@@ -13,12 +13,10 @@ return new class extends Migration
     {
         Schema::create('stay_images', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('stay_id');
-            $table->string('image_path'); // مسیر فایل (مثلاً storage/stays/...)
-            $table->boolean('is_main')->default(false); // تصویر اصلی یا خیر
+            $table->foreignId('stay_id')->constrained()->onDelete('cascade');
+            $table->string('path');
+            $table->boolean('is_main')->default(false);
             $table->timestamps();
-
-            $table->foreign('stay_id')->references('id')->on('stays')->onDelete('cascade');
         });
     }
 

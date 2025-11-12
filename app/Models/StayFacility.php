@@ -4,32 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
-class StayImage extends Model
+class StayFacility extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'stay_id',
-        'path',
-        'is_main',
+        'category',
+        'name',
+        'icon',
+        'is_available',
     ];
 
     protected $casts = [
-        'is_main' => 'boolean',
+        'is_available' => 'boolean',
     ];
 
     public function stay()
     {
         return $this->belongsTo(Stay::class);
-    }
-
-    /**
-     * مسیر کامل URL فایل
-     */
-    public function getUrlAttribute()
-    {
-        return Storage::url($this->path);
     }
 }

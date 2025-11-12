@@ -40,26 +40,38 @@ class AdminAuthController extends Controller
 
     public function verifyOtp(Request $request)
     {
+        \Log::info('verifyOtp called', $request->all());
+
         $request->validate(['phone' => 'required', 'code' => 'required']);
+
         $otp = Otp::where('phone', $request->phone)
-                  ->where('code', $request->code)
-                  ->where('expires_at', '>', now())
-                  ->first();
+                ->where('code', $request->code)
+                ->where('expires_at', '>', now())
+                ->first();
 
         if (!$otp) {
+            \Log::warning('OTP failed', ['phone' => $request->phone, 'code' => $request->code]);
             return back()->with('error', 'کد معتبر نیست یا منقضی شده است.');
         }
 
         $admin = Admin::where('phone', $request->phone)->first();
-
         if (!$admin) {
+            \Log::warning('Admin not found', ['phone' => $request->phone]);
             return back()->with('error', 'این شماره برای مدیر تعریف نشده است.');
         }
 
-        Auth::guard('admin')->login($admin);
+        \Log::info('Admin found, logging in...', ['id' => $admin->id]);
 
-        return redirect()->route('admin.dashboard');
+        Auth::guard('admin')->login($admin, false);
+
+        $request->session()->regenerate();
+
+        \Log::info('Redirecting to dashboard');
+
+        return redirect()->route('admin.dashboard')->with('success', 'ورود با موفقیت انجام شد!');
     }
+
+
 
     public function dashboard()
     {
