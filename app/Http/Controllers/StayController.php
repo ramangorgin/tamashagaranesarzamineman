@@ -151,7 +151,7 @@ class StayController extends Controller
             'house' => 'خانه',
         ];
 
-        return view('stays.admin.form', compact('stay', 'categories'));
+        return view('stays.edit', compact('stay', 'categories'));
     }
 
     /**
