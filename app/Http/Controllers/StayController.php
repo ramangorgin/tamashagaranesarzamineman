@@ -5,11 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Stay;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class StayController extends Controller
 {
-    // Utility: detect current role and guard
     protected function role(): string
     {
         if (Auth::guard('admin')->check()) return 'admin';
@@ -21,19 +19,12 @@ class StayController extends Controller
         return $role === 'admin' ? Auth::guard('admin')->id()
              : ($role === 'host' ? Auth::guard('host')->id() : Auth::id());
     }
-    protected function viewPath(string $name): string
-    {
-        $r = $this->role();
-        return $r === 'admin' ? "stays.admin.$name" : "host.stays.$name";
-    }
 
-    /**
-     * نمایش لیست اقامتگاه‌ها
-     */
+    // LIST
     public function index()
     {
         $role = $this->role();
-        $query = Stay::query();
+        $query = Stay::query()->with('host');
 
         if ($role === 'host') {
             $query->where('host_id', $this->userId('host'));
@@ -46,35 +37,33 @@ class StayController extends Controller
             });
         }
 
-        $stays = $query->latest()->paginate(12);
+        $stays = $query->latest()->paginate(15);
 
-        return view($this->viewPath('index'), compact('stays','role'));
+        return view('stays.index', compact('stays','role'));
     }
 
-    /**
-     * نمایش فرم ایجاد اقامتگاه
-     */
+    // CREATE FORM
     public function create()
     {
+        $role = $this->role();
         $categories = ['hotel','villa','apartment','ecolodge','suite','motel','house'];
-        return view($this->viewPath('create'), compact('categories'));
+        return view('stays.create', compact('categories','role'));
     }
 
-    /**
-     * ذخیره اقامتگاه جدید
-     */
+    // STORE
     public function store(Request $request)
     {
-        $normalize = fn($v)=> $v!==null ? preg_replace('/[^\d]/','',$v) : null;
+        $role = $this->role();
 
+        $normalize = fn($v)=> $v!==null ? preg_replace('/[^\d]/','',$v) : null;
         $request->merge([
             'price_per_person'   => $normalize($request->price_per_person),
             'extra_person_price' => $normalize($request->extra_person_price),
         ]);
 
-        $data = $request->validate([
+        $rules = [
             'title'=>'required|string|max:255',
-            'category'=>'required|string|max:40',
+            'category'=>'required|string|in:hotel,villa,apartment,ecolodge,suite,motel,house',
             'province_id'=>'nullable|string|max:10',
             'province_name'=>'nullable|string|max:80',
             'city_id'=>'nullable|string|max:10',
@@ -98,23 +87,36 @@ class StayController extends Controller
             'western_toilets'=>'nullable|integer|min:0',
             'price_per_person'=>'required|numeric|min:0',
             'extra_person_price'=>'nullable|numeric|min:0',
-            'site_commission'=>'required|numeric|min:0|max:100',
-            'max_discount_normal'=>'required|numeric|min:0|max:100',
-            'max_discount_peak'=>'required|numeric|min:0|max:100',
             'checkin_time'=>'nullable',
             'checkout_time'=>'nullable',
             'rules_json'=>'nullable|string',
             'images.*'=>'nullable|image|max:2048',
             'main_image_index'=>'nullable|integer|min:0',
-        ]);
+        ];
+        // host needs commission & discounts; admin auto-zero
+        if ($role !== 'admin') {
+            $rules += [
+                'site_commission'=>'required|numeric|min:0|max:100',
+                'max_discount_normal'=>'required|numeric|min:0|max:100',
+                'max_discount_peak'=>'required|numeric|min:0|max:100',
+            ];
+        }
 
-        $data['host_id'] = $this->userId('host');
+        $data = $request->validate($rules);
+
+        if ($role === 'admin') {
+            $data['site_commission'] = 0;
+            $data['max_discount_normal'] = 0;
+            $data['max_discount_peak'] = 0;
+        }
+
+        $data['host_id'] = $this->userId('host'); // null if admin creates
         $stay = Stay::create($data);
 
         // Rules
         if($request->filled('rules_json')){
-            $rules = json_decode($request->rules_json,true) ?: [];
-            foreach($rules as $r){
+            $rulesArr = json_decode($request->rules_json,true) ?: [];
+            foreach($rulesArr as $r){
                 if(!empty($r['rule_text'])){
                     $stay->rules()->create([
                         'rule_text'=>trim($r['rule_text']),
@@ -136,48 +138,40 @@ class StayController extends Controller
             }
         }
 
-        return redirect()->route('host.stays.edit',$stay)->with('success','اقامت‌گاه ایجاد شد.');
+        $redirectRoute = $role==='admin' ? 'admin.stays.edit' : 'host.stays.edit';
+        return redirect()->route($redirectRoute,$stay)->with('success','اقامت‌گاه ایجاد شد.');
     }
 
-    /**
-     * نمایش فرم ویرایش اقامتگاه
-     */
+    // EDIT FORM
     public function edit(Stay $stay)
     {
         $role = $this->role();
         if($role==='host' && $stay->host_id !== $this->userId('host')) abort(403);
         $stay->load(['images','rules']);
-        return view($this->viewPath('edit'), compact('stay','role'));
+        return view('stays.edit', compact('stay','role'));
     }
 
-    /**
-     * به‌روزرسانی اقامتگاه
-     */
+    // UPDATE
     public function update(Request $request, Stay $stay)
     {
-        $normalize = function($val){
-            if($val===null || $val==='') return null;
-            return preg_replace('/[^\d]/','', $val);
-        };
+        $role = $this->role();
+        if ($role === 'host' && $stay->host_id !== $this->userId('host')) abort(403);
+
+        $normalize = fn($v)=> $v!==null && $v!=='' ? preg_replace('/[^\d]/','',$v) : null;
         $request->merge([
             'price_per_person'   => $normalize($request->input('price_per_person')),
             'extra_person_price' => $normalize($request->input('extra_person_price')),
         ]);
 
-        $role = $this->role();
-        if ($role === 'host' && $stay->host_id !== $this->userId('host')) {
-            abort(403);
-        }
-
-        $request->validate([
+        $rules = [
             'title'   => 'required|string|max:255',
             'category'=> 'required|in:hotel,villa,apartment,ecolodge,suite,motel,house',
-            'province_id'   => 'required|string|max:4',
-            'province_name' => 'required|string|max:100',
-            'city_id'       => 'required|string|max:4',
-            'city_name'     => 'required|string|max:100',
-            'county_id'     => 'required|string|max:4',
-            'county_name'   => 'required|string|max:100',
+            'province_id'   => 'required|string|max:10',
+            'province_name' => 'required|string|max:80',
+            'city_id'       => 'required|string|max:10',
+            'city_name'     => 'required|string|max:80',
+            'county_id'     => 'required|string|max:10',
+            'county_name'   => 'required|string|max:80',
             'village_name'  => 'nullable|string|max:120',
             'address'       => 'required|string|max:400',
             'latitude'      => 'required|numeric|between:-90,90',
@@ -195,13 +189,29 @@ class StayController extends Controller
             'western_toilets' => 'nullable|integer|min:0',
             'price_per_person'   => 'required|numeric|min:0',
             'extra_person_price' => 'nullable|numeric|min:0',
-            'site_commission'    => 'required|numeric|min:0|max:100',
-            'max_discount_normal'=> 'required|numeric|min:0|max:100',
-            'max_discount_peak'  => 'required|numeric|min:0|max:100',
-            'is_active' => $role==='admin' ? 'sometimes|boolean' : 'prohibited',
-        ]);
+            'rules_json'         => 'nullable|string',
+            'remove_image_ids'   => 'nullable|string',
+            'images.*'           => 'nullable|image|max:2048',
+            'main_image_index'   => 'nullable|integer|min:0',
+            'main_image_existing_id' => 'nullable|integer',
+        ];
+        if ($role !== 'admin') {
+            $rules += [
+                'site_commission'    => 'required|numeric|min:0|max:100',
+                'max_discount_normal'=> 'required|numeric|min:0|max:100',
+                'max_discount_peak'  => 'required|numeric|min:0|max:100',
+            ];
+        }
 
-        $data = $request->only([
+        $validated = $request->validate($rules);
+
+        if ($role === 'admin') {
+            $validated['site_commission'] = 0;
+            $validated['max_discount_normal'] = 0;
+            $validated['max_discount_peak'] = 0;
+        }
+
+        $stay->update(array_intersect_key($validated, array_flip([
             'title','category',
             'province_id','province_name','city_id','city_name',
             'county_id','county_name','village_name','address',
@@ -211,19 +221,13 @@ class StayController extends Controller
             'iranian_toilets','western_toilets','bathrooms',
             'price_per_person','extra_person_price',
             'site_commission','max_discount_normal','max_discount_peak',
-        ]);
+        ])));
 
-        if ($role === 'admin') {
-            $data['is_active'] = (bool)$request->input('is_active', $stay->is_active);
-        }
-
-        $stay->update($data);
-
-        // Rules replace
+        // Rules
         if($request->filled('rules_json')){
-            $rules = json_decode($request->rules_json,true) ?: [];
+            $arr = json_decode($request->rules_json,true) ?: [];
             $stay->rules()->delete();
-            foreach($rules as $r){
+            foreach($arr as $r){
                 if(!empty($r['rule_text'])){
                     $stay->rules()->create([
                         'rule_text'=>trim($r['rule_text']),
@@ -263,60 +267,44 @@ class StayController extends Controller
             }
         }
 
-        return back()->with('success','اقامت‌گاه با موفقیت ویرایش شد.');
+        return back()->with('success','اقامت‌گاه به‌روزرسانی شد.');
     }
 
-    // Admin only
+    // TOGGLE STATUS (admin)
     public function toggleStatus(Stay $stay)
     {
         if ($this->role() !== 'admin') abort(403);
         $stay->is_active = !$stay->is_active;
         $stay->save();
-        return back()->with('success', $stay->is_active ? 'اقامتگاه فعال شد ✅' : 'اقامتگاه غیرفعال شد ❌');
+        return back()->with('success', $stay->is_active ? 'فعال شد' : 'غیرفعال شد');
     }
 
-    // Admin only — global peak switch (if you keep this behavior)
+    // TOGGLE PEAK (admin)
     public function togglePeak()
     {
         if ($this->role() !== 'admin') abort(403);
-        $isCurrentlyPeak = Stay::where('is_peak', true)->exists();
-        $newStatus = !$isCurrentlyPeak;
-        Stay::query()->update(['is_peak' => $newStatus]);
-        return back()->with('success', $newStatus ? 'قیمت‌ها در حالت پیک قرار گرفتند ✅' : 'قیمت‌ها از حالت پیک خارج شدند ❌');
+        $isPeak = Stay::where('is_peak', true)->exists();
+        Stay::query()->update(['is_peak' => !$isPeak]);
+        return back()->with('success', !$isPeak ? 'حالت پیک فعال شد' : 'حالت پیک غیرفعال شد');
     }
 
-    /**
-     * حذف اقامتگاه
-     */
+    // DESTROY
     public function destroy(Stay $stay)
     {
         $role = $this->role();
-        if ($role === 'host' && $stay->host_id !== $this->userId('host')) {
-            abort(403);
-        }
+        if ($role === 'host' && $stay->host_id !== $this->userId('host')) abort(403);
         $stay->delete();
         return back()->with('success','اقامت‌گاه حذف شد.');
     }
 
-    /**
-     * نمایش جزئیات اقامتگاه
-     */
+    // SHOW
     public function show(Stay $stay)
     {
         $role = $this->role();
+        if ($role === 'host' && $stay->host_id !== $this->userId('host')) abort(403);
+        if ($role === 'user' && !$stay->is_active) abort(404);
 
-        // میزبان فقط اقامتگاه خودش را می‌بیند
-        if ($role === 'host' && $stay->host_id !== $this->userId('host')) {
-            abort(403);
-        }
-
-        // کاربر عادی فقط اقامتگاه فعال
-        if ($role === 'user' && !$stay->is_active) {
-            abort(404);
-        }
-
-        $stay->loadMissing(['images','rules']); // اگر روابط وجود دارند
-
+        $stay->loadMissing(['images','rules']); // ensures collections, not null
         return view('stays.show', compact('stay','role'));
     }
 }

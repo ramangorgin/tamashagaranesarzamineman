@@ -55,6 +55,23 @@ class Stay extends Model
         'checkout_time' => 'datetime:H:i',
     ];
 
-    public function images() { return $this->hasMany(StayImage::class); }
-    public function rules() { return $this->hasMany(StayRule::class); }
+    public function host()
+    {
+        return $this->belongsTo(Host::class); // FK: host_id
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class); // FK: admin_id
+    }
+
+    public function images()
+    {
+        return $this->hasMany(StayImage::class);
+    }
+
+    public function rules()
+    {
+        return $this->hasMany(StayRule::class);
+    }
 }

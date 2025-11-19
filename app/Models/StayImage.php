@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class StayImage extends Model
 {
@@ -28,8 +29,17 @@ class StayImage extends Model
     /**
      * مسیر کامل URL فایل
      */
-    public function getUrlAttribute()
+    public function getUrlAttribute(): string
     {
-        return Storage::url($this->path);
+        $p = $this->path ?? '';
+        if (Str::startsWith($p, ['http://','https://'])) {
+            return $p;
+        }
+        // If path already includes "storage/", serve as asset
+        if (Str::startsWith($p, 'storage/')) {
+            return asset($p);
+        }
+        // Otherwise use storage disk URL
+        return Storage::url($p);
     }
 }
