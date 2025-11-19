@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('stay_rules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('stay_id')->constrained()->onDelete('cascade');
-            $table->string('rule_text');
+            $table->foreignId('stay_id')->constrained('stays')->cascadeOnDelete();
+            $table->string('rule_text', 255);
             $table->boolean('is_allowed')->default(true);
-            $table->time('checkin_time')->nullable();
-            $table->time('checkout_time')->nullable();
             $table->timestamps();
+            $table->index('stay_id');
         });
     }
 

@@ -22,7 +22,7 @@
             <input type="date" class="form-control" placeholder="تاریخ خروج">
           </div>
           <div class="col-md-2">
-            <button class="btn btn-primary w-100"><i class="bi bi-search"></i> جستجو</button>
+            <button class="btn btn-secondary w-100"><i class="bi bi-search"></i> جستجو</button>
           </div>
         </form>
       </div>
@@ -107,7 +107,7 @@
     <div class="container">
       <h2 class="fw-bold mb-3">میزبان شو و کسب درآمد کن!</h2>
       <p class="lead mb-4">اقامتگاه خودت رو ثبت کن و از رزروها درآمد کسب کن.</p>
-      <a href="{{ route('host.login') }}" class="btn btn-light btn-lg text-primary fw-bold">
+      <a href="{{ route('login.form', ['role' => 'host']) }}" class="btn btn-light btn-lg text-primary fw-bold">
         <i class="bi bi-plus-circle"></i> ثبت اقامتگاه
       </a>
     </div>

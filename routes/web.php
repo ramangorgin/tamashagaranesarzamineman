@@ -7,23 +7,19 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Admin\StayImageController;
 use App\Http\Controllers\Admin\DiscountContractController;
 use App\Http\Controllers\Admin\DiscountContractMemberController;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+use App\Http\Controllers\GeoController;
 
 Route::middleware(['web'])->group(function () {
 
-    // صفحه اصلی
+    // Home page
     Route::get('/', fn() => view('home'))->name('home');
 
     /*
     |--------------------------------------------------------------------------
-    | 🔹 احراز هویت عمومی (ادمین، میزبان، کاربر)
+    | General Authentication (Admin, Host, User)
     |--------------------------------------------------------------------------
     */
+
     Route::prefix('login')->group(function () {
         Route::get('/{role}', [AuthController::class, 'showLoginForm'])->name('login.form');
         Route::post('/{role}/send-otp', [AuthController::class, 'sendOtp'])->name('login.sendOtp');
@@ -35,24 +31,24 @@ Route::middleware(['web'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | 🔹 مسیرهای مربوط به ادمین
+    | Routes for Admin
     |--------------------------------------------------------------------------
     */
-    Route::prefix('admin')->middleware('auth:admin')->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function () {
 
-        // داشبورد ادمین
-        Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('admin.dashboard');
+        // Admin's dashboard
+        Route::get('/dashboard', [AuthController::class, 'adminDashboard'])->name('dashboard');
 
-        // اقامتگاه‌ها
-        Route::resource('stays', StayController::class)->names('admin.stays');
-        Route::patch('stays/{stay}/toggle-status', [StayController::class, 'toggleStatus'])->name('admin.stays.toggleStatus');
-        Route::post('stays/toggle-peak', [StayController::class, 'togglePeak'])->name('admin.stays.togglePeak');
+        // Stays
+        Route::resource('stays', StayController::class)->except(['show']);
+        Route::patch('stays/{stay}/toggle-status', [StayController::class, 'toggleStatus'])->name('stays.toggleStatus');
+        Route::post('stays/toggle-peak', [StayController::class, 'togglePeak'])->name('stays.togglePeak');
 
-        // مدیریت تصاویر اقامت‌گاه
-        Route::post('stays/{stay}/upload-image', [StayImageController::class, 'upload'])->name('admin.stays.upload');
-        Route::delete('images/{image}', [StayImageController::class, 'destroy'])->name('admin.stays.image.destroy');
+        // Managing stay images
+        Route::post('stays/{stay}/upload-image', [StayImageController::class, 'upload'])->name('stays.upload');
+        Route::delete('images/{image}', [StayImageController::class, 'destroy'])->name('stays.image.destroy');
 
-        // مدیریت قراردادها و تخفیف‌ها
+        // Managing contracts and discounts
         Route::resource('discount-contracts', DiscountContractController::class);
         Route::resource('discount-contract-members', DiscountContractMemberController::class)
             ->only(['store', 'destroy', 'edit', 'update']);
@@ -60,34 +56,44 @@ Route::middleware(['web'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | 🔹 مسیرهای مربوط به میزبان
+    | Routes for Host
     |--------------------------------------------------------------------------
     */
-    Route::prefix('host')->middleware('auth:host')->group(function () {
+    Route::prefix('host')->name('host.')->middleware('auth:host')->group(function () {
 
-        // تکمیل پروفایل میزبان (درصورت ناقص بودن)
-        Route::get('/complete-profile', [AuthController::class, 'showCompleteProfileForm'])->name('host.completeProfile');
-        Route::post('/complete-profile', [AuthController::class, 'completeProfile'])->name('host.saveProfile');
+        // completing the profile of host (if not completed)
+        Route::get('/complete-profile', [AuthController::class, 'showCompleteProfileForm'])->name('completeProfile');
+        Route::post('/complete-profile', [AuthController::class, 'storeCompleteProfile'])->name('completeProfile.store');
 
-        // داشبورد میزبان
-        Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('host.dashboard');
+        // Host's dashboard
+        Route::get('/dashboard', [AuthController::class, 'hostDashboard'])->name('dashboard');
 
-        // اقامتگاه‌ها
-        Route::resource('stays', StayController::class)->names('host.stays');
-        Route::post('stays/{stay}/upload-image', [StayImageController::class, 'upload'])->name('host.stays.upload');
-        Route::delete('images/{image}', [StayImageController::class, 'destroy'])->name('host.stays.image.destroy');
+        // Stays
+        Route::resource('stays', StayController::class)->except(['show']);
+        Route::post('stays/{stay}/upload-image', [StayImageController::class, 'upload'])->name('stays.upload');
+        Route::delete('images/{image}', [StayImageController::class, 'destroy'])->name('stays.image.destroy');
     });
 
     /*
     |--------------------------------------------------------------------------
-    | 🔹 مسیرهای مربوط به کاربر عادی (رزرو و پرداخت)
+    | Routes for Regular User (Booking and Payment)
     |--------------------------------------------------------------------------
     */
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
 
-    // پرداخت آزمایشی
+    // Test Payment
     Route::get('/payment/test/{booking}', function ($bookingId) {
         $booking = \App\Models\Booking::findOrFail($bookingId);
         return view('test-payment', compact('booking'));
     })->name('payment.test');
+
+    Route::prefix('geo')->group(function () {
+        Route::get('/provinces', [GeoController::class, 'provinces'])->name('geo.provinces');
+        Route::get('/provinces/{province}/cities', [GeoController::class, 'cities'])->name('geo.cities');
+        Route::get('/provinces/{province}/cities/{city}/counties', [GeoController::class, 'counties'])->name('geo.counties');
+        Route::get('/provinces/{province}/cities/{city}/counties/{county}/villages', [GeoController::class, 'villages'])->name('geo.villages');
+    });
+
+    // Public (or shared) Stay show page
+    Route::get('stays/{stay}', [StayController::class, 'show'])->name('stays.show');
 });

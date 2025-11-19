@@ -157,12 +157,16 @@
   <aside class="sidebar animate__animated animate__fadeInRight">
     <h4><i class="bi bi-person-workspace me-2"></i>پنل میزبان</h4>
     <a href="{{ route('host.dashboard') }}" class="{{ request()->routeIs('host.dashboard') ? 'active' : '' }}"><i class="bi bi-speedometer2"></i> داشبورد</a>
-    <a href="#"><i class="bi bi-building"></i> اقامت‌گاه‌های من</a>
+    <a href="{{ route('host.stays.index') }}"><i class="bi bi-building"></i> اقامت‌گاه‌های من</a>
     <a href="#"><i class="bi bi-wallet2"></i> درآمدها و تسویه‌حساب‌ها</a>
     <a href="#"><i class="bi bi-chat-left-text"></i> پیام‌ها و درخواست‌ها</a>
     <a href="#"><i class="bi bi-gear"></i> تنظیمات پروفایل</a>
-    <a href="#" onclick="logout()"><i class="bi bi-box-arrow-left"></i> خروج</a>
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+    <a href="{{ route('logout', ['role' => 'host']) }}" onclick="event.preventDefault(); logout()">
+      <i class="bi bi-box-arrow-left"></i> خروج
+    </a>
+    <form id="logout-form" action="{{ route('logout', ['role' => 'host']) }}" method="POST" class="d-none">
+      @csrf
+    </form>
   </aside>
 
   {{-- Header --}}
@@ -192,6 +196,39 @@
       document.getElementById('logout-form').submit();
     }
   </script>
+   <script>
+        (function(){
+        const map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9',
+                    '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+        const pattern = /[۰-۹٠-٩]/g;
+        function normalize(str){
+            return str.replace(pattern, d => map[d] || d);
+        }
+        function bind(el){
+            el.addEventListener('input', e => {
+            const v = e.target.value;
+            if (pattern.test(v)) {
+                const caret = e.target.selectionStart;
+                e.target.value = normalize(v);
+                e.target.setSelectionRange(caret, caret);
+            }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[type="text"],input[type="tel"],input[type="number"],input[type="password"],input:not([type]),textarea')
+            .forEach(bind);
+            // MutationObserver to handle dynamically added inputs
+            new MutationObserver(muts => {
+            muts.forEach(m => m.addedNodes.forEach(n => {
+                if (n.nodeType===1) {
+                if (n.matches && n.matches('input,textarea')) bind(n);
+                n.querySelectorAll?.('input,textarea').forEach(bind);
+                }
+            }));
+            }).observe(document.body,{childList:true,subtree:true});
+        });
+        })();
+    </script>
   @stack('scripts')
 </body>
 </html>

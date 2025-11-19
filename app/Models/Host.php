@@ -22,12 +22,10 @@ class Host extends Authenticatable
         'iban',
         'bank_name',
         'account_holder',
-        'province',
-        'city',
+        'province_id','province_name','city_id','city_name',
+        'county_id','county_name','village_name',
         'postal_code',
         'address',
-        'avatar',
-        'bio',
     ];
 
     protected $hidden = [

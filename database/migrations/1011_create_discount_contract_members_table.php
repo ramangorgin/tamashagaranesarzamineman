@@ -8,16 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('discount_contract_members', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('contract_id')
-                  ->constrained('discount_contracts')
-                  ->onDelete('cascade');
-            $table->string('full_name');
-            $table->string('national_id')->nullable();
-            $table->string('phone')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('discount_contract_members')) {
+            Schema::create('discount_contract_members', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('contract_id')
+                    ->constrained('discount_contracts')
+                    ->onDelete('cascade');
+                $table->string('full_name');
+                $table->string('national_id')->nullable();
+                $table->string('phone')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

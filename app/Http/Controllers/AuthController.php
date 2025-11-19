@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,7 +14,7 @@ use Carbon\Carbon;
 use Exception;
 use Melipayamak;
 
-class UniversalAuthController extends Controller
+class AuthController extends Controller
 {
     /**
      * نمایش فرم ورود بر اساس نقش
@@ -102,16 +102,18 @@ class UniversalAuthController extends Controller
         Auth::guard($guard)->login($user, true);
         session()->regenerate();
 
-        // 🔸 بررسی تکمیل بودن پروفایل میزبان
-        if ($role === 'host' && (!$user->name || !$user->national_id)) {
+        // Redirect to complete profile if host is pending OR missing required fields
+        if ($role === 'host' && (
+            ($user->status ?? 'pending') === 'pending' ||
+            empty($user->name) || empty($user->national_id)
+        )) {
             return redirect()->route('host.completeProfile');
         }
 
-        // 🔸 هدایت به داشبورد مناسب
         $dashboardRoutes = [
             'admin' => 'admin.dashboard',
-            'host' => 'host.dashboard',
-            'web' => 'home'
+            'host'  => 'host.dashboard',
+            'user'  => 'home'
         ];
 
         return redirect()->route($dashboardRoutes[$role])
@@ -150,5 +152,77 @@ class UniversalAuthController extends Controller
             default:
                 abort(404);
         }
+    }
+
+    /**
+     * داشبورد اختصاصی هر نقش
+     */
+    public function adminDashboard()
+    {
+        return view('admin.dashboard');
+    }
+
+    public function hostDashboard()
+    {
+        $host = Auth::guard('host')->user();
+        return view('host.dashboard', compact('host'));
+    }
+
+    public function userDashboard()
+    {
+        return view('home');
+    }
+
+    public function showCompleteProfileForm()
+    {
+        $host = Auth::guard('host')->user();
+        return view('host.complete-profile', compact('host'));
+    }
+
+    public function storeCompleteProfile(Request $request)
+    {
+        $host = Auth::guard('host')->user();
+
+        $validated = $request->validate([
+            // Step 1
+            'name' => 'required|string|max:100',
+            'national_id' => 'required|string|max:20',
+            'email' => 'nullable|email|max:120',
+            // Step 2 files
+            'id_card_image' => 'required|image|max:2048',
+            'selfie_image' => 'required|image|max:3072',
+            'business_license' => 'nullable|file|max:4096',
+            // Step 3 address
+            'province_id' => 'required|string',
+            'province_name' => 'required|string',
+            'city_id' => 'required|string',
+            'city_name' => 'required|string',
+            'county_id' => 'required|string',
+            'county_name' => 'required|string',
+            'village_name' => 'nullable|string|max:120',
+            'address' => 'required|string|max:400',
+            // Step 4 banking
+            'iban' => 'required|string|regex:/^[0-9]{24}$/',
+            'bank_name' => 'required|string|max:80',
+            'account_holder' => 'required|string|max:100',
+        ]);
+
+        // Files
+        $disk = 'public';
+        if ($request->hasFile('id_card_image')) {
+            $validated['id_card_image'] = $request->file('id_card_image')->store('hosts/id_cards', $disk);
+        }
+        if ($request->hasFile('selfie_image')) {
+            $validated['selfie_image'] = $request->file('selfie_image')->store('hosts/selfies', $disk);
+        }
+        if ($request->hasFile('business_license')) {
+            $validated['business_license'] = $request->file('business_license')->store('hosts/licenses', $disk);
+        }
+
+        $host->fill($validated);
+        $host->status = 'approved';
+        $host->save();
+
+        return redirect()->route('host.dashboard')->with('success','پروفایل با موفقیت ثبت شد.');
     }
 }

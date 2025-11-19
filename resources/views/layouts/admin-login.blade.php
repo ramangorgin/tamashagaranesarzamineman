@@ -121,6 +121,40 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+     <script>
+        (function(){
+        const map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9',
+                    '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+        const pattern = /[۰-۹٠-٩]/g;
+        function normalize(str){
+            return str.replace(pattern, d => map[d] || d);
+        }
+        function bind(el){
+            el.addEventListener('input', e => {
+            const v = e.target.value;
+            if (pattern.test(v)) {
+                const caret = e.target.selectionStart;
+                e.target.value = normalize(v);
+                e.target.setSelectionRange(caret, caret);
+            }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[type="text"],input[type="tel"],input[type="number"],input[type="password"],input:not([type]),textarea')
+            .forEach(bind);
+            // MutationObserver to handle dynamically added inputs
+            new MutationObserver(muts => {
+            muts.forEach(m => m.addedNodes.forEach(n => {
+                if (n.nodeType===1) {
+                if (n.matches && n.matches('input,textarea')) bind(n);
+                n.querySelectorAll?.('input,textarea').forEach(bind);
+                }
+            }));
+            }).observe(document.body,{childList:true,subtree:true});
+        });
+        })();
+    </script>
+    
     @stack('scripts')
 
 </body>

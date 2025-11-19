@@ -13,14 +13,10 @@ class StayRule extends Model
         'stay_id',
         'rule_text',
         'is_allowed',
-        'checkin_time',
-        'checkout_time',
     ];
 
     protected $casts = [
         'is_allowed' => 'boolean',
-        'checkin_time' => 'datetime:H:i',
-        'checkout_time' => 'datetime:H:i',
     ];
 
     public function stay()

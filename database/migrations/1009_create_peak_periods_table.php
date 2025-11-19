@@ -8,12 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('peak_periods', function (Blueprint $table) {
-            $table->id();
-            $table->date('start_date'); // تاریخ شروع پیک
-            $table->date('end_date');   // تاریخ پایان پیک
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('peak_periods')) {
+            Schema::create('peak_periods', function (Blueprint $table) {
+                $table->id();
+                $table->date('start_date');
+                $table->date('end_date');
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

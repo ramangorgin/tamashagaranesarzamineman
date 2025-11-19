@@ -236,16 +236,16 @@
         <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <i class="bi bi-speedometer2"></i> داشبورد
         </a>
-        <a href="{{ route('admin.stays.index') }}" class="{{ request()->routeIs('stays.*') ? 'active' : '' }}">
+        <a href="{{ route('admin.stays.index') }}" class="{{ request()->routeIs('admin.stays.*') ? 'active' : '' }}">
             <i class="bi bi-house-door"></i> اقامت‌گاه‌ها
         </a>
         <a href="{{ route('discount-contracts.index') }}" class="{{ request()->routeIs('discount-contracts.*') ? 'active' : '' }}">
             <i class="bi bi-percent"></i> تخفیفات سازمانی
         </a>
-        <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <a href="{{ route('logout', ['role' => 'admin']) }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <i class="bi bi-box-arrow-left"></i> خروج
         </a>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+        <form id="logout-form" action="{{ route('logout', ['role' => 'admin']) }}" method="POST" class="d-none">@csrf</form>
     </aside>
 
     {{-- Header --}}
