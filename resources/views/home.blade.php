@@ -68,7 +68,7 @@
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
               <source srcset="/images/places/tehran.webp" type="image/webp">
-              <img src="/images/places/tehran.jpg" alt="تهران" class="card-img-top" loading="lazy" decoding="async">
+              <img src="{{ asset('storage/places/tehran.jpg') }}" alt="تهران" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
               <h6 class="fw-bold">تهران</h6>
@@ -80,7 +80,7 @@
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
               <source srcset="/images/places/rasht.webp" type="image/webp">
-              <img src="/images/places/rasht.jpg" alt="رشت" class="card-img-top" loading="lazy" decoding="async">
+              <img src="{{ asset('storage/places/rasht.jpg') }}" alt="رشت" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
               <h6 class="fw-bold">رشت</h6>
@@ -92,7 +92,7 @@
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
               <source srcset="/images/places/shiraz.webp" type="image/webp">
-              <img src="/images/places/shiraz.jpg" alt="شیراز" class="card-img-top" loading="lazy" decoding="async">
+              <img src="{{ asset('storage/places/shiraz.jpg') }}" alt="شیراز" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
               <h6 class="fw-bold">شیراز</h6>
@@ -104,7 +104,7 @@
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
               <source srcset="/images/places/mazandaran.webp" type="image/webp">
-              <img src="/images/places/mazandaran.jpg" alt="مازندران" class="card-img-top" loading="lazy" decoding="async">
+              <img src="{{ asset('storage/places/mazandaran.jpg') }}" alt="مازندران" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
               <h6 class="fw-bold">مازندران</h6>
