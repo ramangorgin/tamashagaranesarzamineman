@@ -1,5 +1,20 @@
-@extends('layouts.host')
+@extends(($role ?? null)==='admin' ? 'layouts.admin' : 'layouts.host')
 @section('title','ویرایش اقامت‌گاه')
+
+@section('breadcrumb')
+    @if(($role ?? null)==='admin')
+        <li class="breadcrumb-item"><a href="{{ route('admin.stays.index') }}">اقامت‌گاه‌ها</a></li>
+        <li class="breadcrumb-item active">ویرایش</li>
+    @endif
+@endsection
+
+@section('breadcrumb-actions')
+    @if(($role ?? null)==='admin')
+        <a href="{{ route('admin.stays.show',$stay) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-eye"></i> مشاهده
+        </a>
+    @endif
+@endsection
 
 @section('content')
 <div class="container py-4">

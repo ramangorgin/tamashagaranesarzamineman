@@ -14,11 +14,14 @@ class Booking extends Model
         'stay_id',
         'start_date',
         'end_date',
-        'guests',
+        'base_guests',
+        'extra_guests',
         'base_price',
         'extra_cost',
         'stay_discount',
         'org_discount',
+        'discount_contract_id',
+        'discount_amount',
         'final_price',
         'status',
     ];
@@ -61,5 +64,10 @@ class Booking extends Model
             'cancelled'=> '<span class="badge bg-danger">لغوشده</span>',
             default    => '<span class="badge bg-secondary">نامشخص</span>',
         };
+    }
+
+    public function discountContract()
+    {
+        return $this->belongsTo(\App\Models\DiscountContract::class, 'discount_contract_id');
     }
 }

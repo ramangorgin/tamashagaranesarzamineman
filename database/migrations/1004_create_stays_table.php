@@ -60,6 +60,11 @@ return new class extends Migration
             // وضعیت
             $table->boolean('is_active')->default(false);
             $table->boolean('is_peak')->default(false);
+            $table->string('moderation_status', 20)->default('pending')->index();
+            $table->foreignId('approved_by_admin_id')->nullable()->constrained('admins')->nullOnDelete();
+            $table->timestamp('approved_at')->nullable();
+            $table->text('reject_reason')->nullable();
+        
 
             $table->timestamps();
             $table->index(['host_id','is_active']);

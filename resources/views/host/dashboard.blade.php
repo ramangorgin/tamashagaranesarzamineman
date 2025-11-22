@@ -51,3 +51,10 @@
   </div>
 </div>
 @endsection
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/host-layout.css') }}">
+<style>
+/* keep existing stat-card styles or import from admin */
+</style>
+@endpush

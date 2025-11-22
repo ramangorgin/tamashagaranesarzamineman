@@ -221,4 +221,12 @@
     }
 }
 
+/* افزودنی‌های جدید برای نسخه ارتقاء یافته */
+.booking-modal-neo{animation:fadeInUp .4s ease}
+.booking-modal-neo .modal-header{border:0}
+.booking-modal-neo .modal-body{position:relative}
+.booking-modal-neo .form-control{transition:.25s}
+.booking-modal-neo .form-control:focus{box-shadow:0 0 0 .15rem rgba(37,99,235,.25)}
+.booking-summary-box .list-unstyled li{margin-bottom:.35rem}
+
 </style>

@@ -30,7 +30,9 @@
         } ,
 
         "files": [
-            "app/Helpers/helpers.php"
+            "app/Helpers/helpers.php",
+            "app/Support/helpers.php"
+
         ]
 
     },

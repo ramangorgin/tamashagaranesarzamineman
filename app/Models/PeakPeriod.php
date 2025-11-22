@@ -9,13 +9,13 @@ class PeakPeriod extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['start_date', 'end_date'];
+    protected $fillable = ['start_date','end_date'];
 
     public static function isNowPeak(): bool
     {
         $today = now()->toDateString();
-        return self::where('start_date', '<=', $today)
-                   ->where('end_date', '>=', $today)
+        return self::where('start_date','<=',$today)
+                   ->where('end_date','>=',$today)
                    ->exists();
     }
 }

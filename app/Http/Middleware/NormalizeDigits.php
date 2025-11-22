@@ -7,17 +7,13 @@ use Illuminate\Http\Request;
 
 class NormalizeDigits
 {
-    protected array $skipKeys = ['password','password_confirmation','_token'];
-
     public function handle(Request $request, Closure $next)
     {
-        $data = $request->all();
-        array_walk_recursive($data, function (&$val, $key) {
-            if (is_string($val) && !in_array($key, $this->skipKeys, true)) {
-                $val = normalize_digits($val);
-            }
-        });
-        $request->replace($data);
+        // Convert all request string values to English digits
+        // (prefix \ to call the global helper)
+        $normalized = \normalize_digits_recursive($request->all(), 'en');
+        $request->merge($normalized);
+
         return $next($request);
     }
 }

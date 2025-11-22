@@ -297,14 +297,44 @@ class StayController extends Controller
         return back()->with('success','اقامت‌گاه حذف شد.');
     }
 
+    // APPROVE (admin)
+    public function approve(Stay $stay)
+    {
+        if ($this->role() !== 'admin') abort(403);
+        $stay->update([
+            'moderation_status'     => 'approved',
+            'approved_by_admin_id'  => $this->userId('admin'),
+            'approved_at'           => now(),
+            'reject_reason'         => null,
+            // optionally activate on approve:
+            'is_active'             => true,
+        ]);
+        return back()->with('success','اقامت‌گاه تأیید شد.');
+    }
+
+    // REJECT (admin)
+    public function reject(Request $request, Stay $stay)
+    {
+        if ($this->role() !== 'admin') abort(403);
+        $data = $request->validate(['reason' => 'nullable|string|max:500']);
+        $stay->update([
+            'moderation_status'     => 'rejected',
+            'approved_by_admin_id'  => null,
+            'approved_at'           => null,
+            'reject_reason'         => $data['reason'] ?? null,
+            // ensure it is not publicly active
+            'is_active'             => false,
+        ]);
+        return back()->with('success','اقامت‌گاه رد شد.');
+    }
+
     // SHOW
     public function show(Stay $stay)
     {
         $role = $this->role();
         if ($role === 'host' && $stay->host_id !== $this->userId('host')) abort(403);
-        if ($role === 'user' && !$stay->is_active) abort(404);
-
-        $stay->loadMissing(['images','rules']); // ensures collections, not null
+        if ($role === 'user' && (!$stay->is_active || $stay->moderation_status !== 'approved')) abort(404);
+        $stay->loadMissing(['images','rules','host']);
         return view('stays.show', compact('stay','role'));
     }
 }

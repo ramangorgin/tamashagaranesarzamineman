@@ -1,5 +1,12 @@
-@extends('layouts.host')
+@extends(($role ?? null)==='admin' ? 'layouts.admin' : 'layouts.host')
 @section('title','ایجاد اقامت‌گاه جدید')
+
+@section('breadcrumb')
+    @if(($role ?? null)==='admin')
+        <li class="breadcrumb-item"><a href="{{ route('admin.stays.index') }}">اقامت‌گاه‌ها</a></li>
+        <li class="breadcrumb-item active">ایجاد</li>
+    @endif
+@endsection
 
 @section('content')
 <div class="container py-4">
@@ -8,7 +15,6 @@
       <h4 class="fw-bold text-primary text-center mb-4">
         <i class="bi bi-building-add me-2"></i> ثبت اقامت‌گاه جدید
       </h4>
-
       @if($errors->any())
         <div class="alert alert-danger small">
           <ul class="mb-0">
@@ -16,11 +22,9 @@
           </ul>
         </div>
       @endif
-
-      <form id="stayForm" method="POST" action="{{ route('host.stays.store') }}" enctype="multipart/form-data">
+      <form id="stayForm" method="POST" action="{{ isset($role)&&$role==='admin' ? route('admin.stays.store') : route('host.stays.store') }}" enctype="multipart/form-data">
         @csrf
         @php $role = $role ?? (auth('admin')->check() ? 'admin' : 'host'); @endphp
-
         {{-- Step indicators --}}
         <div class="d-flex flex-wrap justify-content-center mb-4 gap-2 small fw-semibold">
           <div class="step-dot active" data-step="1">مشخصات</div>
@@ -31,7 +35,6 @@
           <div class="step-dot" data-step="6">قوانین</div>
           <div class="step-dot" data-step="7">تأیید</div>
         </div>
-
         {{-- Step 1 --}}
         <div id="step1">
           <div class="row g-3">
@@ -53,7 +56,6 @@
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-
         {{-- Step 2: Location --}}
         <div id="step2" class="d-none">
           <div class="row g-3">
@@ -97,7 +99,6 @@
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-
         {{-- Step 3: Capacity --}}
         <div id="step3" class="d-none">
           <div class="row g-3">
@@ -155,7 +156,6 @@
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-
         {{-- Step 4: Pricing --}}
         <div id="step4" class="d-none">
           <div class="row g-3">
@@ -167,7 +167,6 @@
               <label class="form-label">قیمت نفر اضافه <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="extra_person_price" class="form-control price-field" data-price-format value="0">
             </div>
-
             @if($role !== 'admin')
               <div class="col-md-4">
                 <label class="form-label">درصد کمیسیون سایت</label>
@@ -191,19 +190,16 @@
                 </div>
               </div>
             @else
-              {{-- Hidden defaults for admin (so controller validation can pass) --}}
               <input type="hidden" name="site_commission" value="0">
               <input type="hidden" name="max_discount_normal" value="0">
               <input type="hidden" name="max_discount_peak" value="0">
             @endif
-
           </div>
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-
         {{-- Step 5: Images --}}
         <div id="step5" class="d-none">
           <div class="mb-3">
@@ -218,7 +214,6 @@
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-
         {{-- Step 6: Rules --}}
         <div id="step6" class="d-none">
           <div class="row g-3">
@@ -231,14 +226,12 @@
               <input type="time" name="checkout_time" id="checkout_time" class="form-control" value="12:00">
             </div>
           </div>
-
           <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
             <label class="form-label mb-0">سایر قوانین</label>
             <button type="button" class="btn btn-sm btn-outline-primary" id="addRuleBtn">
               <i class="bi bi-plus-lg"></i> افزودن قانون
             </button>
           </div>
-
           <div class="table-responsive">
             <table class="table table-sm table-bordered align-middle mb-0" id="rulesTable">
               <thead class="table-light">
@@ -251,18 +244,13 @@
               <tbody></tbody>
             </table>
           </div>
-
           <textarea name="rules_json" id="rules_json" class="d-none"></textarea>
-          <div class="mt-3 small text-muted">
-            نمونه‌ها: «برگزاری پارتی: ممنوع»، «پخش آهنگ: مجاز»
-          </div>
-
+          <div class="mt-3 small text-muted">نمونه‌ها: «برگزاری پارتی: ممنوع»، «پخش آهنگ: مجاز»</div>
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-
         {{-- Step 7: Review --}}
         <div id="step7" class="d-none">
           <div class="alert alert-info d-flex align-items-center">
@@ -274,7 +262,6 @@
             <button type="submit" class="btn btn-success">ثبت اقامت‌گاه <i class="bi bi-check2-circle"></i></button>
           </div>
         </div>
-
       </form>
     </div>
   </div>
@@ -286,7 +273,10 @@
 <style>
 .step-dot{background:#e9ecef;color:#6c757d;padding:6px 10px;border-radius:18px;min-width:70px;text-align:center;transition:.25s;cursor:pointer;font-size:.75rem;}
 .step-dot.active{background:#0d6efd;color:#fff;box-shadow:0 0 0 3px rgba(13,110,253,.15);}
-#map{overflow:hidden}
+#map{position:relative;overflow:hidden;height:380px;border:1px solid #dee2e6;border-radius:14px;}
+/* Prevent global img rules from breaking Leaflet tiles */
+.leaflet-container img{max-width:none!important;}
+.leaflet-container{z-index:0;}
 .image-box{position:relative}
 .image-box img{width:100%;height:140px;object-fit:cover;border-radius:10px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .main-badge{position:absolute;top:6px;left:6px;background:#ffc107;color:#212529;padding:4px 8px;border-radius:20px;font-size:.7rem;cursor:pointer;display:flex;align-items:center;gap:4px;box-shadow:0 0 0 2px rgba(255,193,7,.4)}

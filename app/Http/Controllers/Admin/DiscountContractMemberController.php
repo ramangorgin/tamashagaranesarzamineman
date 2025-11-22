@@ -6,53 +6,72 @@ use App\Http\Controllers\Controller;
 use App\Models\DiscountContract;
 use App\Models\DiscountContractMember;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 class DiscountContractMemberController extends Controller
 {
-    // Adding new member to the contract
-    public function store(Request $request)
+    // Store member (route: admin.discount_contract_members.store with contract param)
+    public function store(Request $request, DiscountContract $discountContract)
     {
-        $validated = $request->validate([
-            'contract_id' => 'required|exists:discount_contracts,id',
-            'full_name' => 'required|string|max:255',
+        $data = $request->validate([
+            'full_name'   => 'required|string|max:255',
             'national_id' => 'nullable|string|max:50',
-            'phone' => 'nullable|string|max:50',
+            'phone'       => 'nullable|string|max:50',
         ]);
 
-        DiscountContractMember::create($validated);
+        // Normalize phone (basic)
+        if (!empty($data['phone'])) {
+            $data['phone'] = preg_replace('/\D+/', '', $data['phone']);
+        }
 
-        return back()->with('success', 'عضو جدید با موفقیت اضافه شد.');
+        $data['contract_id'] = $discountContract->id;
+
+        try {
+            DiscountContractMember::create($data);
+        } catch (QueryException $e) {
+            return back()->with('error', 'عضو تکراری یا خطا در ذخیره.');
+        }
+
+        return back()->with('success', 'عضو اضافه شد.');
     }
 
-    // Editig the Members
-    public function edit($id)
+    // Edit member (optional view)
+    public function edit(DiscountContract $discountContract, DiscountContractMember $discountContractMember)
     {
-        $member = DiscountContractMember::findOrFail($id);
-        return view('admin.discount_contract_members.edit', compact('member'));
-    }
-
-    // Updating the changes
-    public function update(Request $request, $id)
-    {
-        $member = DiscountContractMember::findOrFail($id);
-
-        $validated = $request->validate([
-            'full_name' => 'required|string|max:255',
-            'national_id' => 'nullable|string|max:50',
-            'phone' => 'nullable|string|max:50',
+        return view('admin.discount_contract_members.edit', [
+            'contract' => $discountContract,
+            'member'   => $discountContractMember
         ]);
-
-        $member->update($validated);
-
-        return back()->with('success', 'مشخصات عضو با موفقیت ویرایش شد.');
     }
 
-    // Deleting Member
-    public function destroy($id)
+    // Update member
+    public function update(Request $request, DiscountContract $discountContract, DiscountContractMember $discountContractMember)
     {
-        $member = DiscountContractMember::findOrFail($id);
-        $member->delete();
+        $data = $request->validate([
+            'full_name'   => 'required|string|max:255',
+            'national_id' => 'nullable|string|max:50',
+            'phone'       => 'nullable|string|max:50',
+        ]);
+        if (!empty($data['phone'])) {
+            $data['phone'] = preg_replace('/\D+/', '', $data['phone']);
+        }
 
-        return back()->with('success', 'عضو با موفقیت حذف شد.');
+        try {
+            $discountContractMember->update($data);
+        } catch (QueryException $e) {
+            return back()->with('error', 'خطا در ویرایش (احتمال تکراری).');
+        }
+
+        return redirect()
+            ->route('admin.discount_contracts.edit', $discountContract)
+            ->with('success', 'عضو ویرایش شد.');
+    }
+
+    // Delete member
+    public function destroy(DiscountContract $discountContract, DiscountContractMember $discountContractMember)
+    {
+        $discountContractMember->delete();
+
+        return back()->with('success', 'عضو حذف شد.');
     }
 }

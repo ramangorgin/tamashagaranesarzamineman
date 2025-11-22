@@ -43,7 +43,11 @@ class Stay extends Model
         'checkin_time',
         'checkout_time',
         'is_active',
-        'is_peak'
+        'is_peak',
+        'moderation_status',
+        'approved_by_admin_id',
+        'approved_at',
+        'reject_reason',
     ];
 
     protected $casts = [
@@ -53,6 +57,7 @@ class Stay extends Model
         'is_peak' => 'boolean',
         'checkin_time' => 'datetime:H:i',
         'checkout_time' => 'datetime:H:i',
+        'approved_at' => 'datetime',
     ];
 
     public function host()
@@ -74,4 +79,7 @@ class Stay extends Model
     {
         return $this->hasMany(StayRule::class);
     }
+
+    // Approver admin
+    public function approver() { return $this->belongsTo(Admin::class, 'approved_by_admin_id'); }
 }

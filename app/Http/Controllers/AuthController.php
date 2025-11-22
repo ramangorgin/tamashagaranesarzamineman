@@ -107,7 +107,7 @@ class AuthController extends Controller
             ($user->status ?? 'pending') === 'pending' ||
             empty($user->name) || empty($user->national_id)
         )) {
-            return redirect()->route('host.completeProfile');
+            return redirect()->route('host.completeProfile.show');
         }
 
         $dashboardRoutes = [
@@ -176,6 +176,10 @@ class AuthController extends Controller
     public function showCompleteProfileForm()
     {
         $host = Auth::guard('host')->user();
+        if ($host->status === 'pending_review') {
+            $host->status = 'pending'; // normalize
+        }
+        // FIX: correct blade path
         return view('host.complete-profile', compact('host'));
     }
 
@@ -183,16 +187,19 @@ class AuthController extends Controller
     {
         $host = Auth::guard('host')->user();
 
+        if (in_array($host->status, ['pending','approved'])) {
+            // FIX: redirect to show route, not store
+            return redirect()->route('host.completeProfile.show')
+                ->with('info','اطلاعات شما قبلا ارسال شده و در حال بررسی است.');
+        }
+
         $validated = $request->validate([
-            // Step 1
             'name' => 'required|string|max:100',
             'national_id' => 'required|string|max:20',
             'email' => 'nullable|email|max:120',
-            // Step 2 files
             'id_card_image' => 'required|image|max:2048',
             'selfie_image' => 'required|image|max:3072',
             'business_license' => 'nullable|file|max:4096',
-            // Step 3 address
             'province_id' => 'required|string',
             'province_name' => 'required|string',
             'city_id' => 'required|string',
@@ -201,28 +208,25 @@ class AuthController extends Controller
             'county_name' => 'required|string',
             'village_name' => 'nullable|string|max:120',
             'address' => 'required|string|max:400',
-            // Step 4 banking
             'iban' => 'required|string|regex:/^[0-9]{24}$/',
             'bank_name' => 'required|string|max:80',
             'account_holder' => 'required|string|max:100',
         ]);
 
-        // Files
         $disk = 'public';
-        if ($request->hasFile('id_card_image')) {
-            $validated['id_card_image'] = $request->file('id_card_image')->store('hosts/id_cards', $disk);
-        }
-        if ($request->hasFile('selfie_image')) {
-            $validated['selfie_image'] = $request->file('selfie_image')->store('hosts/selfies', $disk);
-        }
-        if ($request->hasFile('business_license')) {
-            $validated['business_license'] = $request->file('business_license')->store('hosts/licenses', $disk);
+        foreach (['id_card_image','selfie_image','business_license'] as $f) {
+            if ($request->hasFile($f)) {
+                $validated[$f] = $request->file($f)->store("hosts/{$host->id}", $disk);
+            }
         }
 
         $host->fill($validated);
-        $host->status = 'approved';
+        $host->status = 'pending';
         $host->save();
 
-        return redirect()->route('host.dashboard')->with('success','پروفایل با موفقیت ثبت شد.');
+        // FIX: redirect to show route name
+        return redirect()
+            ->route('host.completeProfile.show')
+            ->with('success','اطلاعات ارسال شد. لطفاً تا تأیید مدیریت منتظر بمانید.');
     }
 }

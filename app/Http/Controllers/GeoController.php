@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Cache;
-
 class GeoController extends Controller
 {
     protected function load(string $file): array {
@@ -12,31 +10,54 @@ class GeoController extends Controller
         return json_decode(file_get_contents($path), true) ?: [];
     }
 
-    public function provinces() {
-        return response()->json($this->load('provinces.json'));
+    private function norm(array $rows, string $type): array
+    {
+        return array_map(function ($r) use ($type) {
+            $id   = $r[$type.'Id'] ?? $r['id'] ?? $r['code'] ?? null;
+            $name = $r[$type.'Name'] ?? $r['name'] ?? $r[$type.'Title'] ?? $r['title'] ?? $r[$type.'Fa'] ?? null;
+            return [
+                'id'        => (string) $id,
+                'name'      => $name ?: '—',
+                'provinceId'=> (string)($r['provinceId'] ?? ''),
+                'cityId'    => (string)($r['cityId'] ?? ''),
+                'countyId'  => (string)($r['countyId'] ?? ''),
+            ];
+        }, $rows);
     }
 
-    public function cities($provinceId) {
-        $all = $this->load('provinces_cities.json');
-        $rows = array_values(array_filter($all, fn($r) => ($r['provinceId'] ?? null) === $provinceId));
-        return response()->json($rows);
+    public function provinces()
+    {
+        $rows = $this->load('provinces.json');
+        return response()->json($this->norm($rows,'province'));
     }
 
-    public function counties($provinceId, $cityId) {
-        $all = $this->load('provinces_cities_counties.json');
-        $rows = array_values(array_filter($all, fn($r) =>
-            ($r['provinceId'] ?? null) === $provinceId && ($r['cityId'] ?? null) === $cityId
+    public function cities($provinceId)
+    {
+        $rows = array_values(array_filter(
+            $this->load('provinces_cities.json'),
+            fn($r) => (string)($r['provinceId'] ?? '') == (string)$provinceId
         ));
-        return response()->json($rows);
+        return response()->json($this->norm($rows,'city'));
     }
 
-    public function villages($provinceId, $cityId, $countyId) {
-        $all = $this->load('provinces_cities_counties_villages.json');
-        $rows = array_values(array_filter($all, fn($r) =>
-            ($r['provinceId'] ?? null) === $provinceId &&
-            ($r['cityId'] ?? null) === $cityId &&
-            ($r['countyId'] ?? null) === $countyId
+    public function counties($provinceId, $cityId)
+    {
+        $rows = array_values(array_filter(
+            $this->load('provinces_cities_counties.json'),
+            fn($r) => (string)($r['provinceId'] ?? '') == (string)$provinceId
+                 && (string)($r['cityId'] ?? '') == (string)$cityId
         ));
-        return response()->json($rows);
+        return response()->json($this->norm($rows,'county'));
+    }
+
+    public function villages($provinceId, $cityId, $countyId)
+    {
+        $rows = array_values(array_filter(
+            $this->load('provinces_cities_counties_villages.json'),
+            fn($r) => (string)($r['provinceId'] ?? '') == (string)$provinceId
+                 && (string)($r['cityId'] ?? '') == (string)$cityId
+                 && (string)($r['countyId'] ?? '') == (string)$countyId
+        ));
+        return response()->json($this->norm($rows,'village'));
     }
 }

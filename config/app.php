@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
 
 return [
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Tamashagaranesarzamineman'),
 
     'env' => env('APP_ENV', 'production'),
 
@@ -14,7 +14,7 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Tehran',
 
     'locale' => 'fa',
 
@@ -37,7 +37,6 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\BreadcrumbServiceProvider::class,
         Melipayamak\Laravel\ServiceProvider::class,
     ])->toArray(),
 

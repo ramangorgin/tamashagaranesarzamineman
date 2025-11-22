@@ -12,6 +12,7 @@ class DiscountContract extends Model
 
     protected $fillable = [
         'title',
+        'description',
         'discount_percent',
         'start_date',
         'end_date',
@@ -33,7 +34,46 @@ class DiscountContract extends Model
     // checking if the contract is active
     public function getIsCurrentlyActiveAttribute(): bool
     {
+        $tz = config('app.timezone', 'Asia/Tehran');
+        $today = now($tz)->startOfDay();      // local day
+        $start = $this->start_date?->copy()->startOfDay();
+        $end   = $this->end_date?->copy()->endOfDay();
+
+        return $this->is_active
+            && $start
+            && $end
+            && $today->greaterThanOrEqualTo($start)
+            && $today->lessThanOrEqualTo($end);
+    }
+
+    // Find best discount for given identifiers
+    public static function findForMember(array $data): ?self
+    {
         $today = Carbon::today();
-        return $this->is_active && $today->between($this->start_date, $this->end_date);
+        $query = static::query()->active()->with('members')
+            ->whereHas('members', function ($q) use ($data) {
+                $q->where(function ($w) use ($data) {
+                    if (!empty($data['national_id'])) $w->orWhere('national_id', $data['national_id']);
+                    if (!empty($data['phone'])) $w->orWhere('phone', $data['phone']);
+                    if (!empty($data['full_name'])) $w->orWhere('full_name', $data['full_name']);
+                });
+            })
+            ->orderByDesc('discount_percent')
+            ->orderBy('end_date');
+
+        return $query->first();
+    }
+
+    public function scopeActive($q)
+    {
+        return $q->where('is_active', true)
+                 ->whereDate('start_date', '<=', Carbon::today())
+                 ->whereDate('end_date', '>=', Carbon::today());
+    }
+
+    public function scopeOnDate($q, $date)
+    {
+        return $q->whereDate('start_date', '<=', $date)
+                 ->whereDate('end_date', '>=', $date);
     }
 }

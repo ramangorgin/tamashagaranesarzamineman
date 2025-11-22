@@ -4,79 +4,87 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DiscountContract;
-use App\Models\DiscountContractMember;
 use Illuminate\Http\Request;
 
 class DiscountContractController extends Controller
 {
-    // Indexing the Contracts
+    // List contracts
     public function index()
     {
-        $contracts = DiscountContract::latest()->paginate(10);
+        $contracts = DiscountContract::withCount('members')
+            ->latest()
+            ->paginate(15);
+
         return view('admin.discount_contracts.index', compact('contracts'));
     }
 
-    // Creating new Contracts
+    // Show create form
     public function create()
     {
         return view('admin.discount_contracts.create');
     }
 
-    // Storing new Contracts
+    // Store new contract
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
+        $data = $request->validate([
+            'title'            => 'required|string|max:255',
+            'description'      => 'nullable|string',
             'discount_percent' => 'required|numeric|min:0|max:100',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date'       => 'required|date',
+            'end_date'         => 'required|date|after_or_equal:start_date',
+            'is_active'        => 'nullable|boolean',
         ]);
+        $data['is_active'] = (bool)($data['is_active'] ?? true);
 
-        $contract = DiscountContract::create($validated);
-        return redirect()->route('discount-contracts.show', $contract->id)
-                         ->with('success', 'قرارداد با موفقیت ایجاد شد.');
+        $contract = DiscountContract::create($data);
+
+        return redirect()
+            ->route('admin.discount_contracts.edit', $contract)
+            ->with('success', 'قرارداد ایجاد شد.');
     }
 
-    // Showing the Contract
-    public function show($id)
+    // Show single contract
+    public function show(DiscountContract $discountContract)
     {
-        $contract = DiscountContract::with('members')->findOrFail($id);
-        return view('admin.discount_contracts.show', compact('contract'));
+        $discountContract->load('members');
+        return view('admin.discount_contracts.show', ['contract' => $discountContract]);
     }
 
-    // Editing the Contract
-    public function edit($id)
+    // Edit form
+    public function edit(DiscountContract $discountContract)
     {
-        $contract = DiscountContract::findOrFail($id);
-        return view('admin.discount_contracts.edit', compact('contract'));
+        $discountContract->load('members');
+        return view('admin.discount_contracts.edit', ['contract' => $discountContract]);
     }
 
-    // Updating the Contract
-    public function update(Request $request, $id)
+    // Update
+    public function update(Request $request, DiscountContract $discountContract)
     {
-        $contract = DiscountContract::findOrFail($id);
-
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
+        $data = $request->validate([
+            'title'            => 'required|string|max:255',
+            'description'      => 'nullable|string',
             'discount_percent' => 'required|numeric|min:0|max:100',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'is_active' => 'nullable|boolean',
+            'start_date'       => 'required|date',
+            'end_date'         => 'required|date|after_or_equal:start_date',
+            'is_active'        => 'nullable|boolean',
         ]);
+        $data['is_active'] = (bool)($data['is_active'] ?? false);
 
-        $contract->update($validated);
+        $discountContract->update($data);
 
-        return redirect()->route('discount-contracts.show', $contract->id)
-                         ->with('success', 'قرارداد با موفقیت به‌روزرسانی شد.');
+        return redirect()
+            ->route('admin.discount_contracts.edit', $discountContract)
+            ->with('success', 'قرارداد به‌روزرسانی شد.');
     }
 
-    // Deleting the Contract
-    public function destroy($id)
+    // Delete
+    public function destroy(DiscountContract $discountContract)
     {
-        $contract = DiscountContract::findOrFail($id);
-        $contract->delete();
+        $discountContract->delete();
 
-        return redirect()->route('discount-contracts.index')
-                         ->with('success', 'قرارداد با موفقیت حذف شد.');
+        return redirect()
+            ->route('admin.discount_contracts.index')
+            ->with('success', 'قرارداد حذف شد.');
     }
 }

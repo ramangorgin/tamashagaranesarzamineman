@@ -3,37 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 
 class Host extends Authenticatable
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name',
-        'national_id',
-        'phone',
-        'email',
-        'id_card_image',
-        'selfie_image',
-        'business_license',
-        'status',
-        'rejection_reason',
-        'iban',
-        'bank_name',
-        'account_holder',
+        'phone','status','name','national_id','email',
+        'id_card_image','selfie_image','business_license',
         'province_id','province_name','city_id','city_name',
-        'county_id','county_name','village_name',
-        'postal_code',
-        'address',
+        'county_id','county_name','village_name','address',
+        'iban','bank_name','account_holder',
     ];
 
-    protected $hidden = [
-        'remember_token',
-    ];
-
-    public function stays()
-    {
-        return $this->hasMany(Stay::class);
-    }
+    protected $hidden = ['remember_token'];
 }

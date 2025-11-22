@@ -1,5 +1,20 @@
-@extends('layouts.app')
+@extends(($role ?? null)==='admin' ? 'layouts.admin' : 'layouts.app')
 @section('title', $stay->title)
+
+@section('breadcrumb')
+    @if(($role ?? null)==='admin')
+        <li class="breadcrumb-item"><a href="{{ route('admin.stays.index') }}">اقامت‌گاه‌ها</a></li>
+        <li class="breadcrumb-item active">جزئیات</li>
+    @endif
+@endsection
+
+@section('breadcrumb-actions')
+    @if(($role ?? null)==='admin')
+        <a href="{{ route('admin.stays.edit',$stay) }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-pencil-square"></i> ویرایش
+        </a>
+    @endif
+@endsection
 
 @section('content')
 <div class="container my-5">
@@ -79,7 +94,7 @@
         <div class="card border-0 shadow-sm rounded-4 mb-5">
           <div class="card-body">
             <h5 class="fw-bold mb-3"><i class="bi bi-geo text-danger me-2"></i> موقعیت مکانی</h5>
-            <div id="map" style="height: 300px;" class="rounded-4"></div>
+            <div id="map" class="rounded-4 overflow-hidden" style="height:300px;width:100%"></div>
           </div>
         </div>
       @endif
@@ -122,18 +137,22 @@
 @push('scripts')
 {{-- Leaflet --}}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 @if($stay->latitude && $stay->longitude)
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const lat = {{ (float) $stay->latitude }};
   const lng = {{ (float) $stay->longitude }};
-  const map = L.map('map').setView([lat, lng], 13);
+  const map = L.map('map', { zoomControl: true }).setView([lat, lng], 13);
+
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
   }).addTo(map);
+
   L.marker([lat, lng]).addTo(map);
+
+  // Fix wrong tile positions when the container was not fully laid out
+  setTimeout(() => map.invalidateSize(), 300);
 });
 </script>
 @endif
@@ -142,15 +161,10 @@ document.addEventListener('DOMContentLoaded', function () {
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-.hover-zoom { transition: transform 0.3s ease; }
-.hover-zoom:hover { transform: scale(1.03); }
-.card { transition: all .3s ease-in-out; }
-.card:hover { transform: translateY(-3px); }
-.sticky-top { z-index: 1020; }
-@media (max-width: 768px) {
-  .breadcrumb { font-size: 0.9rem; }
-  .card-body h5 { font-size: 1rem; }
-}
+  /* Keep tiles from inheriting global img rules and clip overflow */
+  #map { position: relative; overflow: hidden; }
+  .leaflet-container img { max-width: none !important; }
+  .leaflet-container { z-index: 0; }
 </style>
 @endpush
 @endsection
