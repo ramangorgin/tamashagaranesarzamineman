@@ -22,7 +22,7 @@ jobs:
         port: ${{ secrets.SSH_PORT }}
         script_stop: true
         script: |
-          echo "📌 Starting Deployment..."
+         echo "📌 Starting Deployment..."
 
           cd /var/www/tamashagaranesarzamineman
 
@@ -51,12 +51,6 @@ jobs:
           if [ ! -L "public/storage" ]; then
               php artisan storage:link
           fi
-
-          echo "📌 Applying ACL permissions..."
-          setfacl -R -m u:www-data:rwx storage bootstrap/cache
-          setfacl -dR -m u:www-data:rwx storage bootstrap/cache
-          setfacl -R -m u:ubuntu:rwx storage bootstrap/cache
-          setfacl -dR -m u:ubuntu:rwx storage bootstrap/cache
 
           echo "📌 Restarting PHP FPM..."
           sudo systemctl restart php8.2-fpm
