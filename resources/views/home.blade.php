@@ -67,7 +67,7 @@
         <div class="col-md-3 col-6 anim scale-in delay-1">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
-              <source srcset="/images/places/tehran.webp" type="image/webp">
+              <source srcset="{{ asset('storage/places/tehran.webp') }}" type="image/webp">
               <img src="{{ asset('storage/places/tehran.jpg') }}" alt="تهران" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
@@ -79,7 +79,7 @@
         <div class="col-md-3 col-6 anim scale-in delay-2">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
-              <source srcset="/images/places/rasht.webp" type="image/webp">
+              <source srcset="{{ asset('storage/places/rasht.webp') }}" type="image/webp">
               <img src="{{ asset('storage/places/rasht.jpg') }}" alt="رشت" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
@@ -91,7 +91,7 @@
         <div class="col-md-3 col-6 anim scale-in delay-3">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
-              <source srcset="/images/places/shiraz.webp" type="image/webp">
+              <source srcset="{{ asset('storage/places/shiraz.webp') }}" type="image/webp">
               <img src="{{ asset('storage/places/shiraz.jpg') }}" alt="شیراز" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
@@ -103,7 +103,7 @@
         <div class="col-md-3 col-6 anim scale-in delay-4">
           <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <picture>
-              <source srcset="/images/places/mazandaran.webp" type="image/webp">
+              <source srcset="{{ asset('storage/places/mazandaran.webp') }}" type="image/webp">
               <img src="{{ asset('storage/places/mazandaran.jpg') }}" alt="مازندران" class="card-img-top" loading="lazy" decoding="async">
             </picture>
             <div class="card-body text-center">
