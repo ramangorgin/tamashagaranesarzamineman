@@ -26,10 +26,6 @@ jobs:
 
           cd /var/www/tamashagaranesarzamineman
 
-          echo "📌 Fixing permissions BEFORE running Laravel commands..."
-          sudo chown -R www-data:www-data storage bootstrap/cache
-          sudo chmod -R 775 storage bootstrap/cache
-
           echo "📌 Pulling latest code..."
           git pull origin main
 
@@ -55,6 +51,12 @@ jobs:
           if [ ! -L "public/storage" ]; then
               php artisan storage:link
           fi
+
+          echo "📌 Applying ACL permissions..."
+          setfacl -R -m u:www-data:rwx storage bootstrap/cache
+          setfacl -dR -m u:www-data:rwx storage bootstrap/cache
+          setfacl -R -m u:ubuntu:rwx storage bootstrap/cache
+          setfacl -dR -m u:ubuntu:rwx storage bootstrap/cache
 
           echo "📌 Restarting PHP FPM..."
           sudo systemctl restart php8.2-fpm
