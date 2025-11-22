@@ -48,8 +48,25 @@ class AuthController extends Controller
         );
 
         try {
-            $sms = Melipayamak::sms();
-            $sms->send($request->phone, '5000...', "کد ورود {$role}: {$code}");
+            $sms = Melipayamak::sms(); // SmsRest instance
+
+            // Pattern (base service) sending preferred if body id is configured
+            $bodyId = env('MELIPAYAMAK_OTP_BODY_ID');
+            if ($bodyId) {
+                // Pattern variables order must match panel definition.
+                // Example pattern text defined in panel (Persian):
+                // "کد ورود: {code} نقش: {role}"
+                // For pattern mode we only send the variable VALUES separated by ';'
+                // If pattern has 2 variables (code, role) we send "CODE;ROLE"
+                $patternValues = $code.';'.$role; // adjust order if panel differs
+                $resp = $sms->sendByBaseNumber($patternValues, $request->phone, (int) $bodyId);
+            } else {
+                // Fallback to normal send with a default sender number
+                $sender = env('MELIPAYAMAK_DEFAULT_NUMBER', '5000');
+                $text = "کد ورود {$role}: {$code}";
+                $resp = $sms->send($request->phone, $sender, $text);
+            }
+            Log::info('OTP SMS dispatched', ['role' => $role, 'phone' => $request->phone, 'response' => $resp]);
         } catch (Exception $e) {
             Log::error('SMS failed', ['role' => $role, 'error' => $e->getMessage()]);
             return back()->with('error', 'ارسال پیامک با خطا مواجه شد.');

@@ -11,12 +11,10 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Vazirmatn Font -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('css/fonts.css') }}" rel="stylesheet">
 
     <style>
         body {
-            font-family: "Vazirmatn", sans-serif;
             background: linear-gradient(135deg, #1e293b, #0f172a);
             color: #fff;
             overflow-x: hidden;

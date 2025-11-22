@@ -6,10 +6,10 @@
     <title>@yield('title', 'پنل مدیریت')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('css/fonts.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
     <style>
-        body {font-family:"Vazirmatn",sans-serif;background-color:#f8f9fb;overflow-x:hidden;}
+        body {background-color:#f8f9fb;overflow-x:hidden;}
         .sidebar {position:fixed;top:0;right:0;width:240px;height:100vh;background-color:#1e293b;color:#fff;display:flex;flex-direction:column;transition:.3s;z-index:1050;}
         .sidebar h4{ text-align:center;margin:1.2rem 0;font-weight:600;}
         .sidebar a{color:#cbd5e1;text-decoration:none;display:flex;align-items:center;padding:12px 18px;transition:.2s;border-right:3px solid transparent;}

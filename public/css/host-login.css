@@ -1,5 +1,5 @@
 body {
-  font-family: 'Vazirmatn', sans-serif;
+  font-family: 'Peyda', sans-serif; /* align with global body font */
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
   min-height: 100vh;
 }

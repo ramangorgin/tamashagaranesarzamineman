@@ -1,0 +1,76 @@
+/* Self-hosted Persian font families: Peyda (body), Modam (display), YekanBakh (numeric/UI) */
+/* NOTE: Using .ttf directly; consider converting to woff2 for performance. */
+
+/* Peyda weights */
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-ExtraLight.ttf') format('truetype'); font-weight: 200; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-Light.ttf') format('truetype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-ExtraBold.ttf') format('truetype'); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Peyda'; src: url('/fonts/Peyda-Black.ttf') format('truetype'); font-weight: 900; font-style: normal; font-display: swap; }
+
+/* Modam display weights */
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-Light.ttf') format('truetype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-ExtraBold.ttf') format('truetype'); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Modam'; src: url('/fonts/Modam-Black.ttf') format('truetype'); font-weight: 900; font-style: normal; font-display: swap; }
+
+/* Yekan Bakh (numeric/UI). Provide regular + bold; extend if needed */
+@font-face { font-family: 'YekanBakh'; src: url('/fonts/Yekan Bakh Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'YekanBakh'; src: url('/fonts/YekanBakh.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+
+/* Global assignments */
+html, body { font-family: 'Peyda', sans-serif; font-weight: 400; }
+body { -webkit-font-smoothing: antialiased; }
+
+/* Headings: use Modam for strong brand feel */
+h1, h2, .display-heading { font-family: 'Modam', 'Peyda', sans-serif; font-weight: 700; }
+h3, h4 { font-family: 'Modam', 'Peyda', sans-serif; font-weight: 600; }
+h5, h6 { font-family: 'Peyda', sans-serif; font-weight: 600; }
+
+/* Hero section specific */
+.hero-section h1 { font-family: 'Modam', 'Peyda', sans-serif; font-weight: 800; }
+.hero-section p.lead { font-family: 'Peyda', sans-serif; font-weight: 400; }
+
+/* Navigation & buttons */
+.navbar-brand { font-family: 'Modam', 'Peyda', sans-serif; font-weight: 700; }
+.nav-link, .btn { font-family: 'Peyda', sans-serif; }
+
+/* Price & numeric emphasis */
+.price-box, .numeric, .badge-number, .price, .amount, .total { font-family: 'YekanBakh', 'Peyda', sans-serif; font-feature-settings: 'tnum' 1; }
+
+/* Forms */
+input, select, textarea { font-family: 'Peyda', sans-serif; }
+
+/* Small meta text */
+small, .text-muted, .breadcrumb { font-family: 'Peyda', sans-serif; font-weight: 300; }
+
+/* Cards titles */
+.stay-card h6, .card h5, .card h6 { font-family: 'Peyda', sans-serif; font-weight: 600; }
+
+/* CTAs */
+.cta-section h2 { font-family: 'Modam', 'Peyda', sans-serif; font-weight: 800; }
+.cta-section p { font-family: 'Peyda', sans-serif; }
+
+/* Footer */
+footer h5, footer h6 { font-family: 'Modam', 'Peyda', sans-serif; font-weight: 700; }
+footer, footer p, footer a { font-family: 'Peyda', sans-serif; }
+
+/* Utility weight helpers */
+.fw-200 { font-weight: 200; }
+.fw-300 { font-weight: 300; }
+.fw-500 { font-weight: 500; }
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+.fw-800 { font-weight: 800; }
+.fw-900 { font-weight: 900; }
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+  .hero-section h1 { font-size: 1.75rem; }
+}

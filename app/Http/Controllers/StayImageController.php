@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Stay;
 use App\Models\StayImage;
 use Illuminate\Support\Facades\Storage;
+use Spatie\ImageOptimizer\OptimizerChain;
 
 class StayImageController extends Controller
 {
@@ -33,7 +34,10 @@ class StayImageController extends Controller
     public function destroy($id)
     {
         $image = StayImage::findOrFail($id);
-        Storage::disk('public')->delete($image->image_path);
+        // Correct column name is 'path'. 'image_path' would be null and prevent deletion.
+        if ($image->path) {
+            Storage::disk('public')->delete($image->path);
+        }
         $image->delete();
 
         return back()->with('success', 'تصویر با موفقیت حذف شد.');

@@ -7,15 +7,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="{{ asset('css/auth-modal.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/fonts.css') }}" rel="stylesheet">
     <link href="{{ asset('css/home.css') }}" rel="stylesheet">
+    @if(class_exists('Livewire\\Livewire'))
+        @livewireStyles
+    @endif
 </head>
    <style>
-        body {
-            font-family: Vazirmatn, sans-serif;
+        .text-justify{
+            text-align: justify;
         }
     </style>
     @stack('styles')
@@ -36,10 +39,10 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link active" href="#">خانه</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">اقامتگاه‌ها</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">درباره ما</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">تماس با ما</a></li>
+                <li class="nav-item"><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">خانه</a></li>
+                <li class="nav-item"><a class="nav-link {{ request()->routeIs('stays.*') ? 'active' : '' }}" href="{{ route('stays.show', ['stay'=>1]) }}">اقامتگاه‌ها</a></li>
+                <li class="nav-item"><a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">درباره ما</a></li>
+                <li class="nav-item"><a class="nav-link {{ request()->routeIs('support') ? 'active' : '' }}" href="{{ route('support') }}">پشتیبانی</a></li>
             </ul>
 
             <div class="d-flex gap-2">
@@ -65,31 +68,43 @@
     <footer class="bg-dark text-white py-4 mt-5">
         <div class="container">
         <div class="row">
-            <div class="col-md-4 mb-3">
-            <h5 class="fw-bold">تماشاگران سرزمین من</h5>
-            <p class="small text-secondary">
-                پلتفرم رزرو آنلاین اقامتگاه در سراسر ایران، با امنیت، پشتیبانی و تجربه‌ای لذت‌بخش.
-            </p>
+            <!-- About Us -->
+            <div class="col-md-3 mb-3">
+                <h5 class="fw-bold">تماشاگران سرزمین من</h5>
+                <p class="small text-secondary mb-0 text-justify">
+                    تماشاگران سرزمین من یک پلتفرم یکپارچه برای جستجو، مقایسه و رزرو آنلاین انواع اقامتگاه در شهرها و روستاهای سراسر ایران است. 
+                </p>
             </div>
-            <div class="col-md-4 mb-3">
-            <h6 class="fw-bold">لینک‌های مفید</h6>
-            <ul class="list-unstyled small">
-                <li><a href="#" class="text-white-50 text-decoration-none">درباره ما</a></li>
-                <li><a href="#" class="text-white-50 text-decoration-none">قوانین و مقررات</a></li>
-                <li><a href="#" class="text-white-50 text-decoration-none">پشتیبانی</a></li>
-            </ul>
+            <!-- Useful Links -->
+            <div class="col-md-3 mb-3 d-flex flex-column justify-content-start align-items-center text-center">
+                <h6 class="fw-bold">لینک‌های مفید</h6>
+                <ul class="list-unstyled small mb-0 footer-links">
+                    <li class="mb-2"><a href="{{ route('about') }}" class="text-white-50 text-decoration-none">درباره ما</a></li>
+                    <li class="mb-2"><a href="{{ route('terms') }}" class="text-white-50 text-decoration-none">قوانین و مقررات</a></li>
+                    <li class="mb-2"><a href="{{ route('support') }}" class="text-white-50 text-decoration-none">پشتیبانی</a></li>
+                </ul>
             </div>
-            <div class="col-md-4 mb-3 text-center">
-            <h6 class="fw-bold">ما را دنبال کنید</h6>
-            <div class="d-flex justify-content-center gap-3 fs-4">
-                <a href="#" class="text-white-50"><i class="bi bi-instagram"></i></a>
-                <a href="#" class="text-white-50"><i class="bi bi-telegram"></i></a>
-                <a href="#" class="text-white-50"><i class="bi bi-whatsapp"></i></a>
+            <!-- Social -->
+            <div class="col-md-3 mb-3 text-center">
+                <h6 class="fw-bold">ما را دنبال کنید</h6>
+                <div class="d-flex justify-content-center gap-3 fs-4">
+                    <a href="#" class="text-white-50"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-white-50"><i class="bi bi-telegram"></i></a>
+                    <a href="#" class="text-white-50"><i class="bi bi-whatsapp"></i></a>
+                </div>
             </div>
+            <!-- Enamad Placeholder -->
+            <div class="col-md-3 mb-3 text-center">
+                <h6 class="fw-bold">نماد اعتماد الکترونیکی</h6>
+                <div class="bg-white rounded-3 p-2 d-inline-block shadow-sm enamad-box">
+                    <a href="https://trustseal.ecommerce.gov.ir/" target="_blank" rel="noopener" class="d-block">
+                        <img src="/images/enamad-placeholder.png" alt="نماد اعتماد" style="height:80px" loading="lazy">
+                    </a>
+                </div>
             </div>
         </div>
         <hr class="border-secondary">
-        <p class="text-center small text-white-50 mb-0">© 2025 تماشاگران سرزمین من - تمام حقوق محفوظ است</p>
+        <p class="text-center small text-white-50 mb-0">© ۱۴۰۴ تماشاگران سرزمین من - تمام حقوق محفوظ است</p>
         </div>
     </footer>
 
@@ -136,7 +151,20 @@
         })();
     </script>
     
+    <script>
+    // Global intersection observer for .anim elements
+    document.addEventListener('DOMContentLoaded', function(){
+        const items = document.querySelectorAll('.anim');
+        const obs = new IntersectionObserver((entries)=>{
+            entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in-view'); obs.unobserve(e.target);} });
+        },{threshold:.12, rootMargin:'0px 0px -10% 0px'});
+        items.forEach(i=>obs.observe(i));
+    });
+    </script>
     @stack('scripts')
+    @if(class_exists('Livewire\\Livewire'))
+        @livewireScripts
+    @endif
 </body>
 </html>
 

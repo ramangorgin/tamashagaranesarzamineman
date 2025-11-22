@@ -95,3 +95,20 @@ Route::prefix('geo')->group(function () {
 | Public stay show
 */
 Route::get('stays/{stay}', [StayController::class, 'show'])->name('stays.show');
+
+/*
+| Static public pages
+*/
+Route::view('/support', 'pages.support')->name('support');
+Route::post('/support', function(\Illuminate\Http\Request $request){
+    $data = $request->validate([
+        'name' => 'required|string|max:100',
+        'email' => 'required|email',
+        'subject' => 'required|string|max:150',
+        'message' => 'required|string|max:2000',
+    ]);
+    \Log::info('Support request', $data);
+    return back()->with('status', 'درخواست شما ثبت شد. تیم پشتیبانی به زودی پاسخ خواهد داد.');
+})->name('support.submit');
+Route::view('/about', 'pages.about')->name('about');
+Route::view('/terms', 'pages.terms')->name('terms');

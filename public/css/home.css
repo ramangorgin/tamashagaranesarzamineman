@@ -1,5 +1,6 @@
 body {
-  font-family: 'Vazirmatn', sans-serif;
+  /* Use global mapping primary body font */
+  font-family: 'Peyda', sans-serif;
   background-color: #f9fafb;
   color: #1e293b;
 }
@@ -15,8 +16,14 @@ body {
 
 /* 🔹 بخش هیرو */
 .hero-section {
-  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
-              url('/images/hero-bg.jpg') center/cover no-repeat;
+  background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+    image-set(
+      url('/images/hero-bg.webp') type('image/webp'),
+      url('/images/hero-bg.jpg') type('image/jpeg')
+    );
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   height: 85vh;
 }
 .hero-section .fade-in {
@@ -40,10 +47,70 @@ body {
   background: linear-gradient(135deg, #0d6efd, #2563eb);
 }
 
+/* 🔹 Featured stays section */
+.featured-stays-section {
+  background: #ffffff;
+}
+.home-stays-wrapper .stay-card .card {
+  transition: all .35s ease;
+}
+.home-stays-wrapper .stay-card:hover .card {
+  transform: translateY(-6px);
+  box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.08);
+}
+.home-stays-wrapper .ratio { background: #f1f5f9; }
+.home-stays-wrapper .object-fit-cover { object-fit: cover; }
+.home-stays-wrapper .loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  background: rgba(255,255,255,0.45);
+  z-index: 1050;
+  transition: opacity .3s ease;
+}
+.home-stays-wrapper .loading-overlay.opacity-0 { opacity:0; pointer-events:none; }
+
+@media (max-width: 576px) {
+  .home-stays-wrapper .filters > div { flex: 0 0 50%; }
+}
+
 /* 🔹 انیمیشن */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(25px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Smooth entrance animations utilities (triggered via JS adding .in-view) */
+.anim.fade-up { opacity:0; transform:translateY(30px); transition:opacity .6s ease, transform .6s cubic-bezier(.25,.8,.25,1); }
+.anim.fade-up.in-view { opacity:1; transform:translateY(0); }
+
+.anim.scale-in { opacity:0; transform:scale(.85); filter:blur(2px); transition:opacity .5s ease, transform .5s ease, filter .7s ease; }
+.anim.scale-in.in-view { opacity:1; transform:scale(1); filter:blur(0); }
+
+.anim.slide-right { opacity:0; transform:translateX(-40px); transition:opacity .55s ease, transform .55s ease; }
+.anim.slide-right.in-view { opacity:1; transform:translateX(0); }
+
+/* Stagger helpers */
+.delay-1 { transition-delay:.1s; }
+.delay-2 { transition-delay:.2s; }
+.delay-3 { transition-delay:.3s; }
+.delay-4 { transition-delay:.4s; }
+.delay-5 { transition-delay:.5s; }
+
+/* Subtle hover enhancement for cards */
+.card.hover-animate { transition:transform .4s cubic-bezier(.16,.68,.5,1.2), box-shadow .4s ease; }
+.card.hover-animate:hover { transform:translateY(-8px) scale(1.015); box-shadow:0 1.25rem 2.5rem -0.5rem rgba(0,0,0,.12); }
+
+/* Performance hint: enable GPU acceleration */
+.anim, .card.hover-animate { will-change: transform, opacity; }
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .anim { transition:none !important; transform:none !important; opacity:1 !important; filter:none !important; }
+  .card.hover-animate { transition:none; }
 }
 
 /* 🔹 موبایل */
