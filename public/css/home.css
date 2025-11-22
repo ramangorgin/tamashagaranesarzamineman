@@ -16,12 +16,8 @@ body {
 
 /* 🔹 بخش هیرو */
 .hero-section {
-  /* Updated paths to use storage symlink versions */
-  background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
-    image-set(
-      url('/storage/hero-bg.webp') type('image/webp'),
-      url('/storage/hero-bg.jpg') type('image/jpeg')
-    );
+  /* Use original jpg (no webp available) */
+  background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/images/hero-bg.jpg');
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
