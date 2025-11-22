@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\Otp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Melipayamak;
+use App\Services\SmsIrService;
 
 class OtpController extends Controller
 {
@@ -23,8 +23,12 @@ class OtpController extends Controller
         );
 
         try {
-            $sms = Melipayamak::sms();
-            $sms->send($request->phone, '5000...', "کد ورود شما: $code");
+            /** @var SmsIrService $sms */
+            $sms = app(SmsIrService::class);
+            $result = $sms->ultraFastSend(['CODE' => (string)$code], 857262, $request->phone);
+            if (!($result['IsSuccessful'] ?? false)) {
+                return response()->json(['error' => 'ارسال پیامک ناموفق بود.'], 500);
+            }
         } catch (\Exception $e) {
             return response()->json(['error' => 'ارسال پیامک با خطا مواجه شد.'], 500);
         }

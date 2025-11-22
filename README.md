@@ -64,3 +64,49 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## SMS.ir Integration (Custom Service)
+
+This project includes a lightweight `SmsIrService` instead of the `ipecompany/smsirlaravel` package (which requires Guzzle 6 and conflicts with Laravel 10's Guzzle 7).
+
+### Setup
+Add these variables to your `.env`:
+```
+SMSIR_API_KEY=your_api_key_here
+SMSIR_SECRET_KEY=your_secret_key_here
+SMSIR_LINE_NUMBER=your_line_number_here
+SMSIR_WEBSERVICE_URL=https://ws.sms.ir/
+```
+
+### Sending a Simple SMS
+Inject the service or resolve it:
+```php
+use App\Services\SmsIrService;
+
+$sms = app(SmsIrService::class);
+$result = $sms->send('سلام', '09120000000');
+// $result['IsSuccessful'] === true if sent
+```
+
+### Sending Verification Code
+```php
+$sms = app(App\Services\SmsIrService::class);
+$result = $sms->sendVerification('12345', '09120000000');
+```
+
+### Ultra Fast Template Send
+```php
+$sms = app(App\Services\SmsIrService::class);
+$result = $sms->ultraFastSend([
+	'user' => 'username',
+	'verificationCode' => '12345'
+], 350, '09120000000');
+```
+
+### Get Credit
+```php
+$sms = app(App\Services\SmsIrService::class);
+$credit = $sms->credit();
+```
+
+If you need additional endpoints from the original package, they can be added following the pattern used in `SmsIrService`.

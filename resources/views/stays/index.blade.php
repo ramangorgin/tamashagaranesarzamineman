@@ -8,11 +8,11 @@
 @endsection
 
 @section('breadcrumb-actions')
-    @if(($role ?? null)==='admin')
-        <a href="{{ route('admin.stays.create') }}" class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-lg"></i> ایجاد اقامت‌گاه
-        </a>
-    @endif
+  @if(in_array(($role ?? null), ['admin','host']))
+    <a href="{{ route('admin.stays.create') }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-plus-lg"></i> ایجاد اقامت‌گاه
+    </a>
+  @endif
 @endsection
 
 @section('content')

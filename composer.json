@@ -8,11 +8,11 @@
         "php": "^8.1",
         "guzzlehttp/guzzle": "^7.2",
         "hekmatinasser/verta": "^8.4",
+        "ipe/smsir-php": "^1.0",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.7",
-        "melipayamak/laravel": "1.0.0",
         "spatie/laravel-image-optimizer": "^1.8"
     },
     "require-dev": {

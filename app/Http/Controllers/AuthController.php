@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
-use Melipayamak;
+ 
+use Ipe\Sdk\Facades\SmsIr;
+
 
 class AuthController extends Controller
 {
@@ -47,32 +49,53 @@ class AuthController extends Controller
             ['code' => $code, 'expires_at' => $expiresAt]
         );
 
+        $mobile = $request->phone;
+        $templateId = 857262; 
+        $parameters = [
+            [
+                "name" => "Code",
+                "value" => (string)$code
+            ]
+        ];
+
+        // لاگ قبل از ارسال
+        Log::info('OTP generating', [
+            'phone' => $mobile,
+            'role' => $role,
+            'templateId' => $templateId,
+            'code' => $code,
+            'expires_at' => $expiresAt->toDateTimeString()
+        ]);
+
         try {
-            $sms = Melipayamak::sms(); // SmsRest instance
-
-            // Pattern (base service) sending preferred if body id is configured
-            $bodyId = env('MELIPAYAMAK_OTP_BODY_ID');
-            if ($bodyId) {
-                // Pattern variables order must match panel definition.
-                // Example pattern text defined in panel (Persian):
-                // "کد ورود: {code} نقش: {role}"
-                // For pattern mode we only send the variable VALUES separated by ';'
-                // If pattern has 2 variables (code, role) we send "CODE;ROLE"
-                $patternValues = $code.';'.$role; // adjust order if panel differs
-                $resp = $sms->sendByBaseNumber($patternValues, $request->phone, (int) $bodyId);
-            } else {
-                // Fallback to normal send with a default sender number
-                $sender = env('MELIPAYAMAK_DEFAULT_NUMBER', '5000');
-                $text = "کد ورود {$role}: {$code}";
-                $resp = $sms->send($request->phone, $sender, $text);
+            $response = SmsIr::verifySend($mobile, $templateId, $parameters);
+            Log::info('OTP sms.ir response', [
+                'phone' => $mobile,
+                'status' => $response->status ?? null,
+                'message' => $response->message ?? null,
+                'data' => $response->data ?? null,
+            ]);
+            // If status indicates failure (assuming falsy or non-success)
+            if (empty($response->status) || !in_array($response->status, [true, 1, 'Success', 'OK'])) {
+                return back()->with('error', 'ارسال کد تایید ناموفق بود. لطفاً دوباره تلاش کنید.');
             }
-            Log::info('OTP SMS dispatched', ['role' => $role, 'phone' => $request->phone, 'response' => $resp]);
+            return back()->with('success', 'کد تایید ارسال شد.');
+        } catch (\Ipe\Sdk\Exceptions\SmsException $e) {
+            Log::error('sms.ir SmsException while sending OTP', [
+                'phone' => $mobile,
+                'code' => $code,
+                'error' => $e->getMessage(),
+                'status_code' => $e->getCode(),
+            ]);
+            return back()->with('error', 'خطای سرویس پیامک: ' . $e->getMessage());
         } catch (Exception $e) {
-            Log::error('SMS failed', ['role' => $role, 'error' => $e->getMessage()]);
-            return back()->with('error', 'ارسال پیامک با خطا مواجه شد.');
+            Log::error('Unexpected exception sending OTP', [
+                'phone' => $mobile,
+                'code' => $code,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('error', 'خطای غیرمنتظره در ارسال پیامک.');
         }
-
-        return back()->with('success', 'کد با موفقیت ارسال شد.');
     }
 
     /**

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8d06682bb2ce3d58810336f091b79901",
+    "content-hash": "55fb51e6e7bd2a629dfb35273e8e592b",
     "packages": [
         {
             "name": "brick/math",
@@ -1334,6 +1334,57 @@
             "time": "2024-03-12T05:35:21+00:00"
         },
         {
+            "name": "ipe/smsir-php",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/IPeCompany/smsir-php.git",
+                "reference": "a9c1bf0259541cc0f29317f36b868186ec5a03ba"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/IPeCompany/smsir-php/zipball/a9c1bf0259541cc0f29317f36b868186ec5a03ba",
+                "reference": "a9c1bf0259541cc0f29317f36b868186ec5a03ba",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0",
+                "php": "^7.3|^8.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "SmsIr": "Ipe\\Sdk\\Facades\\SmsIr"
+                    },
+                    "providers": [
+                        "Ipe\\Sdk\\SmsIrServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Ipe\\Sdk\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A package for sending SMS.",
+            "support": {
+                "issues": "https://github.com/IPeCompany/smsir-php/issues",
+                "source": "https://github.com/IPeCompany/smsir-php/tree/v1.0.1"
+            },
+            "time": "2024-10-19T05:20:03+00:00"
+        },
+        {
             "name": "laravel/framework",
             "version": "v10.49.1",
             "source": {
@@ -2310,133 +2361,6 @@
                 }
             ],
             "time": "2025-11-12T17:58:16+00:00"
-        },
-        {
-            "name": "melipayamak/laravel",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Melipayamak/melipayamak-laravel.git",
-                "reference": "8666e3afb2248c5de73b35e3c709a235a7a15393"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Melipayamak/melipayamak-laravel/zipball/8666e3afb2248c5de73b35e3c709a235a7a15393",
-                "reference": "8666e3afb2248c5de73b35e3c709a235a7a15393",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
-            },
-            "require": {
-                "melipayamak/php": "1.0.0"
-            },
-            "type": "laravel-package",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "Melipayamak": "Melipayamak\\Laravel\\Facade"
-                    },
-                    "providers": [
-                        "Melipayamak\\Laravel\\ServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Melipayamak\\Laravel\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "melipayamak",
-                    "email": "melipayamak.ir@gmail.com"
-                },
-                {
-                    "name": "Ara Code It",
-                    "email": "ahnara92@gmail.com"
-                }
-            ],
-            "description": "Laravel Melipayamak Integration",
-            "homepage": "http://github.com/Melipayamak/melipayamak-laravel",
-            "keywords": [
-                "api",
-                "laravel",
-                "melipayamak",
-                "sms"
-            ],
-            "support": {
-                "issues": "https://github.com/Melipayamak/melipayamak-laravel/issues",
-                "source": "https://github.com/Melipayamak/melipayamak-laravel/tree/1.0.0"
-            },
-            "time": "2019-12-23T13:20:17+00:00"
-        },
-        {
-            "name": "melipayamak/php",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Melipayamak/melipayamak-php.git",
-                "reference": "b8f7db07eef1fa57f8a23d379949e3f04cb923b8"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Melipayamak/melipayamak-php/zipball/b8f7db07eef1fa57f8a23d379949e3f04cb923b8",
-                "reference": "b8f7db07eef1fa57f8a23d379949e3f04cb923b8",
-                "shasum": "",
-                "mirrors": [
-                    {
-                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
-                        "preferred": true
-                    }
-                ]
-            },
-            "require": {
-                "php": ">=5.4.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Melipayamak\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Melipayamak Team",
-                    "email": "melipayamak.ir@gmail.com"
-                },
-                {
-                    "name": "Ara Code It",
-                    "email": "ahnara92@gmail.com"
-                },
-                {
-                    "name": "Amirhossein Mehrvarzi",
-                    "email": "info@trigger.ir"
-                }
-            ],
-            "description": "A PHP wrapper for melipayamak's web services",
-            "homepage": "http://github.com/Melipayamak/melipayamak-php",
-            "keywords": [
-                "api",
-                "melipayamak",
-                "sms"
-            ],
-            "support": {
-                "issues": "https://github.com/Melipayamak/melipayamak-php/issues",
-                "source": "https://github.com/Melipayamak/melipayamak-php/tree/1.0.0"
-            },
-            "time": "2019-12-23T13:19:36+00:00"
         },
         {
             "name": "monolog/monolog",

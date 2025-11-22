@@ -37,11 +37,9 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        Melipayamak\Laravel\ServiceProvider::class,
     ])->toArray(),
 
     'aliases' => Facade::defaultAliases()->merge([
-        Melipayamak\Laravel\Facade::class,
     ])->toArray(),
 
 ];
