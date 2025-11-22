@@ -26,6 +26,10 @@ jobs:
 
           cd /var/www/tamashagaranesarzamineman
 
+          echo "📌 Marking directory as safe for git..."
+          git config --global --add safe.directory /var/www/tamashagaranesarzamineman
+
+
           echo "📌 Pulling latest code..."
           git pull origin main
 

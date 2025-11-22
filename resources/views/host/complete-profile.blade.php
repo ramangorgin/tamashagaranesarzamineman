@@ -129,8 +129,7 @@
 
 @push('scripts')
 <script>
-// --- موجود: GEO logic ---
-const GEO_BASE="{{ url('/geo') }}";
+// --- GEO logic (static JSON from /public/data) ---
 const pSel=document.getElementById('province'),
       cSel=document.getElementById('city'),
       coSel=document.getElementById('county'),
@@ -139,33 +138,69 @@ const pSel=document.getElementById('province'),
       hC=document.getElementById('city_name'),
       hCo=document.getElementById('county_name');
 function opt(v,t){ return `<option value="${v}">${t}</option>`; }
-function reset(sel,text,dis=true){ sel.innerHTML=opt('',text); if(dis) sel.disabled=true; }
-function fill(sel,text,rows){ sel.innerHTML=opt('',text)+rows.map(r=>`<option value="${r.id}" data-name="${r.name}">${r.name}</option>`).join(''); sel.disabled=false; }
+function reset(sel,text,dis=true){ sel.innerHTML=opt('',text); if(dis) sel.disabled=true; else sel.disabled=false; }
 
-reset(pSel,'بارگذاری...',false); reset(cSel,'ابتدا استان',true); reset(coSel,'ابتدا شهر',true); reset(vSel,'ابتدا شهرستان',true);
-fetch("{{ route('geo.provinces') }}").then(r=>r.json()).then(rows=>fill(pSel,'انتخاب استان',rows));
+let DATA_PROVINCES=[], DATA_CITIES=[], DATA_COUNTIES=[], DATA_VILLAGES=[];
 
-pSel.onchange=()=>{
-  hP.value=pSel.selectedOptions[0]?.dataset.name||'';
+async function loadStaticData(){
+  try {
+    const [p,c,co,v] = await Promise.all([
+      fetch('/data/provinces.json').then(r=>r.json()),
+      fetch('/data/provinces_cities.json').then(r=>r.json()),
+      fetch('/data/provinces_cities_counties.json').then(r=>r.json()),
+      fetch('/data/provinces_cities_counties_villages.json').then(r=>r.json())
+    ]);
+    DATA_PROVINCES=p; DATA_CITIES=c; DATA_COUNTIES=co; DATA_VILLAGES=v;
+    populateProvinces();
+  } catch(e){
+    reset(pSel,'خطا در بارگذاری استان‌ها');
+  }
+}
+
+function populateProvinces(){
+  pSel.innerHTML=opt('','انتخاب استان');
+  DATA_PROVINCES.forEach(p=>{
+    pSel.insertAdjacentHTML('beforeend', opt(p.provinceId, p.provinceName));
+  });
+  pSel.disabled=false;
+}
+
+pSel.addEventListener('change',()=>{
+  hP.value=pSel.options[pSel.selectedIndex]?.text || '';
   reset(cSel,'بارگذاری...',false); reset(coSel,'ابتدا شهر',true); reset(vSel,'ابتدا شهرستان',true);
   if(!pSel.value){ reset(cSel,'انتخاب شهر'); return; }
-  fetch(`${GEO_BASE}/provinces/${pSel.value}/cities`).then(r=>r.json()).then(rows=>fill(cSel,'انتخاب شهر',rows)).catch(()=>reset(cSel,'خطا',false));
-};
-cSel.onchange=()=>{
-  hC.value=cSel.selectedOptions[0]?.dataset.name||'';
+  const cities = DATA_CITIES.filter(row=>row.provinceId===pSel.value);
+  cSel.innerHTML=opt('','انتخاب شهر');
+  cities.forEach(c=> cSel.insertAdjacentHTML('beforeend', opt(c.cityId,c.cityName)) );
+  cSel.disabled=false;
+});
+
+cSel.addEventListener('change',()=>{
+  hC.value=cSel.options[cSel.selectedIndex]?.text || '';
   reset(coSel,'بارگذاری...',false); reset(vSel,'ابتدا شهرستان',true);
   if(!cSel.value){ reset(coSel,'انتخاب شهرستان'); return; }
-  fetch(`${GEO_BASE}/provinces/${pSel.value}/cities/${cSel.value}/counties`).then(r=>r.json()).then(rows=>fill(coSel,'انتخاب شهرستان',rows)).catch(()=>reset(coSel,'خطا',false));
-};
-coSel.onchange=()=>{
-  hCo.value=coSel.selectedOptions[0]?.dataset.name||'';
+  const counties = DATA_COUNTIES.filter(row=>row.provinceId===pSel.value && row.cityId===cSel.value);
+  coSel.innerHTML=opt('','انتخاب شهرستان');
+  counties.forEach(co=> coSel.insertAdjacentHTML('beforeend', opt(co.countyId, co.countyName)) );
+  coSel.disabled=false;
+});
+
+coSel.addEventListener('change',()=>{
+  hCo.value=coSel.options[coSel.selectedIndex]?.text || '';
   reset(vSel,'بارگذاری...',false);
-  if(!coSel.value){ reset(vSel,'—'); return; }
-  fetch(`${GEO_BASE}/provinces/${pSel.value}/cities/${cSel.value}/counties/${coSel.value}/villages`).then(r=>r.json()).then(rows=>{
-    vSel.innerHTML=opt('','(اختیاری) انتخاب روستا')+rows.map(r=>`<option value="${r.name}">${r.name}</option>`).join('');
-    vSel.disabled=false;
-  }).catch(()=>reset(vSel,'خطا',false));
-};
+  if(!coSel.value){ reset(vSel,'(اختیاری) انتخاب روستا'); return; }
+  const villages = DATA_VILLAGES.filter(row=>row.provinceId===pSel.value && row.cityId===cSel.value && row.countyId===coSel.value);
+  vSel.innerHTML=opt('','(اختیاری) انتخاب روستا');
+  villages.forEach(v=>{
+    if(v.villageName && v.villageName.trim()){
+      vSel.insertAdjacentHTML('beforeend', opt(v.villageName, v.villageName));
+    }
+  });
+  vSel.disabled=false;
+});
+
+reset(pSel,'در حال بارگذاری...',false); reset(cSel,'ابتدا استان',true); reset(coSel,'ابتدا شهر',true); reset(vSel,'ابتدا شهرستان',true);
+loadStaticData();
 
 // --- جدید: کنترل مراحل فرم ---
 const steps=['step1','step2','step3','step4','step5'];
