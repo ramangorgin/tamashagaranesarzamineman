@@ -51,6 +51,10 @@ jobs:
           php artisan view:cache
           php artisan optimize
 
+          echo "📌 Cleaning untracked JSON files..."
+          rm -f public/data/provinces*.json
+
+
           echo "📌 Checking storage link..."
           if [ ! -L "public/storage" ]; then
               php artisan storage:link
