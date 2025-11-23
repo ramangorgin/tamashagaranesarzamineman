@@ -12,6 +12,7 @@
     <link href="{{ asset('css/auth-modal.css') }}" rel="stylesheet">
     <link href="{{ asset('css/fonts.css') }}" rel="stylesheet">
     <link href="{{ asset('css/home.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/preloader.css') }}" rel="stylesheet">
     @if(class_exists('Livewire\\Livewire'))
         @livewireStyles
     @endif
@@ -25,6 +26,15 @@
 
 </head>
 <body class="bg-light">
+
+    <!-- ========================= PRELOADER ========================= -->
+    <div id="preloader" aria-hidden="true">
+        <div class="preloader-inner">
+            <div class="preloader-ring">
+                <img src="/images/logo.png" alt="در حال بارگذاری" class="preloader-logo" loading="eager">
+            </div>
+        </div>
+    </div>
 
     <!-- ========================= HEADER ========================= -->
     <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
@@ -201,6 +211,17 @@
     @if(class_exists('Livewire\\Livewire'))
         @livewireScripts
     @endif
+    <script>
+    // Hide preloader after full load (images + optional fonts)
+    (function(){
+  function removePreloader(){
+    document.body.classList.add('preloader-loaded');
+    setTimeout(()=>document.getElementById('preloader')?.remove(),600);
+  }
+  window.addEventListener('load', removePreloader);
+  setTimeout(()=>{ if(!document.body.classList.contains('preloader-loaded')) removePreloader(); },4000);
+})();
+    </script>
 </body>
 </html>
 
