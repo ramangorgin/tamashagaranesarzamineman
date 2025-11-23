@@ -20,7 +20,7 @@ class BookingController extends Controller
      */
     public function sendOtp(Request $request)
     {
-        $request->validate(['phone' => 'required|regex:/^09\d{9}$/']);
+        // $request->validate(['phone' => 'required|regex:/^09\d{9}$/']);
         $phone = $request->phone;
         $code = rand(100000, 999999);
         $expiresAt = now()->addMinutes(3);
@@ -44,10 +44,10 @@ class BookingController extends Controller
      */
     public function verifyOtp(Request $request)
     {
-        $request->validate([
-            'phone' => 'required|regex:/^09\d{9}$/',
-            'code'  => 'required|digits:6',
-        ]);
+        // $request->validate([
+        //     'phone' => 'required|regex:/^09\d{9}$/',
+        //     'code'  => 'required|digits:6',
+        // ]);
         $otp = Otp::where('phone', $request->phone)
             ->where('code', $request->code)
             ->where('expires_at', '>', now())
@@ -63,17 +63,17 @@ class BookingController extends Controller
      */
     public function preview(Request $request)
     {
-        $request->validate([
-            'first_name'   => 'required|string|max:100',
-            'last_name'    => 'required|string|max:100',
-            'national_id'  => 'required|string|min:8',
-            'phone'        => 'required|string|regex:/^09\d{9}$/',
-            'stay_id'      => 'required|integer|exists:stays,id',
-            'start_date'   => 'required|date',
-            'end_date'     => 'required|date|after:start_date',
-            'base_guests'  => 'required|integer|min:1',
-            'extra_guests' => 'required|integer|min:0',
-        ]);
+        // $request->validate([
+        //     'first_name'   => 'required|string|max:100',
+        //     'last_name'    => 'required|string|max:100',
+        //     'national_id'  => 'required|string|min:8',
+        //     'phone'        => 'required|string|regex:/^09\d{9}$/',
+        //     'stay_id'      => 'required|integer|exists:stays,id',
+        //     'start_date'   => 'required|date',
+        //     'end_date'     => 'required|date|after:start_date',
+        //     'base_guests'  => 'required|integer|min:1',
+        //     'extra_guests' => 'required|integer|min:0',
+        // ]);
 
         $stay = Stay::findOrFail($request->stay_id);
         if ($request->base_guests > (int)$stay->base_capacity) {
@@ -131,17 +131,17 @@ class BookingController extends Controller
     }
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name'   => 'required|string|max:100',
-            'last_name'    => 'required|string|max:100',
-            'phone'        => 'required|string|regex:/^09\d{9}$/',
-            'national_id'  => 'required|string|min:8',
-            'stay_id'      => 'required|integer|exists:stays,id',
-            'start_date'   => 'required|date',
-            'end_date'     => 'required|date|after:start_date',
-            'base_guests'  => 'required|integer|min:1',
-            'extra_guests' => 'required|integer|min:0',
-        ]);
+        // $request->validate([
+        //     'first_name'   => 'required|string|max:100',
+        //     'last_name'    => 'required|string|max:100',
+        //     'phone'        => 'required|string|regex:/^09\d{9}$/',
+        //     'national_id'  => 'required|string|min:8',
+        //     'stay_id'      => 'required|integer|exists:stays,id',
+        //     'start_date'   => 'required|date',
+        //     'end_date'     => 'required|date|after:start_date',
+        //     'base_guests'  => 'required|integer|min:1',
+        //     'extra_guests' => 'required|integer|min:0',
+        // ]);
 
         DB::beginTransaction();
         try {

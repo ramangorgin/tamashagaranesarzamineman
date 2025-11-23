@@ -44,7 +44,7 @@
           </div>
           <div id="otpSection" class="d-none">
             <div class="mb-3 text-center">
-              <input type="text" id="otpCode" class="form-control text-center fw-bold" maxlength="6" placeholder="کد ۶ رقمی">
+              <input type="text" id="otpInput" class="form-control text-center fw-bold" maxlength="6" placeholder="کد ۶ رقمی">
               <div id="otpError" class="invalid-feedback text-center"></div>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -65,11 +65,13 @@
                 <label class="form-label">تاریخ شروع</label>
                 <input type="text" id="startDateDisplay" class="form-control" placeholder="انتخاب">
                 <input type="hidden" name="start_date" id="startDate">
+                <div id="startDateError" class="invalid-feedback"></div>
               </div>
               <div class="col-md-6">
                 <label class="form-label">تاریخ پایان</label>
                 <input type="text" id="endDateDisplay" class="form-control" placeholder="انتخاب">
                 <input type="hidden" name="end_date" id="endDate">
+                <div id="endDateError" class="invalid-feedback"></div>
               </div>
             </div>
             <button type="submit" class="btn btn-primary w-100 mt-3">ثبت تاریخ‌ها</button>
@@ -85,13 +87,15 @@
                   <label class="form-label">
                     نفرات پایه (حداکثر @faNum($stay->base_capacity))
                   </label>
-                  <input type="number" min="1" max="{{ $stay->base_capacity }}" value="1" class="form-control" id="baseGuestsInput">
+                  <input type="number" min="1" max="{{ $stay->base_capacity }}" value="1" class="form-control" id="base_guestsInput">
+                  <div id="base_guestsError" class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">
                     نفرات اضافه (حداکثر @faNum($stay->extra_capacity))
                   </label>
-                  <input type="number" min="0" max="{{ $stay->extra_capacity }}" value="0" class="form-control" id="extraGuestsInput">
+                  <input type="number" min="0" max="{{ $stay->extra_capacity }}" value="0" class="form-control" id="extra_guestsInput">
+                  <div id="extra_guestsError" class="invalid-feedback"></div>
                 </div>
               </div>
               <div class="mt-3 p-3 rounded bg-light small">
@@ -110,15 +114,18 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label">نام</label>
-                <input type="text" class="form-control" id="firstNameInput">
+                <input type="text" class="form-control" id="first_nameInput">
+                <div id="first_nameError" class="invalid-feedback"></div>
               </div>
               <div class="col-md-4">
                 <label class="form-label">نام خانوادگی</label>
-                <input type="text" class="form-control" id="lastNameInput">
+                <input type="text" class="form-control" id="last_nameInput">
+                <div id="last_nameError" class="invalid-feedback"></div>
               </div>
               <div class="col-md-4">
                 <label class="form-label">کد ملی</label>
-                <input type="text" class="form-control" id="nationalIdInput">
+                <input type="text" class="form-control" id="national_idInput">
+                <div id="national_idError" class="invalid-feedback"></div>
               </div>
               <div class="col-md-4">
                  <label class="form-label">شماره موبایل (تایید شده)</label>
@@ -168,6 +175,8 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/booking-modal.css') }}">
 <style>
+.invalid-feedback{display:block;width:100%;margin-top:.25rem;font-size:.875em;color:#dc3545}
+.form-control.is-invalid{border-color:#dc3545}
 .booking-modal-neo{border-radius:1.25rem;overflow:hidden;position:relative}
 .booking-gradient{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
 .booking-layout{display:flex;min-height:600px;background:#fff}
@@ -204,24 +213,50 @@
 
 @push('scripts')
 <script>
+// Scope all selectors to the booking modal to avoid ID collisions with other modals
+const bookingModalEl = document.getElementById('bookingModal');
+const q  = (sel) => bookingModalEl?.querySelector(sel);
+const qa = (sel) => Array.from(bookingModalEl?.querySelectorAll(sel) || []);
+
+// Helpers for error display (scoped)
+function clearErrors() {
+  qa('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+  qa('.invalid-feedback').forEach(el => el.textContent = '');
+}
+
+function displayErrors(errors) {
+  clearErrors();
+  for (const field in errors) {
+    const input = q('#' + field + 'Input'); // e.g., #phoneInput
+    const errorDiv = q('#' + field + 'Error'); // e.g., #phoneError
+    if (input) {
+      input.classList.add('is-invalid');
+    }
+    if (errorDiv) {
+      errorDiv.textContent = errors[field][0];
+    }
+  }
+}
+
 // نیاز به persianDatepicker و jQuery
 const stepsOrder=['phoneOtp','dates','guests','info','review'];
 let currentStep='phoneOtp';
 function goStep(name){
+  clearErrors(); // Clear errors when changing steps
   stepsOrder.forEach((s,i)=>{
-    document.getElementById('step-'+s)?.classList.add('d-none');
-    const el=document.querySelector('.steps-pane .step[data-step="'+s+'"]');
+    q('#step-'+s)?.classList.add('d-none');
+    const el=q('.steps-pane .step[data-step="'+s+'"]');
     el?.classList.remove('active');
     // Mark completed if before target step
     if(stepsOrder.indexOf(name)>i) el?.classList.add('completed');
   });
-  document.getElementById('step-'+name)?.classList.remove('d-none');
-  const current=document.querySelector('.steps-pane .step[data-step="'+name+'"]');
+  q('#step-'+name)?.classList.remove('d-none');
+  const current=q('.steps-pane .step[data-step="'+name+'"]');
   current?.classList.add('active');
   currentStep=name;
 }
 function showLoader(show=true){
-  document.getElementById('loadingOverlay').classList.toggle('d-none',!show);
+  q('#loadingOverlay')?.classList.toggle('d-none',!show);
 }
 
 // Enable clicking previous completed steps
@@ -241,7 +276,7 @@ document.addEventListener('click',function(e){
 function toFaDigits(str){return (str+'').replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);}
 let verifiedPhone=null;
 function handleSendOtp(){
-  const phone=document.getElementById('phoneInput').value.trim();
+  const phone=(q('#phoneInput')?.value || '').trim();
   showLoader(true);
   fetch("{{ route('booking.otp.send') }}",{
     method:'POST',
@@ -258,11 +293,16 @@ function handleSendOtp(){
   }).then(res=>{
       showLoader(false);
       if(res.ok && res.body.success){
-        document.getElementById('otpSection').classList.remove('d-none');
+        q('#otpSection')?.classList.remove('d-none');
         startOtpTimer();
         verifiedPhone=phone;
       }else{
-        alert(res.body.message||'خطا در ارسال کد');
+        const defaultMessage = 'خطا در ارسال کد';
+        if (res.status === 422 && res.body.errors) {
+          displayErrors(res.body.errors);
+        } else {
+          alert(res.body.message || defaultMessage);
+        }
       }
   }).catch(err=>{
       showLoader(false);
@@ -270,14 +310,16 @@ function handleSendOtp(){
       alert('خطای ارتباط با سرور');
   });
 }
-// Bind with jQuery if available
-if(window.$){ $(document).on('click','#sendOtpBtn',function(e){ e.preventDefault(); handleSendOtp(); }); }
-// Also bind with vanilla delegation
-document.addEventListener('click',function(e){ if(e.target && e.target.id==='sendOtpBtn'){ e.preventDefault(); handleSendOtp(); } });
+// Bind with jQuery
+$(document).on('click', '#sendOtpBtn', function(e) {
+    e.preventDefault();
+    clearErrors();
+    handleSendOtp();
+});
 
 /* مرحله ۲ تایید OTP (شبه) */
 function handleVerifyOtp(){
-  const code=document.getElementById('otpCode').value.trim();
+  const code=(q('#otpInput')?.value || '').trim();
   showLoader(true);
   fetch("{{ route('booking.otp.verify') }}",{
     method:'POST',
@@ -294,10 +336,16 @@ function handleVerifyOtp(){
   }).then(res=>{
       showLoader(false);
       if(res.ok && res.body.success){
-        document.getElementById('infoPhoneInput').value=verifiedPhone;
+        if(q('#infoPhoneInput')) q('#infoPhoneInput').value=verifiedPhone;
         goStep('dates');
       }else{
-        alert(res.body.message||'کد اشتباه است');
+        const defaultMessage = 'کد اشتباه است';
+        if (res.status === 422 && res.body.errors) {
+            // Custom mapping for otp code
+            displayErrors({ otp: res.body.errors.code || [res.body.message] });
+        } else {
+            alert(res.body.message || defaultMessage);
+        }
       }
   }).catch(err=>{
       showLoader(false);
@@ -305,32 +353,44 @@ function handleVerifyOtp(){
       alert('خطای ارتباط با سرور');
   });
 }
-if(window.$){ $(document).on('click','#verifyOtpBtn',function(e){ e.preventDefault(); handleVerifyOtp(); }); }
-document.addEventListener('click',function(e){ if(e.target && e.target.id==='verifyOtpBtn'){ e.preventDefault(); handleVerifyOtp(); } });
+// Bind with jQuery
+$(document).on('click', '#verifyOtpBtn', function(e) {
+    e.preventDefault();
+    clearErrors();
+    handleVerifyOtp();
+});
 
 /* تاریخ‌ها */
 $('#datesForm').on('submit',function(e){
   e.preventDefault();
-  const sd=$('#startDate').val();
-  const ed=$('#endDate').val();
-  if(!sd || !ed){ alert('تاریخ‌ها را انتخاب کنید'); return; }
-  if(new Date(ed)<=new Date(sd)){ alert('تاریخ پایان باید بعد از شروع باشد'); return; }
+  clearErrors();
+  // const sd=$('#startDate').val();
+  // const ed=$('#endDate').val();
+  // if(!sd || !ed){
+  //   displayErrors({ startDate: ['تاریخ شروع را انتخاب کنید.'], endDate: ['تاریخ پایان را انتخاب کنید.'] });
+  //   return;
+  // }
+  // if(new Date(ed)<=new Date(sd)){
+  //   displayErrors({ endDate: ['تاریخ پایان باید بعد از شروع باشد.'] });
+  //   return;
+  // }
   goStep('guests');
 });
 
 /* نفرات */
 function updateGuestsPreview(){
-  const base=parseInt($('#baseGuestsInput').val()||0);
-  const extra=parseInt($('#extraGuestsInput').val()||0);
+  const base=parseInt($('#base_guestsInput').val()||0);
+  const extra=parseInt($('#extra_guestsInput').val()||0);
   $('#liveGuestsSummary').text(`پایه: ${toFaDigits(base)} نفر | اضافه: ${toFaDigits(extra)} نفر`);
   const maxBase={{ $stay->base_capacity }};
-  if(base===maxBase){ $('#extraGuestsInput').prop('disabled',false); } else { $('#extraGuestsInput').prop('disabled',true).val(0); }
+  if(base===maxBase){ $('#extra_guestsInput').prop('disabled',false); } else { $('#extra_guestsInput').prop('disabled',true).val(0); }
 }
-$('#baseGuestsInput,#extraGuestsInput').on('input',updateGuestsPreview);
+$('#base_guestsInput,#extra_guestsInput').on('input',updateGuestsPreview);
 // ابتدایی: فیلد اضافه غیر فعال
-$('#extraGuestsInput').prop('disabled',true);
+$('#extra_guestsInput').prop('disabled',true);
 $('#guestsForm').on('submit',function(e){
   e.preventDefault();
+  clearErrors();
   updateGuestsPreview();
   goStep('info');
 });
@@ -338,40 +398,60 @@ $('#guestsForm').on('submit',function(e){
 /* مشخصات */
 $('#infoForm').on('submit',function(e){
   e.preventDefault();
-  if(!$('#firstNameInput').val().trim()||!$('#lastNameInput').val().trim()||!$('#nationalIdInput').val().trim()){ alert('همه فیلدها را کامل کنید'); return; }
+  clearErrors();
+  const firstName = $('#first_nameInput').val().trim();
+  const lastName = $('#last_nameInput').val().trim();
+  const nationalId = $('#national_idInput').val().trim();
+  // let errors = {};
+  // if(!firstName) errors.first_name = ['نام الزامی است.'];
+  // if(!lastName) errors.last_name = ['نام خانوادگی الزامی است.'];
+  // if(!nationalId) errors.national_id = ['کد ملی الزامی است.'];
+
+  // if(Object.keys(errors).length > 0) {
+  //   displayErrors(errors);
+  //   return;
+  // }
+
   // پیش‌نمایش قیمت از سرور
   showLoader(true);
   const payload={
     _token:"{{ csrf_token() }}",
     stay_id:"{{ $stay->id }}",
     phone:verifiedPhone,
-    first_name:$('#firstNameInput').val(),
-    last_name:$('#lastNameInput').val(),
-    national_id:$('#nationalIdInput').val(),
+    first_name:firstName,
+    last_name:lastName,
+    national_id:nationalId,
     start_date:$('#startDate').val(),
     end_date:$('#endDate').val(),
-    base_guests:$('#baseGuestsInput').val(),
-    extra_guests:$('#extraGuestsInput').val()
+    base_guests:$('#base_guestsInput').val(),
+    extra_guests:$('#extra_guestsInput').val()
   };
-  fetch("{{ route('bookings.preview') }}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},body:JSON.stringify(payload)})
+  fetch("{{ route('bookings.preview') }}",{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},body:JSON.stringify(payload)})
     .then(r=>r.json().then(j=>({ok:r.ok,body:j,status:r.status})))
     .then(res=>{
       showLoader(false);
       if(res.ok && res.body.success){
         fillReview(res.body);
         goStep('review');
-      }else{ alert(res.body.message||'خطا در محاسبه'); }
+      } else {
+        const defaultMessage = 'خطا در محاسبه';
+        if (res.status === 422 && res.body.errors) {
+          displayErrors(res.body.errors);
+        } else {
+          alert(res.body.message || defaultMessage);
+        }
+      }
     }).catch(()=>{showLoader(false);alert('خطای ارتباط با سرور')});
 });
 
 /* مرور و محاسبه اولیه (سمت کلاینت تقریبی) */
 function fillReview(data){
   const sd=$('#startDate').val(), ed=$('#endDate').val();
-  const baseGuests=parseInt($('#baseGuestsInput').val());
-  const extraGuests=parseInt($('#extraGuestsInput').val());
+  const baseGuests=parseInt($('#base_guestsInput').val());
+  const extraGuests=parseInt($('#extra_guestsInput').val());
   $('#revDates').text(toFaDigits(sd)+' تا '+toFaDigits(ed));
   $('#revGuests').text(`پایه ${toFaDigits(baseGuests)} / اضافه ${toFaDigits(extraGuests)}`);
-  $('#revName').text($('#firstNameInput').val()+' '+$('#lastNameInput').val());
+  $('#revName').text($('#first_nameInput').val()+' '+$('#last_nameInput').val());
   $('#revNights').text(toFaDigits(data.nights));
   $('#revBase').text(toFaDigits(data.base_price.toLocaleString()));
   $('#revExtra').text(toFaDigits(data.extra_cost.toLocaleString()));
@@ -391,13 +471,13 @@ $('#goToPayment').on('click',function(){
     _token:"{{ csrf_token() }}",
     stay_id:"{{ $stay->id }}",
     phone:verifiedPhone,
-    first_name:$('#firstNameInput').val(),
-    last_name:$('#lastNameInput').val(),
-    national_id:$('#nationalIdInput').val(),
+    first_name:$('#first_nameInput').val(),
+    last_name:$('#last_nameInput').val(),
+    national_id:$('#national_idInput').val(),
     start_date:$('#startDate').val(),
     end_date:$('#endDate').val(),
-    base_guests:$('#baseGuestsInput').val(),
-    extra_guests:$('#extraGuestsInput').val()
+    base_guests:$('#base_guestsInput').val(),
+    extra_guests:$('#extra_guestsInput').val()
   };
   fetch("{{ route('bookings.store') }}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},body:JSON.stringify(payload)})
     .then(r=>r.json().then(j=>({ok:r.ok,body:j,status:r.status})))
