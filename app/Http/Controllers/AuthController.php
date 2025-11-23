@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
  
-use Ipe\Sdk\Facades\SmsIr;
+// use Ipe\Sdk\Facades\SmsIr; // Temporarily disabled for Melipayamak testing
 
 
 class AuthController extends Controller
@@ -67,6 +67,7 @@ class AuthController extends Controller
             'expires_at' => $expiresAt->toDateTimeString()
         ]);
 
+        /* Original Sms.ir sending block kept for future use
         try {
             $response = SmsIr::verifySend($mobile, $templateId, $parameters);
             Log::info('OTP sms.ir response', [
@@ -75,7 +76,6 @@ class AuthController extends Controller
                 'message' => $response->message ?? null,
                 'data' => $response->data ?? null,
             ]);
-            // If status indicates failure (assuming falsy or non-success)
             if (empty($response->status) || !in_array($response->status, [true, 1, 'Success', 'OK'])) {
                 return back()->with('error', 'ارسال کد تایید ناموفق بود. لطفاً دوباره تلاش کنید.');
             }
@@ -96,6 +96,29 @@ class AuthController extends Controller
             ]);
             return back()->with('error', 'خطای غیرمنتظره در ارسال پیامک.');
         }
+        */
+
+       // Melipayamak Console
+
+        $url = 'https://console.melipayamak.com/api/send/shared/e9741f18ee7e494792c4b49f6c7572e9';
+        $data = array('bodyId' => 386622, 'to' => $mobile, 'args' => [(string)$code]);
+        $data_string = json_encode($data);
+        $ch = curl_init($url);                          
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                      
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER,
+        array('Content-Type: application/json',
+                'Content-Length: ' . strlen($data_string))
+        );
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return back()->with('error', 'خطا در سرویس پیامک. لطفا با پشتیبانی تماس بگیرید.');
+    
     }
 
     /**

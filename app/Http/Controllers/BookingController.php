@@ -26,6 +26,7 @@ class BookingController extends Controller
         $expiresAt = now()->addMinutes(3);
         Otp::updateOrCreate(['phone' => $phone], ['code' => $code, 'expires_at' => $expiresAt]);
 
+        /* Sms.ir
         try {
             $templateId = 857262; // نمونه
             $parameters = [["name" => "Code", "value" => (string)$code]];
@@ -37,6 +38,31 @@ class BookingController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'خطا در ارسال کد.'], 500);
         }
+        */
+        // MeliPayamak
+        
+       // Melipayamak Console
+
+        $url = 'https://console.melipayamak.com/api/send/shared/e9741f18ee7e494792c4b49f6c7572e9';
+        $data = array('bodyId' => 386622, 'to' => $phone, 'args' => [(string)$code]);
+        $data_string = json_encode($data);
+        $ch = curl_init($url);                          
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                      
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER,
+        array('Content-Type: application/json',
+                'Content-Length: ' . strlen($data_string))
+        );
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        return back()->with('error', 'خطا در سرویس پیامک. لطفا با پشتیبانی تماس بگیرید.');
+    
+    
     }
 
     /**
