@@ -9,7 +9,7 @@
 
 @section('breadcrumb-actions')
   @if(in_array(($role ?? null), ['admin','host']))
-    <a href="{{ route('admin.stays.create') }}" class="btn btn-sm btn-primary">
+    <a href="{{ ($role ?? null)==='admin' ? route('admin.stays.create') : route('host.stays.create') }}" class="btn btn-sm btn-primary">
       <i class="bi bi-plus-lg"></i> ایجاد اقامت‌گاه
     </a>
   @endif

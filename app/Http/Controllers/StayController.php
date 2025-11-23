@@ -332,9 +332,25 @@ class StayController extends Controller
     public function show(Stay $stay)
     {
         $role = $this->role();
-        if ($role === 'host' && $stay->host_id !== $this->userId('host')) abort(403);
-        if ($role === 'user' && (!$stay->is_active || $stay->moderation_status !== 'approved')) abort(404);
+        // Visibility rules:
+        // Admin: can view all.
+        // Host: can view own stays always; other hosts' stays only if they are approved & active.
+        // Guest/user: can view only approved & active stays.
+        if ($role === 'admin') {
+            // no restriction
+        } elseif ($role === 'host') {
+            $isOwner = $stay->host_id === $this->userId('host');
+            if (!$isOwner && (!$stay->is_active || $stay->moderation_status !== 'approved')) {
+                abort(404); // treat as not found
+            }
+        } else { // guest/user
+            if (!$stay->is_active || $stay->moderation_status !== 'approved') {
+                abort(404);
+            }
+        }
         $stay->loadMissing(['images','rules','host']);
         return view('stays.show', compact('stay','role'));
     }
+  
+
 }

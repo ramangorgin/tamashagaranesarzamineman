@@ -228,3 +228,11 @@
 .booking-modal-neo .form-control:focus{box-shadow:0 0 0 .15rem rgba(37,99,235,.25)}
 .booking-summary-box .list-unstyled li{margin-bottom:.35rem}
 
+/* Ensure booking modal is always above and clickable */
+#bookingModal {
+  pointer-events: auto;
+}
+.modal-backdrop {
+  display: none !important;
+}
+

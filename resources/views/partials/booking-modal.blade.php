@@ -1,5 +1,12 @@
 <!-- رزرو -->
-<div class="modal fade" id="bookingModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+<div
+  class="modal fade"
+  id="bookingModal"
+  tabindex="-1"
+  data-bs-backdrop="false"
+  data-bs-keyboard="true"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-centered modal-xl">
     <div class="modal-content booking-modal-neo">
       <div class="modal-header booking-gradient">
@@ -10,41 +17,43 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
-      <div class="modal-body p-4">
-        <!-- نوار مراحل -->
-        <div class="booking-steps mb-4">
-          <div class="step active" data-step="phone"><span>۱</span><small>موبایل</small></div>
-          <div class="step" data-step="otp"><span>۲</span><small>کد تایید</small></div>
-          <div class="step" data-step="dates"><span>۳</span><small>تاریخ‌ها</small></div>
-          <div class="step" data-step="guests"><span>۴</span><small>نفرات</small></div>
-          <div class="step" data-step="info"><span>۵</span><small>مشخصات</small></div>
-          <div class="step" data-step="review"><span>۶</span><small>بررسی</small></div>
-          <div class="step" data-step="result"><span>۷</span><small>پرداخت</small></div>
-        </div>
-
-        <!-- مرحله ۱ -->
-        <div id="step-phone">
-          <h6 class="fw-bold mb-3"><i class="bi bi-phone-vibrate text-primary me-1"></i> شماره موبایل</h6>
+      <div class="modal-body p-0">
+        <div class="booking-layout">
+          <!-- نوار مراحل عمودی -->
+          <aside class="steps-pane">
+            <div class="steps-header d-flex align-items-center gap-2 mb-3">
+              <i class="bi bi-list-check text-white fs-5"></i>
+              <span class="fw-semibold text-white small">مراحل رزرو</span>
+            </div>
+            <div class="steps-wrapper">
+              <div class="step active" data-step="phoneOtp"><span>۱</span><small>موبایل/OTP</small></div>
+              <div class="step" data-step="dates"><span>۲</span><small>تاریخ‌ها</small></div>
+              <div class="step" data-step="guests"><span>۳</span><small>نفرات</small></div>
+              <div class="step" data-step="info"><span>۴</span><small>مشخصات</small></div>
+              <div class="step" data-step="review"><span>۵</span><small>محاسبه</small></div>
+            </div>
+          </aside>
+          <div class="content-pane p-4">
+        <!-- مرحله ۱: موبایل + OTP -->
+        <div id="step-phoneOtp">
+          <h6 class="fw-bold mb-3"><i class="bi bi-phone-vibrate text-primary me-1"></i> موبایل و تایید</h6>
           <div class="mb-3">
             <label class="form-label">شماره موبایل</label>
-            <input type="text" id="phoneInput" class="form-control" placeholder="09123456789">
+            <input type="text" id="phoneInput" class="form-control" placeholder="09123456789" autocomplete="tel">
             <div id="phoneError" class="invalid-feedback"></div>
           </div>
+          <div id="otpSection" class="d-none">
+            <div class="mb-3 text-center">
+              <input type="text" id="otpCode" class="form-control text-center fw-bold" maxlength="6" placeholder="کد ۶ رقمی">
+              <div id="otpError" class="invalid-feedback text-center"></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span id="otpTimer" class="badge bg-light text-dark"></span>
+              <button id="resendOtpBtn" class="btn btn-outline-secondary btn-sm" disabled>ارسال مجدد <i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <button class="btn btn-success w-100" id="verifyOtpBtn">تایید کد <i class="bi bi-check-circle ms-1"></i></button>
+          </div>
           <button class="btn btn-primary w-100" id="sendOtpBtn">ارسال کد تأیید <i class="bi bi-send ms-1"></i></button>
-        </div>
-
-        <!-- مرحله ۲ -->
-        <div id="step-otp" class="d-none">
-          <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock text-warning me-1"></i> تأیید شماره</h6>
-          <div class="mb-3 text-center">
-            <input type="text" id="otpCode" class="form-control text-center fs-5 fw-bold" maxlength="6" placeholder="کد ۶ رقمی">
-            <div id="otpError" class="invalid-feedback text-center"></div>
-          </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <span id="otpTimer" class="badge bg-light text-dark"></span>
-            <button id="resendOtpBtn" class="btn btn-outline-secondary btn-sm" disabled>ارسال مجدد <i class="bi bi-arrow-clockwise"></i></button>
-          </div>
-          <button class="btn btn-success w-100 mt-3" id="verifyOtpBtn">بررسی کد <i class="bi bi-check-circle ms-1"></i></button>
         </div>
 
         <!-- مرحله ۳: تاریخ‌ها -->
@@ -94,7 +103,7 @@
             </form>
         </div>
 
-        <!-- مرحله ۵: مشخصات -->
+        <!-- مرحله ۴: مشخصات -->
         <div id="step-info" class="d-none">
           <h6 class="fw-bold mb-3"><i class="bi bi-person-badge text-secondary me-1"></i> اطلاعات شخصی</h6>
           <form id="infoForm">
@@ -111,12 +120,16 @@
                 <label class="form-label">کد ملی</label>
                 <input type="text" class="form-control" id="nationalIdInput">
               </div>
+              <div class="col-md-4">
+                 <label class="form-label">شماره موبایل (تایید شده)</label>
+                 <input type="text" class="form-control" id="infoPhoneInput" readonly>
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mt-3">ادامه</button>
+            <button type="submit" class="btn btn-primary w-100 mt-3">محاسبه قیمت</button>
           </form>
         </div>
 
-        <!-- مرحله ۶: بررسی -->
+        <!-- مرحله ۵: بررسی و محاسبه نهایی -->
         <div id="step-review" class="d-none">
           <h6 class="fw-bold mb-3"><i class="bi bi-search-heart text-warning me-1"></i> بررسی و محاسبه مبلغ</h6>
           <div class="rounded shadow-sm p-3 booking-summary-box">
@@ -135,26 +148,18 @@
               <div class="fw-bold fs-5 text-success">مبلغ نهایی: <span id="revFinal"></span> تومان</div>
             </div>
           </div>
-          <button id="confirmBookingBtn" class="btn btn-success w-100 mt-3">
-            ثبت رزرو و محاسبه نهایی <i class="bi bi-check2-circle ms-1"></i>
-          </button>
+          <button id="goToPayment" class="btn btn-success w-100 mt-3">رفتن به پرداخت <i class="bi bi-credit-card ms-1"></i></button>
         </div>
 
-        <!-- مرحله ۷: نتیجه -->
-        <div id="step-result" class="d-none text-center">
-          <i class="bi bi-gift-fill text-success fs-1 bounce-icon"></i>
-          <h5 class="mt-3 fw-bold" id="discountMsg"></h5>
-          <p class="fs-5 text-primary mt-2">مبلغ قابل پرداخت: <span id="finalPrice"></span> تومان</p>
-          <button id="goToPayment" class="btn btn-gradient-pay w-100 mt-3">
-            پرداخت <i class="bi bi-credit-card ms-1"></i>
-          </button>
-        </div>
+        <!-- حذف مرحله نتیجه: پرداخت مستقیم پس از بررسی -->
 
         <!-- لودر -->
         <div id="loadingOverlay" class="booking-loading d-none">
           <div class="spinner-border text-primary"></div>
           <p class="mt-3 fw-semibold text-primary">در حال پردازش...</p>
         </div>
+          </div> <!-- /content-pane -->
+        </div> <!-- /booking-layout -->
       </div>
     </div>
   </div>
@@ -165,12 +170,25 @@
 <style>
 .booking-modal-neo{border-radius:1.25rem;overflow:hidden;position:relative}
 .booking-gradient{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
-.booking-steps{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:space-between}
-.booking-steps .step{flex:1;min-width:75px;background:#f1f5f9;border-radius:.75rem;padding:.4rem .35rem;text-align:center;position:relative;font-size:.7rem;cursor:default;transition:.25s}
-.booking-steps .step span{display:inline-flex;justify-content:center;align-items:center;width:28px;height:28px;border-radius:50%;background:#e2e8f0;font-weight:600;margin-bottom:.25rem;font-size:.8rem}
-.booking-steps .step.active{background:#2563eb;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,.25)}
-.booking-steps .step.active span{background:#fff;color:#2563eb}
+.booking-layout{display:flex;min-height:600px;background:#fff}
+.steps-pane{width:200px;background:linear-gradient(180deg,#1e3a8a,#1d4ed8);padding:1.25rem;display:flex;flex-direction:column}
+.steps-header{border-bottom:1px solid rgba(255,255,255,.15);padding-bottom:.5rem;margin-bottom:.75rem}
+.steps-wrapper{display:flex;flex-direction:column;gap:.6rem}
+.steps-wrapper .step{background:rgba(255,255,255,.15);color:#f1f5f9;border-radius:.65rem;padding:.55rem .4rem;display:flex;align-items:center;gap:.55rem;font-size:.75rem;cursor:pointer;position:relative;transition:.25s}
+.steps-wrapper .step span{flex:0 0 30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.35);font-weight:600;font-size:.8rem}
+.steps-wrapper .step.active{background:#fff;color:#1d4ed8;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.steps-wrapper .step.active span{background:#1d4ed8;color:#fff}
+.steps-wrapper .step.completed{background:rgba(255,255,255,.35)}
+.steps-wrapper .step.completed span{background:#10b981;color:#fff}
+.content-pane{flex:1;overflow-y:auto}
+.content-pane h6{display:flex;align-items:center}
+.content-pane::-webkit-scrollbar{width:8px}
+.content-pane::-webkit-scrollbar-track{background:#f1f5f9}
+.content-pane::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px}
 .booking-loading{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(255,255,255,.85);backdrop-filter:blur(4px);z-index:50}
+.booking-loading.d-none{display:none!important}
+#bookingModal .modal-dialog{z-index:1060;max-width:920px}
+.modal-backdrop.show{opacity:.4}
 .pulse-icon{animation:pulse 1.4s infinite}
 .bounce-icon{animation:bounce 1.2s infinite}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
@@ -179,47 +197,124 @@
 .btn-gradient-pay:hover{background:linear-gradient(135deg,#0d8236,#16a34a)}
 .booking-summary-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:1rem}
 .pricing-preview div{display:flex;justify-content:space-between}
-@media(max-width:768px){.booking-steps .step small{display:none}}
+@media(max-width:992px){.booking-layout{flex-direction:column}.steps-pane{width:100%;flex-direction:row;align-items:center}.steps-wrapper{flex-direction:row;flex-wrap:wrap}.steps-wrapper .step{flex:1 1 70px;justify-content:center}}
+@media(max-width:576px){.steps-wrapper .step small{display:none}}
 </style>
 @endpush
 
 @push('scripts')
 <script>
 // نیاز به persianDatepicker و jQuery
-const stepsOrder=['phone','otp','dates','guests','info','review','result'];
+const stepsOrder=['phoneOtp','dates','guests','info','review'];
+let currentStep='phoneOtp';
 function goStep(name){
-  stepsOrder.forEach(s=>{
+  stepsOrder.forEach((s,i)=>{
     document.getElementById('step-'+s)?.classList.add('d-none');
-    document.querySelector('.booking-steps .step[data-step="'+s+'"]')?.classList.remove('active');
+    const el=document.querySelector('.steps-pane .step[data-step="'+s+'"]');
+    el?.classList.remove('active');
+    // Mark completed if before target step
+    if(stepsOrder.indexOf(name)>i) el?.classList.add('completed');
   });
   document.getElementById('step-'+name)?.classList.remove('d-none');
-  document.querySelector('.booking-steps .step[data-step="'+name+'"]')?.classList.add('active');
+  const current=document.querySelector('.steps-pane .step[data-step="'+name+'"]');
+  current?.classList.add('active');
+  currentStep=name;
 }
 function showLoader(show=true){
   document.getElementById('loadingOverlay').classList.toggle('d-none',!show);
 }
 
-/* مرحله ۱ ارسال OTP (شبه) */
-$('#sendOtpBtn').on('click',function(){
-  const phone=$('#phoneInput').val().trim();
-  if(!/^09\d{9}$/.test(phone)){ $('#phoneError').text('شماره معتبر نیست.').show(); $('#phoneInput').addClass('is-invalid'); return; }
-  $('#phoneInput').removeClass('is-invalid').addClass('is-valid'); $('#phoneError').hide();
-  // AJAX ارسال کد (فرضی)
-  goStep('otp'); startOtpTimer();
+// Enable clicking previous completed steps
+document.addEventListener('click',function(e){
+  const target=e.target.closest('.steps-pane .step');
+  if(!target) return;
+  const stepName=target.getAttribute('data-step');
+  // Allow navigation forward only one step ahead, or any previous/completed/current
+  const targetIndex=stepsOrder.indexOf(stepName);
+  const currentIndex=stepsOrder.indexOf(currentStep);
+  if(targetIndex<=currentIndex+1){
+    goStep(stepName);
+  }
 });
 
+/* مرحله ۱ ارسال OTP (شبه) */
+function toFaDigits(str){return (str+'').replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);}
+let verifiedPhone=null;
+function handleSendOtp(){
+  const phone=document.getElementById('phoneInput').value.trim();
+  showLoader(true);
+  fetch("{{ route('booking.otp.send') }}",{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Accept':'application/json',
+      'X-CSRF-TOKEN':'{{ csrf_token() }}'
+    },
+    body:JSON.stringify({phone})
+  }).then(async r=>{
+      let data; let isJson = (r.headers.get('content-type')||'').includes('application/json');
+      try{ data = isJson ? await r.json() : {message: await r.text()}; }catch(e){ data={message:'واکنش نامعتبر سرور'}; }
+      return {ok:r.ok,status:r.status,body:data};
+  }).then(res=>{
+      showLoader(false);
+      if(res.ok && res.body.success){
+        document.getElementById('otpSection').classList.remove('d-none');
+        startOtpTimer();
+        verifiedPhone=phone;
+      }else{
+        alert(res.body.message||'خطا در ارسال کد');
+      }
+  }).catch(err=>{
+      showLoader(false);
+      console.error('OTP send error',err);
+      alert('خطای ارتباط با سرور');
+  });
+}
+// Bind with jQuery if available
+if(window.$){ $(document).on('click','#sendOtpBtn',function(e){ e.preventDefault(); handleSendOtp(); }); }
+// Also bind with vanilla delegation
+document.addEventListener('click',function(e){ if(e.target && e.target.id==='sendOtpBtn'){ e.preventDefault(); handleSendOtp(); } });
+
 /* مرحله ۲ تایید OTP (شبه) */
-$('#verifyOtpBtn').on('click',function(){
-  const code=$('#otpCode').val().trim();
-  if(code.length!==6){ $('#otpError').text('کد ۶ رقمی وارد کنید').show(); return; }
-  $('#otpError').hide();
-  goStep('dates');
-});
+function handleVerifyOtp(){
+  const code=document.getElementById('otpCode').value.trim();
+  showLoader(true);
+  fetch("{{ route('booking.otp.verify') }}",{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Accept':'application/json',
+      'X-CSRF-TOKEN':'{{ csrf_token() }}'
+    },
+    body:JSON.stringify({phone:verifiedPhone,code})
+  }).then(async r=>{
+      let data; let isJson=(r.headers.get('content-type')||'').includes('application/json');
+      try{ data=isJson? await r.json(): {message: await r.text()}; }catch(e){ data={message:'واکنش نامعتبر سرور'}; }
+      return {ok:r.ok,status:r.status,body:data};
+  }).then(res=>{
+      showLoader(false);
+      if(res.ok && res.body.success){
+        document.getElementById('infoPhoneInput').value=verifiedPhone;
+        goStep('dates');
+      }else{
+        alert(res.body.message||'کد اشتباه است');
+      }
+  }).catch(err=>{
+      showLoader(false);
+      console.error('OTP verify error',err);
+      alert('خطای ارتباط با سرور');
+  });
+}
+if(window.$){ $(document).on('click','#verifyOtpBtn',function(e){ e.preventDefault(); handleVerifyOtp(); }); }
+document.addEventListener('click',function(e){ if(e.target && e.target.id==='verifyOtpBtn'){ e.preventDefault(); handleVerifyOtp(); } });
 
 /* تاریخ‌ها */
 $('#datesForm').on('submit',function(e){
   e.preventDefault();
-  if(!$('#startDate').val() || !$('#endDate').val()){ alert('تاریخ‌ها را انتخاب کنید'); return; }
+  const sd=$('#startDate').val();
+  const ed=$('#endDate').val();
+  if(!sd || !ed){ alert('تاریخ‌ها را انتخاب کنید'); return; }
+  if(new Date(ed)<=new Date(sd)){ alert('تاریخ پایان باید بعد از شروع باشد'); return; }
   goStep('guests');
 });
 
@@ -227,9 +322,13 @@ $('#datesForm').on('submit',function(e){
 function updateGuestsPreview(){
   const base=parseInt($('#baseGuestsInput').val()||0);
   const extra=parseInt($('#extraGuestsInput').val()||0);
-  $('#liveGuestsSummary').text(`پایه: ${base} نفر | اضافه: ${extra} نفر`);
+  $('#liveGuestsSummary').text(`پایه: ${toFaDigits(base)} نفر | اضافه: ${toFaDigits(extra)} نفر`);
+  const maxBase={{ $stay->base_capacity }};
+  if(base===maxBase){ $('#extraGuestsInput').prop('disabled',false); } else { $('#extraGuestsInput').prop('disabled',true).val(0); }
 }
 $('#baseGuestsInput,#extraGuestsInput').on('input',updateGuestsPreview);
+// ابتدایی: فیلد اضافه غیر فعال
+$('#extraGuestsInput').prop('disabled',true);
 $('#guestsForm').on('submit',function(e){
   e.preventDefault();
   updateGuestsPreview();
@@ -240,74 +339,79 @@ $('#guestsForm').on('submit',function(e){
 $('#infoForm').on('submit',function(e){
   e.preventDefault();
   if(!$('#firstNameInput').val().trim()||!$('#lastNameInput').val().trim()||!$('#nationalIdInput').val().trim()){ alert('همه فیلدها را کامل کنید'); return; }
-  fillReview(); goStep('review');
+  // پیش‌نمایش قیمت از سرور
+  showLoader(true);
+  const payload={
+    _token:"{{ csrf_token() }}",
+    stay_id:"{{ $stay->id }}",
+    phone:verifiedPhone,
+    first_name:$('#firstNameInput').val(),
+    last_name:$('#lastNameInput').val(),
+    national_id:$('#nationalIdInput').val(),
+    start_date:$('#startDate').val(),
+    end_date:$('#endDate').val(),
+    base_guests:$('#baseGuestsInput').val(),
+    extra_guests:$('#extraGuestsInput').val()
+  };
+  fetch("{{ route('bookings.preview') }}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},body:JSON.stringify(payload)})
+    .then(r=>r.json().then(j=>({ok:r.ok,body:j,status:r.status})))
+    .then(res=>{
+      showLoader(false);
+      if(res.ok && res.body.success){
+        fillReview(res.body);
+        goStep('review');
+      }else{ alert(res.body.message||'خطا در محاسبه'); }
+    }).catch(()=>{showLoader(false);alert('خطای ارتباط با سرور')});
 });
 
 /* مرور و محاسبه اولیه (سمت کلاینت تقریبی) */
-function fillReview(){
+function fillReview(data){
   const sd=$('#startDate').val(), ed=$('#endDate').val();
-  const start=new Date(sd), end=new Date(ed);
-  const nights=Math.max(1,(end-start)/(1000*60*60*24));
   const baseGuests=parseInt($('#baseGuestsInput').val());
   const extraGuests=parseInt($('#extraGuestsInput').val());
-  const basePer={{ $stay->price_per_person }};
-  const extraPer={{ (int)($stay->extra_person_price ?? 0) }};
-  const basePrice=basePer*baseGuests*nights;
-  const extraCost=extraPer*extraGuests*nights;
-  const peak={{ \App\Models\PeakPeriod::isNowPeak()?'true':'false' }};
-  const stayDiscPercent= peak ? {{ $stay->max_discount_peak }} : {{ $stay->max_discount_normal }};
-  const stayDiscAmount=(basePrice+extraCost)*(stayDiscPercent/100);
-  // سازمانی داخل کنترلر محاسبه می‌شود => اینجا صفر
-  $('#revDates').text(sd+' تا '+ed);
-  $('#revGuests').text(`پایه ${baseGuests} / اضافه ${extraGuests}`);
+  $('#revDates').text(toFaDigits(sd)+' تا '+toFaDigits(ed));
+  $('#revGuests').text(`پایه ${toFaDigits(baseGuests)} / اضافه ${toFaDigits(extraGuests)}`);
   $('#revName').text($('#firstNameInput').val()+' '+$('#lastNameInput').val());
-  $('#revNights').text(nights);
-  $('#revBase').text(basePrice.toLocaleString());
-  $('#revExtra').text(extraCost.toLocaleString());
-  $('#revStayDiscount').text(stayDiscAmount.toLocaleString()+' ('+stayDiscPercent+'%)');
-  $('#revOrgDiscount').text('— محاسبه پس از ارسال');
-  $('#revFinal').text((basePrice+extraCost-stayDiscAmount).toLocaleString());
+  $('#revNights').text(toFaDigits(data.nights));
+  $('#revBase').text(toFaDigits(data.base_price.toLocaleString()));
+  $('#revExtra').text(toFaDigits(data.extra_cost.toLocaleString()));
+  $('#revStayDiscount').text(toFaDigits(data.stay_discount_amount.toLocaleString())+` (${toFaDigits(data.stay_discount_percent)}%)`);
+  if(data.org_discount_percent>0){
+    $('#revOrgDiscount').text(toFaDigits(data.org_discount_amount.toLocaleString())+` (${toFaDigits(data.org_discount_percent)}%)`);
+  }else{
+    $('#revOrgDiscount').text('—');
+  }
+  $('#revFinal').text(toFaDigits(data.final_price.toLocaleString()));
 }
 
 /* ثبت رزرو نهایی */
-$('#confirmBookingBtn').on('click',function(){
+$('#goToPayment').on('click',function(){
   showLoader(true);
-  $.ajax({
-    url:"{{ route('bookings.store') }}",
-    method:'POST',
-    data:{
-      _token:"{{ csrf_token() }}",
-      stay_id:"{{ $stay->id }}",
-      phone:$('#phoneInput').val(),
-      first_name:$('#firstNameInput').val(),
-      last_name:$('#lastNameInput').val(),
-      national_id:$('#nationalIdInput').val(),
-      start_date:$('#startDate').val(),
-      end_date:$('#endDate').val(),
-      base_guests:$('#baseGuestsInput').val(),
-      extra_guests:$('#extraGuestsInput').val()
-    },
-    success:function(r){
+  const payload={
+    _token:"{{ csrf_token() }}",
+    stay_id:"{{ $stay->id }}",
+    phone:verifiedPhone,
+    first_name:$('#firstNameInput').val(),
+    last_name:$('#lastNameInput').val(),
+    national_id:$('#nationalIdInput').val(),
+    start_date:$('#startDate').val(),
+    end_date:$('#endDate').val(),
+    base_guests:$('#baseGuestsInput').val(),
+    extra_guests:$('#extraGuestsInput').val()
+  };
+  fetch("{{ route('bookings.store') }}",{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'},body:JSON.stringify(payload)})
+    .then(r=>r.json().then(j=>({ok:r.ok,body:j,status:r.status})))
+    .then(res=>{
       showLoader(false);
-      if(r.success){
-        $('#discountMsg').text(r.message||'رزرو ثبت شد');
-        $('#finalPrice').text(r.final_price);
-        goStep('result');
-      }else{
-        alert(r.message||'خطا');
-      }
-    },
-    error:function(){
-      showLoader(false);
-      alert('خطای ارتباط با سرور');
-    }
-  });
+      if(res.ok && res.body.success){
+        // انتقال به صفحه پرداخت آزمایشی (فعلی)
+        window.location.href='{{ url('/payment/test') }}/'+res.body.booking_id;
+      }else{ alert(res.body.message||'خطا در ثبت رزرو'); }
+    }).catch(()=>{showLoader(false);alert('خطای ارتباط با سرور')});
 });
 
 /* پرداخت (شبه) */
-$('#goToPayment').on('click',function(){
-  alert('انتقال به درگاه پرداخت (پیاده‌سازی نشده)');
-});
+// حذف رویداد قدیمی پرداخت
 
 /* OTP Timer (شبه) */
 let otpSeconds=120, otpInterval=null;

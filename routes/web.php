@@ -22,6 +22,10 @@ Route::prefix('login')->group(function () {
     Route::post('/{role}/verify', [AuthController::class, 'verifyOtp'])->name('login.verify');
 });
 Route::post('/logout/{role}', [AuthController::class, 'logout'])->name('logout');
+// Role-specific explicit logout endpoints (POST recommended)
+Route::post('/logout/admin', [AuthController::class,'logoutAdmin'])->name('admin.logout');
+Route::post('/logout/host', [AuthController::class,'logoutHost'])->name('host.logout');
+Route::post('/logout/user', [AuthController::class,'logoutUser'])->name('user.logout');
 Route::get('/dashboard/{role}', [AuthController::class, 'dashboard'])->name('dashboard');
 
 /*
@@ -77,6 +81,9 @@ Route::prefix('host')->name('host.')->middleware('auth:host')->group(function ()
 | User bookings
 */
 Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
+Route::post('/bookings/preview', [BookingController::class, 'preview'])->name('bookings.preview');
+Route::post('/booking/otp/send', [BookingController::class,'sendOtp'])->name('booking.otp.send');
+Route::post('/booking/otp/verify', [BookingController::class,'verifyOtp'])->name('booking.otp.verify');
 Route::get('/payment/test/{booking}', function (\App\Models\Booking $booking) {
     return view('test-payment', compact('booking'));
 })->name('payment.test');
@@ -112,3 +119,13 @@ Route::post('/support', function(\Illuminate\Http\Request $request){
 })->name('support.submit');
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/terms', 'pages.terms')->name('terms');
+
+Route::get('/whoami', function() {
+    return [
+      'admin' => Auth::guard('admin')->check(),
+      'host'  => Auth::guard('host')->check(),
+      'user'  => Auth::check(),
+      'host_id' => Auth::guard('host')->id(),
+      'admin_id'=> Auth::guard('admin')->id(),
+    ];
+});

@@ -28,7 +28,7 @@
       color: #fff;
       display: flex;
       flex-direction: column;
-      transition: transform 0.3s ease-in-out;
+      transition: right 0.3s ease-in-out;
       z-index: 1000;
     }
     .sidebar.collapsed {
@@ -104,18 +104,15 @@
 
     /* Mobile adjustments */
     @media (max-width: 992px) {
-      .sidebar {
-        transform: translateX(250px);
-      }
-      .sidebar.active {
-        transform: translateX(0);
-      }
+      .sidebar { right: -250px; }
+      .sidebar.active { right: 0; }
       main {
         margin-right: 0;
         padding: 1.5rem;
       }
       .host-header {
         padding-right: 1.5rem;
+        align-items: center;
       }
     }
 
@@ -171,7 +168,7 @@
   {{-- Header --}}
   <header class="host-header">
     <div class="d-flex align-items-center">
-      <i class="bi bi-list toggle-btn me-3" id="toggleSidebar"></i>
+      <i class="bi bi-list fs-3 me-3 mt-2 d-lg-none" id="sidebarToggle" style="cursor:pointer;"></i>
       <h5 class="mb-0 text-dark fw-semibold">به پنل میزبان خوش آمدید</h5>
     </div>
     <div class="header-icons d-flex align-items-center">
@@ -181,19 +178,47 @@
   </header>
 
   <main>
+    @if(View::hasSection('breadcrumb') || View::hasSection('breadcrumb-actions'))
+      <div class="container-fluid px-0 mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+              <li class="breadcrumb-item"><a href="{{ route('host.dashboard') }}">داشبورد</a></li>
+              @yield('breadcrumb')
+            </ol>
+          </nav>
+          <div class="d-flex align-items-center gap-2">
+            @yield('breadcrumb-actions')
+          </div>
+        </div>
+      </div>
+    @endif
     @yield('content')
   </main>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
-    // Sidebar toggle
-    $('#toggleSidebar').on('click', function(){
-      $('.sidebar').toggleClass('active');
+    // Sidebar: mirror admin overlay behavior (mobile)
+    document.addEventListener('DOMContentLoaded',function(){
+      const sidebar=document.querySelector('.sidebar');
+      const toggleBtn=document.getElementById('sidebarToggle');
+      const overlay=document.createElement('div');
+      overlay.id='host-sidebar-overlay';
+      Object.assign(overlay.style,{position:'fixed',top:0,left:0,width:'100%',height:'100%',background:'rgba(0,0,0,0.35)',zIndex:'995',display:'none',opacity:'0',transition:'opacity .3s'});
+      document.body.appendChild(overlay);
+
+      const open=()=>{ sidebar.classList.add('active'); overlay.style.display='block'; requestAnimationFrame(()=>overlay.style.opacity='1'); };
+      const close=()=>{ sidebar.classList.remove('active'); overlay.style.opacity='0'; setTimeout(()=>overlay.style.display='none',200); };
+
+      toggleBtn?.addEventListener('click', e=>{ e.preventDefault(); sidebar.classList.contains('active') ? close() : open(); });
+      overlay.addEventListener('click', close);
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape' && sidebar.classList.contains('active')) close(); });
+      // Close on link click (mobile only)
+      const mq = window.matchMedia('(max-width: 992px)');
+      document.querySelectorAll('.sidebar a').forEach(a=> a.addEventListener('click', ()=>{ if(mq.matches) close(); }));
     });
     // Logout
-    function logout(){
-      document.getElementById('logout-form').submit();
-    }
+    function logout(){ document.getElementById('logout-form').submit(); }
   </script>
    <script>
         (function(){

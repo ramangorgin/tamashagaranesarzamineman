@@ -123,6 +123,9 @@
           @guest('admin')
           @guest('host')
             @includeWhen(View::exists('partials.booking-modal'), 'partials.booking-modal')
+            <button type="button" class="btn btn-success w-100 mt-3" data-bs-toggle="modal" data-bs-target="#bookingModal">
+              <i class="bi bi-calendar-check"></i> رزرو اقامت‌گاه
+            </button>
           @else
             <div class="alert alert-info text-center">فقط مسافران می‌توانند اقامت‌گاه رزرو کنند.</div>
           @endguest

@@ -176,6 +176,23 @@ class AuthController extends Controller
         return redirect("/login/{$role}")->with('success', 'با موفقیت خارج شدید.');
     }
 
+    // اختصاصی برای سادگی استفاده در لینک‌ها بدون پارامتر
+    public function logoutAdmin(Request $request){
+        return $this->performGuardLogout($request,'admin');
+    }
+    public function logoutHost(Request $request){
+        return $this->performGuardLogout($request,'host');
+    }
+    public function logoutUser(Request $request){
+        return $this->performGuardLogout($request,'user');
+    }
+    protected function performGuardLogout(Request $request,string $role){
+        Auth::guard($role==='user'?'web':$role)->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login.form',$role)->with('success','خروج انجام شد');
+    }
+
     /**
      * داشبورد بر اساس نقش
      */

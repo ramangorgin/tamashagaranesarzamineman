@@ -10,9 +10,125 @@ use App\Models\Stay;
 use App\Models\User;
 use App\Models\DiscountContractMember;
 use App\Models\PeakPeriod;
+use App\Models\Otp;
+use Ipe\Sdk\Facades\SmsIr;
 
 class BookingController extends Controller
 {
+    /**
+     * ارسال کد تایید (OTP) برای رزرو – فقط نقش user
+     */
+    public function sendOtp(Request $request)
+    {
+        $request->validate(['phone' => 'required|regex:/^09\d{9}$/']);
+        $phone = $request->phone;
+        $code = rand(100000, 999999);
+        $expiresAt = now()->addMinutes(3);
+        Otp::updateOrCreate(['phone' => $phone], ['code' => $code, 'expires_at' => $expiresAt]);
+
+        try {
+            $templateId = 857262; // نمونه
+            $parameters = [["name" => "Code", "value" => (string)$code]];
+            $resp = SmsIr::verifySend($phone, $templateId, $parameters);
+            if (empty($resp->status) || !in_array($resp->status, [true, 1, 'Success', 'OK'])) {
+                return response()->json(['success' => false, 'message' => 'ارسال کد ناموفق بود.'], 500);
+            }
+            return response()->json(['success' => true, 'message' => 'کد ارسال شد.']);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'خطا در ارسال کد.'], 500);
+        }
+    }
+
+    /**
+     * تایید کد OTP وارد شده
+     */
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required|regex:/^09\d{9}$/',
+            'code'  => 'required|digits:6',
+        ]);
+        $otp = Otp::where('phone', $request->phone)
+            ->where('code', $request->code)
+            ->where('expires_at', '>', now())
+            ->first();
+        if (!$otp) {
+            return response()->json(['success' => false, 'message' => 'کد اشتباه یا منقضی شده است.'], 422);
+        }
+        return response()->json(['success' => true, 'message' => 'شماره تایید شد.']);
+    }
+
+    /**
+     * محاسبه قیمت و تخفیف‌ها قبل از ثبت رزرو (Preview)
+     */
+    public function preview(Request $request)
+    {
+        $request->validate([
+            'first_name'   => 'required|string|max:100',
+            'last_name'    => 'required|string|max:100',
+            'national_id'  => 'required|string|min:8',
+            'phone'        => 'required|string|regex:/^09\d{9}$/',
+            'stay_id'      => 'required|integer|exists:stays,id',
+            'start_date'   => 'required|date',
+            'end_date'     => 'required|date|after:start_date',
+            'base_guests'  => 'required|integer|min:1',
+            'extra_guests' => 'required|integer|min:0',
+        ]);
+
+        $stay = Stay::findOrFail($request->stay_id);
+        if ($request->base_guests > (int)$stay->base_capacity) {
+            return response()->json(['success' => false, 'message' => 'مهمان پایه بیش از ظرفیت است.'], 422);
+        }
+        if ($request->extra_guests > (int)$stay->extra_capacity) {
+            return response()->json(['success' => false, 'message' => 'مهمان اضافه بیش از ظرفیت است.'], 422);
+        }
+        $start  = Carbon::parse($request->start_date);
+        $end    = Carbon::parse($request->end_date);
+        $nights = $end->diffInDays($start);
+        if ($nights < 1) {
+            return response()->json(['success' => false, 'message' => 'حداقل یک شب لازم است.'], 422);
+        }
+        $base_price_per_night  = (int)$stay->price_per_person;
+        $extra_price_per_night = (int)($stay->extra_person_price ?? 0);
+        $base_price = $base_price_per_night * (int)$request->base_guests * $nights;
+        $extra_cost = $extra_price_per_night * (int)$request->extra_guests * $nights;
+        $isPeakNow = method_exists(PeakPeriod::class, 'isNowPeak') ? PeakPeriod::isNowPeak() : (bool)$stay->is_peak;
+        $stay_discount_percent = (float)($isPeakNow ? $stay->max_discount_peak : $stay->max_discount_normal);
+        $subtotal = $base_price + $extra_cost;
+        $stay_discount_amount = $subtotal * ($stay_discount_percent / 100);
+
+        $full_name = trim($request->first_name . ' ' . $request->last_name);
+        $contract = DiscountContractMember::with('contract')
+            ->where(function ($q) use ($full_name, $request) {
+                $q->where('full_name', $full_name)
+                  ->orWhere('phone', $request->phone)
+                  ->orWhere('national_id', $request->national_id);
+            })
+            ->whereHas('contract', function ($q) {
+                $q->where('is_active', true)
+                  ->whereDate('start_date', '<=', now(config('app.timezone')))
+                  ->whereDate('end_date', '>=', now(config('app.timezone')));
+            })
+            ->first()
+            ?->contract;
+        $org_discount_percent = (float)($contract->discount_percent ?? 0);
+        $org_discount_amount = max(0, $subtotal - $stay_discount_amount) * ($org_discount_percent / 100);
+        $final_price = (int)round($subtotal - ($stay_discount_amount + $org_discount_amount));
+
+        return response()->json([
+            'success' => true,
+            'nights' => $nights,
+            'base_price' => $base_price,
+            'extra_cost' => $extra_cost,
+            'stay_discount_percent' => $stay_discount_percent,
+            'stay_discount_amount' => (int)round($stay_discount_amount),
+            'org_discount_percent' => $org_discount_percent,
+            'org_discount_amount' => (int)round($org_discount_amount),
+            'final_price' => (int)$final_price,
+            'has_contract' => (bool)$contract,
+            'contract_id' => $contract?->id,
+        ]);
+    }
     public function store(Request $request)
     {
         $request->validate([

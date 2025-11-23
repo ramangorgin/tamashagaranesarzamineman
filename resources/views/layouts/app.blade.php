@@ -45,14 +45,50 @@
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('support') ? 'active' : '' }}" href="{{ route('support') }}">پشتیبانی</a></li>
             </ul>
 
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#authModal">
-                    ورود | ثبت‌نام
-                </button>
-                <a href="{{ route('login.form', ['role' => 'host']) }}" class="btn btn-warning">
-                    ورود میزبان
-                </a>
-            </div>
+                        <div class="d-flex gap-2">
+                                @php
+                                    $isAdmin = Auth::guard('admin')->check();
+                                    $isHost  = Auth::guard('host')->check();
+                                    $isUser  = Auth::guard('web')->check() && !$isAdmin && !$isHost; // regular user
+                                @endphp
+
+                                @if(!$isAdmin && !$isHost && !$isUser)
+                                    {{-- Guest view (default buttons) --}}
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#authModal">
+                                            ورود | ثبت‌نام
+                                    </button>
+                                    <a href="{{ route('login.form', ['role' => 'host']) }}" class="btn btn-warning">
+                                            ورود میزبان
+                                    </a>
+                                @else
+                                    {{-- Authenticated role view --}}
+                                    @if($isAdmin)
+                                        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-speedometer2"></i> داشبورد مدیر
+                                        </a>
+                                        <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> خروج</button>
+                                        </form>
+                                    @elseif($isHost)
+                                        <a href="{{ route('host.dashboard') }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-house-door"></i> داشبورد میزبان
+                                        </a>
+                                        <form action="{{ route('host.logout') }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> خروج</button>
+                                        </form>
+                                    @elseif($isUser)
+                                        <a href="{{ route('home') }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-person"></i> حساب من
+                                        </a>
+                                        <form action="{{ route('user.logout') }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> خروج</button>
+                                        </form>
+                                    @endif
+                                @endif
+                        </div>
         </div>
         </div>
     </header>
