@@ -30,7 +30,7 @@
     <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
         <div class="container">
         <a class="navbar-brand fw-bold text-primary" href="#">
-            <img src="/images/logo.png" alt="لوگو سایت" height="40"> <!-- 🔹 اینجا لوگوی واقعی سایت -->
+            <img src="/images/logo.png" alt="لوگو سایت" height="50"> <!-- 🔹 اینجا لوگوی واقعی سایت -->
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
