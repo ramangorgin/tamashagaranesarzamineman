@@ -37,7 +37,7 @@ jobs:
           composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
 
           echo "📌 Running migrations..."
-          php artisan migrate --force
+          php artisan migrate:fresh --seed
 
           echo "📌 Clearing cache..."
           php artisan cache:clear

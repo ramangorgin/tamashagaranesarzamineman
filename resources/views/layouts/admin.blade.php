@@ -82,7 +82,7 @@
         <a href="{{ route('admin.discount_contracts.index') }}" class="{{ request()->routeIs('admin.discount_contracts.*') ? 'active' : '' }}">
             <i class="bi bi-percent"></i> تخفیفات سازمانی
         </a>
-        <a href="{{ route('admin.reserves.index') }}" class="{{ request()->routeIs('admin.reserves.*') ? 'active' : '' }}">
+        <a href="{{ route('admin.bookings.index') }}" class="{{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
             <i class="bi bi-calendar-check"></i> رزروها
         </a>
         <a href="{{ route('logout',['role'=>'admin']) }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">

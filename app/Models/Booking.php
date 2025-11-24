@@ -24,11 +24,17 @@ class Booking extends Model
         'discount_amount',
         'final_price',
         'status',
+        'cancelled_by',
+        'cancellation_reason',
+        'refund_amount',
+        'refunded_at',
+        'payment_reference',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'start_date'   => 'date',
+        'end_date'     => 'date',
+        'refunded_at'  => 'datetime',
     ];
 
     // 🔗 ارتباط با کاربر
@@ -59,10 +65,13 @@ class Booking extends Model
     public function getStatusBadgeAttribute()
     {
         return match ($this->status) {
-            'pending'  => '<span class="badge bg-warning text-dark">در انتظار پرداخت</span>',
-            'paid'     => '<span class="badge bg-success">پرداخت‌شده</span>',
-            'cancelled'=> '<span class="badge bg-danger">لغوشده</span>',
-            default    => '<span class="badge bg-secondary">نامشخص</span>',
+            'pending'   => '<span class="badge bg-warning text-dark">در انتظار پرداخت</span>',
+            'paid'      => '<span class="badge bg-success">پرداخت‌شده</span>',
+            'cancelled' => '<span class="badge bg-danger">لغو شده</span>',
+            'refunded'  => '<span class="badge bg-info text-dark">بازگشت وجه</span>',
+            'failed'    => '<span class="badge bg-danger">خطای پرداخت</span>',
+            'expired'   => '<span class="badge bg-secondary">منقضی شده</span>',
+            default     => '<span class="badge bg-secondary">نامشخص</span>',
         };
     }
 

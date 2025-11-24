@@ -6,26 +6,25 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
 <style>
-  .reserves-header{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+  .bookings-header{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
   .filter-box{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:.85rem 1rem;display:flex;flex-wrap:wrap;gap:.75rem;box-shadow:0 4px 12px rgba(0,0,0,.05)}
   .filter-box .form-control,.filter-box select{min-width:160px}
-  .reserve-table-wrapper{background:#ffffff;border:1px solid #e2e8f0;border-radius:1rem;overflow:hidden}
-  table.reserves-table{width:100%;margin:0;font-size:.82rem}
-  table.reserves-table thead{background:linear-gradient(90deg,#2563eb,#1d4ed8);color:#fff}
-  table.reserves-table th,table.reserves-table td{padding:.7rem .6rem;vertical-align:middle}
-  table.reserves-table tbody tr{cursor:pointer;transition:.25s}
-  table.reserves-table tbody tr:hover{background:#f1f5f9}
+  .booking-table-wrapper{background:#ffffff;border:1px solid #e2e8f0;border-radius:1rem;overflow:hidden}
+  table.bookings-table{width:100%;margin:0;font-size:.82rem}
+  table.bookings-table thead{background:linear-gradient(90deg,#2563eb,#1d4ed8);color:#fff}
+  table.bookings-table th,table.bookings-table td{padding:.7rem .6rem;vertical-align:middle}
+  table.bookings-table tbody tr{cursor:pointer;transition:.25s}
+  table.bookings-table tbody tr:hover{background:#f1f5f9}
   .status-badge span{white-space:nowrap}
   .empty-state{padding:2.25rem;text-align:center;color:#64748b}
   .empty-state i{font-size:3rem;color:#1d4ed8;opacity:.25}
-  /* Mobile */
   @media(max-width:768px){
     .filter-box{flex-direction:column}
     .filter-box .form-control,.filter-box select{width:100%;min-width:0}
-    table.reserves-table thead{display:none}
-    table.reserves-table tbody tr{display:block;padding:.85rem .85rem;border-bottom:1px solid #e2e8f0}
-    table.reserves-table tbody tr td{display:flex;justify-content:space-between;padding:.25rem 0;font-size:.78rem}
-    table.reserves-table tbody tr td::before{content:attr(data-label);font-weight:600;color:#334155}
+    table.bookings-table thead{display:none}
+    table.bookings-table tbody tr{display:block;padding:.85rem .85rem;border-bottom:1px solid #e2e8f0}
+    table.bookings-table tbody tr td{display:flex;justify-content:space-between;padding:.25rem 0;font-size:.78rem}
+    table.bookings-table tbody tr td::before{content:attr(data-label);font-weight:600;color:#334155}
   }
   .modal-gradient-header{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff}
   .guest-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-top:.5rem}
@@ -39,7 +38,6 @@
   .instruction-list li i{color:#2563eb;margin-left:.35rem}
   .price-chip{display:inline-flex;align-items:center;gap:.35rem;background:#1d4ed8;color:#fff;padding:.35rem .7rem;border-radius:2rem;font-size:.7rem}
   .price-chip i{font-size:.9rem}
-  /* Persian datepicker z-index fix to appear above layout header */
   .pdp-container{z-index:1055!important}
   .date-filter-group{position:relative;display:flex;align-items:center}
   .date-filter-group .calendar-btn{position:absolute;left:.55rem;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#2563eb;cursor:pointer;font-size:1rem;padding:0;display:flex;align-items:center}
@@ -48,7 +46,7 @@
 @endpush
 
 @section('content')
-  <div class="reserves-header">
+  <div class="bookings-header">
     <h5 class="mb-0 d-flex align-items-center gap-2 text-primary fw-semibold"><i class="bi bi-calendar-check"></i> رزروهای اقامت‌گاه‌های شما</h5>
     <span class="badge bg-light text-dark border border-primary fw-normal">{{ $bookings->total() }} رزرو ثبت شده</span>
   </div>
@@ -73,13 +71,13 @@
     </div>
     <div class="d-flex gap-2 ms-auto">
       <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"><i class="bi bi-search"></i> اعمال</button>
-      <a href="{{ route('host.reserves') }}" class="btn btn-sm btn-outline-secondary">ریست</a>
+      <a href="{{ route('host.bookings') }}" class="btn btn-sm btn-outline-secondary">ریست</a>
     </div>
   </form>
 
-  <div class="reserve-table-wrapper">
+  <div class="booking-table-wrapper">
     @if($bookings->count())
-      <table class="reserves-table">
+      <table class="bookings-table">
         <thead>
           <tr>
             <th>#</th>
@@ -133,7 +131,6 @@
     @endif
   </div>
 
-  <!-- Modal -->
   <div class="modal fade" id="bookingDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
@@ -181,7 +178,7 @@
 <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function(){
-    document.querySelectorAll('table.reserves-table tbody tr').forEach(function(row){
+    document.querySelectorAll('table.bookings-table tbody tr').forEach(function(row){
       row.addEventListener('click', function(){
         const d=row.dataset;
         document.getElementById('mdlBookingId').textContent='#'+(d.bookingId||'—');
@@ -200,10 +197,8 @@
   });
 </script>
 <script>
-  // Persian (Jalali) datepickers for filters converting to Gregorian hidden inputs
   $(function(){
     function toEnglishDigits(str){return (str+'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))}
-    // Init pickers and keep instance references
     var fromPickerInstance = $('#from_display').persianDatepicker({
       format:'YYYY/MM/DD',initialValue:false,autoClose:true,
       onSelect:function(unix){
@@ -218,7 +213,6 @@
         document.getElementById('to').value = toEnglishDigits(g);
       }
     });
-    // Open on icon click (use instance.show if available; fallback focus)
     $('#from_calendar_btn').on('click', function(){
       try { if(fromPickerInstance && typeof fromPickerInstance.show==='function'){ fromPickerInstance.show(); return; } } catch(e) {}
       $('#from_display').trigger('focus');
@@ -227,10 +221,8 @@
       try { if(toPickerInstance && typeof toPickerInstance.show==='function'){ toPickerInstance.show(); return; } } catch(e) {}
       $('#to_display').trigger('focus');
     });
-    // Also open when input itself clicked (in case readonly removed)
     $('#from_display').on('click', function(){ $('#from_calendar_btn').click(); });
     $('#to_display').on('click', function(){ $('#to_calendar_btn').click(); });
-    // Pre-fill display fields if query has gregorian values
     const fromVal='{{ $filters['from'] }}';
     const toVal='{{ $filters['to'] }}';
     function gToPersian(g){

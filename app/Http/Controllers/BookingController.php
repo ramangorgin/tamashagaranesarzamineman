@@ -303,7 +303,7 @@ class BookingController extends Controller
             'to' => $request->to,
         ];
 
-        return view('host.reserves', compact('bookings','filters'));
+        return view('host.bookings', compact('bookings','filters'));
     }
 
     /**
@@ -342,32 +342,7 @@ class BookingController extends Controller
             'to' => $request->to,
         ];
 
-        return view('admin.reserves', compact('bookings','filters'));
+        return view('admin.bookings', compact('bookings','filters'));
     }
 
-    /**
-     * تایید رزرو (تغییر وضعیت به approved)
-     */
-    public function approve(Booking $booking)
-    {
-        if(in_array($booking->status,['approved','rejected'])){
-            return back()->with('status','این رزرو قبلاً بررسی شده است.');
-        }
-        $booking->update(['status'=>'approved']);
-        return back()->with('status','رزرو تایید شد.');
-    }
-
-    /**
-     * رد رزرو (تغییر وضعیت به rejected) با دلیل اختیاری لاگ شود
-     */
-    public function reject(Booking $booking, Request $request)
-    {
-        if(in_array($booking->status,['approved','rejected'])){
-            return back()->with('status','این رزرو قبلاً بررسی شده است.');
-        }
-        $reason = trim($request->reason ?? 'بدون دلیل مشخص');
-        \Log::notice('Booking rejected', ['booking_id'=>$booking->id,'reason'=>$reason]);
-        $booking->update(['status'=>'rejected']);
-        return back()->with('status','رزرو رد شد.');
-    }
 }

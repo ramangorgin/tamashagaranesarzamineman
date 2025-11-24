@@ -34,7 +34,15 @@ return new class extends Migration
             $table->decimal('discount_amount', 12, 0)->default(0);
             $table->decimal('final_price', 12, 0);
 
+            // Lifecycle statuses: pending, paid, cancelled, refunded, failed, expired
             $table->string('status')->default('pending');
+            // Cancellation / refund tracking
+            $table->string('cancelled_by')->nullable(); // user|host|system
+            $table->text('cancellation_reason')->nullable();
+            $table->unsignedDecimal('refund_amount', 12, 0)->default(0); // amount refunded (<= final_price)
+            $table->timestamp('refunded_at')->nullable();
+            // Payment gateway tracking (optional external reference)
+            $table->string('payment_reference')->nullable();
 
             $table->timestamps();
         });

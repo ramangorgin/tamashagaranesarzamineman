@@ -161,7 +161,7 @@
     @php($disableLabel = $pendingReview ? 'در حال بررسی' : ($rejected ? 'رد شده' : ''))
     <a href="{{ route('host.dashboard') }}" class="{{ request()->routeIs('host.dashboard') ? 'active' : '' }}"><i class="bi bi-speedometer2"></i> داشبورد</a>
     <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="{{ route('host.stays.index') }}" @endif><i class="bi bi-building"></i> اقامت‌گاه‌های من</a>
-    <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="{{ route('host.reserves') }}" @endif class="{{ request()->routeIs('host.reserves') ? 'active' : '' }}"><i class="bi bi-calendar-check"></i> رزروها</a>
+    <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="{{ route('host.bookings') }}" @endif class="{{ request()->routeIs('host.bookings') ? 'active' : '' }}"><i class="bi bi-calendar-check"></i> رزروها</a>
     <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="#" @endif><i class="bi bi-wallet2"></i> درآمدها و تسویه‌حساب‌ها</a>
     <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="#" @endif><i class="bi bi-chat-left-text"></i> پیام‌ها و درخواست‌ها</a>
     <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="#" @endif><i class="bi bi-gear"></i> تنظیمات پروفایل</a>
