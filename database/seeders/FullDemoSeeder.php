@@ -25,53 +25,70 @@ class FullDemoSeeder extends Seeder
             };
             $has = fn (string $table, string $col) => Schema::hasTable($table) && Schema::hasColumn($table, $col);
 
-            // Admin
-            $adminKey  = $has('admins','phone') ? ['phone'=>'09014282751'] : ['id'=>1];
-            $adminData = $onlyColumns('admins', [
-                'name'  => 'ادمین سیستم',
-                'role'  => 'admin',
-                'phone' => '09014282751',
-            ]);
-            $admin = Admin::updateOrCreate($adminKey, $adminData);
+            // Admins
+            $admins = [
+                [
+                    'name'  => 'رامان گرگین پاوه',
+                    'role'  => 'admin',
+                    'phone' => '09014282751',
+                ],
+                [
+                    'name'  => 'محمدرضا کریمی',
+                    'role'  => 'admin',
+                    'phone' => '09126858394',
+                ]
+            ];
 
-            // User (optional)
+            $firstAdmin = null;
+            foreach ($admins as $index => $adminData) {
+                $admin = Admin::updateOrCreate(
+                    ['phone' => $adminData['phone']],
+                    $onlyColumns('admins', $adminData)
+                );
+                if ($index === 0) {
+                    $firstAdmin = $admin;
+                }
+            }
+            $admin = $firstAdmin; // Use Raman as the main admin for associations
+
+            // User (Raman)
             if (Schema::hasTable('users')) {
-                $userKey  = $has('users','phone') ? ['phone'=>'09014282751'] : ['id'=>1];
-                $userData = $onlyColumns('users', [
-                    'full_name'   => 'کاربر تست',
-                    'national_id' => '0150629737',
-                    'phone'       => '09014282751',
-                ]);
-                User::updateOrCreate($userKey, $userData);
+                User::updateOrCreate(
+                    ['phone' => '09014282751'],
+                    $onlyColumns('users', [
+                        'full_name'   => 'رامان گرگین پاوه',
+                        'national_id' => '0150629737',
+                        'phone'       => '09014282751',
+                    ])
+                );
             }
 
-            // Host
-            $hostKey  = $has('hosts','phone') ? ['phone'=>'09014282752'] : ['id'=>1];
-            $hostBase = [
-                'name'          => 'میزبان نمونه',
-                'national_id'   => '0250629737',
-                'email'         => 'host@example.com',
-                'phone'         => '09014282752',
-                'status'        => 'approved',
-                'province_id'   => '02',
-                'province_name' => 'مازندران',
-                'city_id'       => '0201',
-                'city_name'     => 'رامسر',
-                'county_id'     => '0202',
-                'county_name'   => 'رامسر',
-                'address'       => 'رامسر، خیابان ساحلی، پلاک ۱۲',
-                'postal_code'   => '4678943210',
-                'iban'          => 'IR555555555555555555555555',
-                'bank_name'     => 'ملت',
-                'account_holder'=> 'میزبان نمونه',
-                'bio'           => 'میزبان با سابقه عالی',
-                'id_card_image' => 'images/demo/id_card.jpg',
-                'selfie_image' => 'images/demo/selfie.jpg',
-                'business_license' => 'images/demo/license.jpg',
-            ];
-            $hostData = $onlyColumns('hosts', $hostBase);
-            if (!isset($hostData['status']) && $has('hosts','status')) $hostData['status'] = 'approved';
-            $host = Host::updateOrCreate($hostKey, $hostData);
+            // Host (Raman)
+            $host = Host::updateOrCreate(
+                ['phone' => '09014282751'],
+                $onlyColumns('hosts', [
+                    'name'          => 'رامان گرگین پاوه',
+                    'national_id'   => '0150629737',
+                    'email'         => 'host.raman@example.com',
+                    'phone'         => '09014282751',
+                    'status'        => 'approved',
+                    'province_id'   => '02',
+                    'province_name' => 'مازندران',
+                    'city_id'       => '0201',
+                    'city_name'     => 'رامسر',
+                    'county_id'     => '0202',
+                    'county_name'   => 'رامسر',
+                    'address'       => 'رامسر، خیابان ساحلی، پلاک ۱۲',
+                    'postal_code'   => '4678943210',
+                    'iban'          => 'IR555555555555555555555555',
+                    'bank_name'     => 'ملت',
+                    'account_holder'=> 'رامان گرگین پاوه',
+                    'bio'           => 'میزبان با سابقه عالی در رامسر و حومه',
+                    'id_card_image' => 'images/demo/id_card.jpg',
+                    'selfie_image'  => 'images/demo/selfie.jpg',
+                    'business_license' => 'images/demo/license.jpg',
+                ])
+            );
 
             // Stays
             if (Schema::hasTable('stays') && $has('stays','title')) {
@@ -79,9 +96,9 @@ class FullDemoSeeder extends Seeder
                 $now = now();
 
                 $stays = [
-                    // Approved + Active
+                    // 1. Approved + Active
                     [
-                        'title'              => 'ویلا جنگلی رامسر',
+                        'title'              => 'ویلا لوکس استخردار در رامسر',
                         'category'           => 'villa',
                         'province_id'        => '02',
                         'province_name'      => 'مازندران',
@@ -90,32 +107,98 @@ class FullDemoSeeder extends Seeder
                         'county_id'          => '0202',
                         'county_name'        => 'رامسر',
                         'address'            => 'رامسر، بلوار معلم، کوچه گلستان ۵',
-                        'latitude'           => 36.9040000,
-                        'longitude'          => 50.6580000,
-                        'area'               => 150,
-                        'capacity'           => 8,
-                        'base_capacity'      => 4,
+                        'latitude'           => 36.9040,
+                        'longitude'          => 50.6580,
+                        'area'               => 250,
+                        'capacity'           => 10,
+                        'base_capacity'      => 6,
                         'extra_capacity'     => 4,
-                        'bedrooms'           => 3,
+                        'bedrooms'           => 4,
+                        'double_beds'        => 3,
+                        'single_beds'        => 2,
+                        'floor_beds'         => 2,
+                        'iranian_toilets'    => 1,
+                        'western_toilets'    => 2,
+                        'bathrooms'          => 3,
+                        'price_per_person'   => 800000,
+                        'extra_person_price' => 200000,
+                        'site_commission'    => 15,
+                        'max_discount_normal'=> 25,
+                        'max_discount_peak'  => 10,
+                        'is_peak'            => false,
+                        'is_active'          => true,
+                        'moderation_status'  => 'approved',
+                        'approved_at'        => $now,
+                    ],
+                    // 2. Approved + Active
+                    [
+                        'title'              => 'کلبه چوبی در دل جنگل‌های دوهزار',
+                        'category'           => 'ecolodge',
+                        'province_id'        => '02',
+                        'province_name'      => 'مازندران',
+                        'city_id'            => '0204', // Tonekabon
+                        'city_name'          => 'تنکابن',
+                        'county_id'          => '0205', // Khorramabad
+                        'county_name'        => 'خرم آباد',
+                        'address'            => 'جاده دوهزار، بعد از دوراهی خرم‌آباد',
+                        'latitude'           => 36.7500,
+                        'longitude'          => 50.8667,
+                        'area'               => 80,
+                        'capacity'           => 5,
+                        'base_capacity'      => 2,
+                        'extra_capacity'     => 3,
+                        'bedrooms'           => 2,
+                        'double_beds'        => 1,
+                        'single_beds'        => 1,
+                        'floor_beds'         => 3,
+                        'iranian_toilets'    => 1,
+                        'western_toilets'    => 0,
+                        'bathrooms'          => 1,
+                        'price_per_person'   => 450000,
+                        'extra_person_price' => 100000,
+                        'site_commission'    => 12,
+                        'max_discount_normal'=> 15,
+                        'max_discount_peak'  => 5,
+                        'is_peak'            => false,
+                        'is_active'          => true,
+                        'moderation_status'  => 'approved',
+                        'approved_at'        => $now,
+                    ],
+                    // 3. Approved + Active
+                    [
+                        'title'              => 'آپارتمان ساحلی با ویو دریا در متل قو',
+                        'category'           => 'apartment',
+                        'province_id'        => '02',
+                        'province_name'      => 'مازندران',
+                        'city_id'            => '0203', // Abbasabad
+                        'city_name'          => 'عباس آباد',
+                        'county_id'          => '0204', // Salman Shahr
+                        'county_name'        => 'سلمان شهر',
+                        'address'            => 'سلمان شهر (متل قو)، برج‌های ساحلی قو',
+                        'latitude'           => 36.7154,
+                        'longitude'          => 51.1680,
+                        'area'               => 110,
+                        'capacity'           => 6,
+                        'base_capacity'      => 4,
+                        'extra_capacity'     => 2,
+                        'bedrooms'           => 2,
                         'double_beds'        => 2,
                         'single_beds'        => 2,
-                        'floor_beds'         => 4,
+                        'floor_beds'         => 0,
                         'iranian_toilets'    => 1,
                         'western_toilets'    => 1,
                         'bathrooms'          => 2,
-                        'price_per_person'   => 500000,
+                        'price_per_person'   => 600000,
                         'extra_person_price' => 150000,
-                        'site_commission'    => 12,
+                        'site_commission'    => 14,
                         'max_discount_normal'=> 20,
                         'max_discount_peak'  => 10,
                         'is_peak'            => false,
                         'is_active'          => true,
                         'moderation_status'  => 'approved',
                         'approved_at'        => $now,
-                        'host_id'            => $host->id,
-                        'admin_id'           => $admin->id,
                     ],
-                    // Pending (not visible publicly)
+                    // 4. Pending (not visible publicly)
                     [
                         'title'              => 'آپارتمان مرکز شهر تهران',
                         'category'           => 'apartment',
@@ -126,8 +209,8 @@ class FullDemoSeeder extends Seeder
                         'county_id'          => '0802',
                         'county_name'        => 'تهران',
                         'address'            => 'تهران، میدان ونک، خیابان گاندی',
-                        'latitude'           => 35.7448000,
-                        'longitude'          => 51.3853000,
+                        'latitude'           => 35.7448,
+                        'longitude'          => 51.3853,
                         'area'               => 90,
                         'capacity'           => 5,
                         'base_capacity'      => 3,
@@ -147,10 +230,8 @@ class FullDemoSeeder extends Seeder
                         'is_peak'            => false,
                         'is_active'          => false,
                         'moderation_status'  => 'pending',
-                        'host_id'            => $host->id,
-                        'admin_id'           => $admin->id,
                     ],
-                    // Rejected
+                    // 5. Rejected
                     [
                         'title'              => 'کلبه کوهستانی کردستان',
                         'category'           => 'ecolodge',
@@ -161,8 +242,8 @@ class FullDemoSeeder extends Seeder
                         'county_id'          => '1202',
                         'county_name'        => 'سنندج',
                         'address'            => 'سنندج، روستای دره‌دراز، پس از پل سنگی',
-                        'latitude'           => 35.3211000,
-                        'longitude'          => 47.0185000,
+                        'latitude'           => 35.3211,
+                        'longitude'          => 47.0185,
                         'area'               => 70,
                         'capacity'           => 4,
                         'base_capacity'      => 2,
@@ -183,19 +264,18 @@ class FullDemoSeeder extends Seeder
                         'is_active'          => false,
                         'moderation_status'  => 'rejected',
                         'reject_reason'      => 'کیفیت تصاویر پایین',
-                        'host_id'            => $host->id,
-                        'admin_id'           => $admin->id,
                     ],
                 ];
 
-                foreach ($stays as $row) {
+                foreach ($stays as $index => $row) {
                     $payload = $onlyColumns('stays', $row);
                     if ($has('stays','host_id')) $payload['host_id'] = $host->id;
-                    if ($has('stays','admin_id')) $payload['admin_id'] = $admin->id;
+                    
+                    // Set admin approval details
                     if ($row['moderation_status'] ?? false) {
                         if ($has('stays','moderation_status')) $payload['moderation_status'] = $row['moderation_status'];
-                        if ($row['moderation_status'] === 'approved' && $has('stays','approved_at')) {
-                            $payload['approved_at'] = $row['approved_at'] ?? $now;
+                        if ($row['moderation_status'] === 'approved') {
+                            if ($has('stays','approved_at')) $payload['approved_at'] = $row['approved_at'] ?? $now;
                             if ($has('stays','approved_by_admin_id')) $payload['approved_by_admin_id'] = $admin->id;
                         }
                         if ($row['moderation_status'] === 'rejected' && $has('stays','reject_reason')) {
@@ -210,10 +290,12 @@ class FullDemoSeeder extends Seeder
 
                     // Images
                     if (Schema::hasTable('stay_images') && $has('stay_images','stay_id')) {
+                        // Use a simple numeric index for image names to avoid issues with stay->id
+                        $image_prefix = $index + 1;
                         $images = [
-                            ['path' => "images/sample/{$stay->id}_1.jpg", 'is_main' => true],
-                            ['path' => "images/sample/{$stay->id}_2.jpg", 'is_main' => false],
-                            ['path' => "images/sample/{$stay->id}_3.jpg", 'is_main' => false],
+                            ['path' => "storage/images/sample/{$image_prefix}_1.jpg", 'is_main' => true],
+                            ['path' => "storage/images/sample/{$image_prefix}_2.jpg", 'is_main' => false],
+                            ['path' => "storage/images/sample/{$image_prefix}_3.jpg", 'is_main' => false],
                         ];
                         foreach ($images as $img) {
                             StayImage::updateOrCreate(
@@ -226,9 +308,10 @@ class FullDemoSeeder extends Seeder
                     // Rules
                     if (Schema::hasTable('stay_rules') && $has('stay_rules','rule_text')) {
                         $rules = [
-                            ['rule_text' => 'برگزاری پارتی', 'is_allowed' => false],
-                            ['rule_text' => 'سیگار کشیدن', 'is_allowed' => false],
-                            ['rule_text' => 'پخش موسیقی', 'is_allowed' => true],
+                            ['rule_text' => 'برگزاری جشن و مهمانی ممنوع', 'is_allowed' => false],
+                            ['rule_text' => 'استعمال دخانیات (سیگار، قلیان) در فضای داخلی ممنوع', 'is_allowed' => false],
+                            ['rule_text' => 'ورود حیوانات خانگی ممنوع', 'is_allowed' => false],
+                            ['rule_text' => 'رعایت نظافت الزامی است', 'is_allowed' => true],
                         ];
                         foreach ($rules as $r) {
                             StayRule::updateOrCreate(
@@ -239,10 +322,10 @@ class FullDemoSeeder extends Seeder
                     }
                 }
             } else {
-                $this->command?->warn('stays table missing essential columns; skipping stays seeding.');
+                $this->command?->warn('`stays` table missing essential columns; skipping stays seeding.');
             }
 
-            $this->command?->info('Full demo seeding completed.');
+            $this->command?->info('Full demo seeding completed successfully.');
         });
     }
 }

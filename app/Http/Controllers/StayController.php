@@ -110,7 +110,12 @@ class StayController extends Controller
             $data['max_discount_peak'] = 0;
         }
 
-        $data['host_id'] = $this->userId('host'); // null if admin creates
+        if ($role === 'host') {
+            $data['host_id'] = $this->userId('host');
+        } else {
+            $data['host_id'] = null; // Admin-created stays have no host
+        }
+
         $stay = Stay::create($data);
 
         // Rules
