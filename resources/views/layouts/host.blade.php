@@ -144,6 +144,8 @@
         display: inline-block;
       }
     }
+    .disabled-link{opacity:.45;cursor:not-allowed;pointer-events:none;position:relative}
+    .disabled-link::after{content:attr(data-label);font-size:.6rem;background:#ffffff;color:#1e3a8a;padding:2px 6px;border-radius:8px;position:absolute;left:10px;top:50%;transform:translateY(-50%);white-space:nowrap}
   </style>
   @stack('styles')
 </head>
@@ -152,11 +154,16 @@
   {{-- Sidebar --}}
   <aside class="sidebar animate__animated animate__fadeInRight">
     <h4><i class="bi bi-person-workspace me-2"></i>پنل میزبان</h4>
+    @php($hostAuth = auth('host')->user())
+    @php($pendingReview = $hostAuth && $hostAuth->status==='pending' && $hostAuth->name && $hostAuth->national_id)
+    @php($rejected = $hostAuth && $hostAuth->status==='rejected')
+    @php($disableLinks = $pendingReview || $rejected)
+    @php($disableLabel = $pendingReview ? 'در حال بررسی' : ($rejected ? 'رد شده' : ''))
     <a href="{{ route('host.dashboard') }}" class="{{ request()->routeIs('host.dashboard') ? 'active' : '' }}"><i class="bi bi-speedometer2"></i> داشبورد</a>
-    <a href="{{ route('host.stays.index') }}"><i class="bi bi-building"></i> اقامت‌گاه‌های من</a>
-    <a href="#"><i class="bi bi-wallet2"></i> درآمدها و تسویه‌حساب‌ها</a>
-    <a href="#"><i class="bi bi-chat-left-text"></i> پیام‌ها و درخواست‌ها</a>
-    <a href="#"><i class="bi bi-gear"></i> تنظیمات پروفایل</a>
+    <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="{{ route('host.stays.index') }}" @endif><i class="bi bi-building"></i> اقامت‌گاه‌های من</a>
+    <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="#" @endif><i class="bi bi-wallet2"></i> درآمدها و تسویه‌حساب‌ها</a>
+    <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="#" @endif><i class="bi bi-chat-left-text"></i> پیام‌ها و درخواست‌ها</a>
+    <a @if($disableLinks) href="#" onclick="return false" class="disabled-link" data-label="{{ $disableLabel }}" @else href="#" @endif><i class="bi bi-gear"></i> تنظیمات پروفایل</a>
     <a href="{{ route('logout', ['role' => 'host']) }}" onclick="event.preventDefault(); logout()">
       <i class="bi bi-box-arrow-left"></i> خروج
     </a>

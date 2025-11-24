@@ -1,17 +1,8 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>ورود / ثبت‌نام میزبان | تماشاگران سرزمین من</title>
+@extends('layouts.app')
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-</head>
-<body class="bg-light">
+@section('title', 'ورود / ثبت‌نام میزبان | تماشاگران سرزمین من')
 
+@section('content')
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-7 col-lg-6">
@@ -85,7 +76,9 @@
     </div>
   </div>
 </div>
+@endsection
 
+@push('styles')
 <style>
 .host-card{background:linear-gradient(135deg,#ffffff,#f5f9ff 55%,#eef4ff);border-radius:22px;}
 .alert{animation:fadeIn .4s ease;border-radius:12px;}
@@ -99,11 +92,10 @@
 .btn-primary:hover,.btn-success:hover{transform:translateY(-2px);}
 .disabled{opacity:.5!important;pointer-events:none;}
 #countdown{min-width:60px;text-align:center;}
-body{
-  font-family: Vazirmatn;
-}
 </style>
+@endpush
 
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const requestForm = document.getElementById('requestOtpForm');
@@ -149,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function sendOtp(phone){
-    const csrf=document.querySelector('meta[name="csrf-token"]').content;
+    const csrf='{{ csrf_token() }}';
     sendBtn.disabled=true; sendSpinner.classList.remove('d-none');
     fetch("{{ route('login.sendOtp',['role'=>'host']) }}",{
       method:'POST',
@@ -194,40 +186,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
-     <script>
-        (function(){
-        const map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9',
-                    '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
-        const pattern = /[۰-۹٠-٩]/g;
-        function normalize(str){
-            return str.replace(pattern, d => map[d] || d);
-        }
-        function bind(el){
-            el.addEventListener('input', e => {
-            const v = e.target.value;
-            if (pattern.test(v)) {
-                const caret = e.target.selectionStart;
-                e.target.value = normalize(v);
-                e.target.setSelectionRange(caret, caret);
-            }
-            });
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('input[type="text"],input[type="tel"],input[type="number"],input[type="password"],input:not([type]),textarea')
-            .forEach(bind);
-            // MutationObserver to handle dynamically added inputs
-            new MutationObserver(muts => {
-            muts.forEach(m => m.addedNodes.forEach(n => {
-                if (n.nodeType===1) {
-                if (n.matches && n.matches('input,textarea')) bind(n);
-                n.querySelectorAll?.('input,textarea').forEach(bind);
-                }
-            }));
-            }).observe(document.body,{childList:true,subtree:true});
-        });
-        })();
-    </script>
-
-</body>
-</html>
+@endpush

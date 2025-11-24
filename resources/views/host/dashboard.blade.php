@@ -3,9 +3,17 @@
 @section('title', 'داشبورد میزبان')
 
 @section('content')
+@php($host = auth('host')->user())
 <div class="container-fluid animate__animated animate__fadeInUp">
-  <h4 class="mb-4 fw-bold text-dark">👋 سلام {{ auth('host')->user()->name ?? 'میزبان عزیز' }}</h4>
+  <h4 class="mb-4 fw-bold text-dark">👋 سلام {{ $host->name ?? 'میزبان عزیز' }}</h4>
 
+  @if($host && $host->status==='pending' && $host->name && $host->national_id)
+    <div class="alert alert-warning mb-4 text-center">
+      اطلاعات شما ارسال شد و در صف بررسی است. لطفاً منتظر تأیید مدیریت بمانید.
+    </div>
+  @endif
+
+  @if(!($host && $host->status==='pending' && $host->name && $host->national_id))
   <div class="row g-4">
     <div class="col-md-3">
       <div class="stat-card bg-blue">
@@ -39,7 +47,9 @@
       </div>
     </div>
   </div>
+  @endif
 
+  @if(!($host && $host->status==='pending' && $host->name && $host->national_id))
   <div class="mt-5">
     <h5 class="fw-bold text-dark mb-3">📈 گزارش وضعیت اقامت‌گاه‌ها</h5>
     <div class="card border-0 shadow-sm rounded-4 p-4">
@@ -49,6 +59,7 @@
       </p>
     </div>
   </div>
+  @endif
 </div>
 @endsection
 

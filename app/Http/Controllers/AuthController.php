@@ -152,6 +152,7 @@ class AuthController extends Controller
                 break;
 
             case 'host':
+                // Create host record if not exists. New host has status 'pending' but without required fields -> treated as incomplete.
                 $user = Host::firstOrCreate(['phone' => $request->phone], ['status' => 'pending']);
                 $guard = 'host';
                 break;
@@ -165,11 +166,8 @@ class AuthController extends Controller
         Auth::guard($guard)->login($user, true);
         session()->regenerate();
 
-        // Redirect to complete profile if host is pending OR missing required fields
-        if ($role === 'host' && (
-            ($user->status ?? 'pending') === 'pending' ||
-            empty($user->name) || empty($user->national_id)
-        )) {
+        // Redirect host to complete profile ONLY if status pending AND essential fields are missing
+        if ($role === 'host' && $user->status === 'pending' && (empty($user->name) || empty($user->national_id))) {
             return redirect()->route('host.completeProfile.show');
         }
 
@@ -267,11 +265,13 @@ class AuthController extends Controller
     {
         $host = Auth::guard('host')->user();
 
-        if (in_array($host->status, ['pending','approved'])) {
-            // FIX: redirect to show route, not store
+        // Block re-submission only if already submitted (status pending or approved) AND has essential fields
+        if (in_array($host->status, ['pending','approved']) && $host->name && $host->national_id) {
             return redirect()->route('host.completeProfile.show')
                 ->with('info','اطلاعات شما قبلا ارسال شده و در حال بررسی است.');
         }
+
+        Log::info('Host profile submission started', ['host_id' => $host?->id, 'status' => $host?->status]);
 
         $validated = $request->validate([
             'name' => 'required|string|max:100',
@@ -293,20 +293,50 @@ class AuthController extends Controller
             'account_holder' => 'required|string|max:100',
         ]);
 
-        $disk = 'public';
-        foreach (['id_card_image','selfie_image','business_license'] as $f) {
-            if ($request->hasFile($f)) {
-                $validated[$f] = $request->file($f)->store("hosts/{$host->id}", $disk);
+        Log::info('Host profile validated', ['host_id' => $host->id, 'fields' => array_keys($validated)]);
+
+        try {
+            $disk = 'public';
+            foreach (['id_card_image','selfie_image','business_license'] as $f) {
+                if ($request->hasFile($f)) {
+                    $stored = $request->file($f)->store("hosts/{$host->id}", $disk);
+                    $validated[$f] = $stored;
+                    Log::info('Stored file', ['field'=>$f,'path'=>$stored]);
+                }
             }
+
+            // Explicit assignment to avoid silent ignoring
+            $host->name = $validated['name'];
+            $host->national_id = $validated['national_id'];
+            $host->email = $validated['email'] ?? null;
+            $host->id_card_image = $validated['id_card_image'] ?? $host->id_card_image;
+            $host->selfie_image = $validated['selfie_image'] ?? $host->selfie_image;
+            $host->business_license = $validated['business_license'] ?? $host->business_license;
+            $host->province_id = $validated['province_id'];
+            $host->province_name = $validated['province_name'];
+            $host->city_id = $validated['city_id'];
+            $host->city_name = $validated['city_name'];
+            $host->county_id = $validated['county_id'];
+            $host->county_name = $validated['county_name'];
+            $host->village_name = $validated['village_name'] ?? null;
+            $host->address = $validated['address'];
+            $host->iban = $validated['iban'];
+            $host->bank_name = $validated['bank_name'];
+            $host->account_holder = $validated['account_holder'];
+            $host->status = 'pending';
+
+            $host->save();
+            Log::info('Host profile saved', ['host_id'=>$host->id]);
+        } catch (\Throwable $e) {
+            Log::error('Host profile save failed', [
+                'host_id' => $host->id,
+                'error' => $e->getMessage(),
+                'trace' => substr($e->getTraceAsString(),0,600)
+            ]);
+            return back()->with('error','خطای ذخیره اطلاعات. لطفاً دوباره تلاش کنید.');
         }
 
-        $host->fill($validated);
-        $host->status = 'pending';
-        $host->save();
-
-        // FIX: redirect to show route name
-        return redirect()
-            ->route('host.completeProfile.show')
+        return redirect()->route('host.completeProfile.show')
             ->with('success','اطلاعات ارسال شد. لطفاً تا تأیید مدیریت منتظر بمانید.');
     }
 }

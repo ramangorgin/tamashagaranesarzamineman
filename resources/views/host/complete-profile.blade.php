@@ -9,19 +9,32 @@
         <i class="bi bi-person-lines-fill me-2"></i> تکمیل اطلاعات میزبان
       </h4>
 
-      @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-      @elseif(session('info'))
-        <div class="alert alert-info">{{ session('info') }}</div>
+      @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
       @endif
 
-      @if(in_array($host->status, ['pending','approved']))
-        <div class="alert {{ $host->status==='pending' ? 'alert-warning' : 'alert-success' }} text-center">
-          {{ $host->status==='pending'
-              ? 'اطلاعات شما ارسال شد و در صف بررسی است. لطفاً منتظر تأیید مدیریت بمانید.'
-              : 'اطلاعات شما تأیید شد.' }}
+      @if($host->status==='pending' && $host->name && $host->national_id)
+        <div class="alert alert-info text-center">
+          اطلاعات شما ارسال شد و در صف بررسی است. لطفاً منتظر تأیید مدیریت بمانید.
         </div>
+      @elseif($host->status==='approved' && $host->name && $host->national_id)
+        <div class="alert alert-success text-center">
+          اطلاعات شما تأیید شد.
+        </div>
+        <a href="{{ route('host.dashboard') }}" class="btn btn-success w-100">
+          ورود به داشبورد
+        </a>
       @else
+        @if($host->status==='rejected')
+          <div class="alert alert-danger text-center mb-3">
+            درخواست شما رد شده است. لطفاً موارد زیر را اصلاح و دوباره ارسال کنید.
+          </div>
+          @if($host->rejection_reason)
+            <div class="border rounded-3 p-3 mb-4 bg-light small text-danger fw-semibold">
+              دلیل رد: {{ $host->rejection_reason }}
+            </div>
+          @endif
+        @endif
         {{-- multi-step form --}}
         <form id="profileForm" method="POST" action="{{ route('host.completeProfile.store') }}" enctype="multipart/form-data">
             @csrf

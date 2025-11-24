@@ -11,7 +11,7 @@ class Host extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'phone','status','name','national_id','email',
+        'phone','status','rejection_reason','name','national_id','email',
         'id_card_image','selfie_image','business_license',
         'province_id','province_name','city_id','city_name',
         'county_id','county_name','village_name','address',
