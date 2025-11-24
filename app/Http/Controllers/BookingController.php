@@ -258,4 +258,116 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => 'خطای سرور'], 500);
         }
     }
+
+    /**
+     * لیست رزروهای مربوط به اقامت‌گاه‌های میزبان (پنل میزبان)
+     */
+    public function hostIndex(Request $request)
+    {
+        $host = auth('host')->user();
+        if (!$host) {
+            abort(403);
+        }
+        // فقط میزبان تایید شده اجازه مشاهده دارد (لینک در حالت pending/rejected غیرفعال است اما محافظ دوبل)
+        if (!in_array($host->status, ['approved'])) {
+            return redirect()->route('host.dashboard');
+        }
+
+        $stayIds = $host->stays()->pluck('id');
+
+        $bookings = Booking::with(['user','stay'])
+            ->whereIn('stay_id', $stayIds)
+            ->when($request->filled('q'), function($q) use ($request){
+                $term = trim($request->q);
+                $q->where(function($qq) use ($term){
+                    $qq->whereHas('user', function($uq) use ($term){
+                        $uq->where('name','like',"%$term%")
+                           ->orWhere('phone','like',"%$term%");
+                    })
+                    ->orWhereHas('stay', function($sq) use ($term){
+                        $sq->where('title','like',"%$term%");
+                    });
+                });
+            })
+            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+            ->when($request->filled('from'), fn($q) => $q->whereDate('start_date','>=',$request->from))
+            ->when($request->filled('to'), fn($q) => $q->whereDate('end_date','<=',$request->to))
+            ->orderByDesc('id')
+            ->paginate(12)
+            ->withQueryString();
+
+        $filters = [
+            'q' => $request->q,
+            'status' => $request->status,
+            'from' => $request->from,
+            'to' => $request->to,
+        ];
+
+        return view('host.reserves', compact('bookings','filters'));
+    }
+
+    /**
+     * لیست همه رزروها برای پنل مدیریت با فیلترها
+     */
+    public function adminIndex(Request $request)
+    {
+        $admin = auth('admin')->user();
+        if(!$admin){ abort(403); }
+
+        $bookings = Booking::with(['user','stay','stay.host'])
+            ->when($request->filled('q'), function($q) use ($request){
+                $term = trim($request->q);
+                $q->where(function($qq) use ($term){
+                    $qq->whereHas('user', function($uq) use ($term){
+                        $uq->where('name','like',"%$term%")
+                           ->orWhere('phone','like',"%$term%");
+                    })
+                    ->orWhereHas('stay', function($sq) use ($term){
+                        $sq->where('title','like',"%$term%")
+                           ->orWhere('address','like',"%$term%");
+                    });
+                });
+            })
+            ->when($request->filled('status'), fn($q) => $q->where('status',$request->status))
+            ->when($request->filled('from'), fn($q) => $q->whereDate('start_date','>=',$request->from))
+            ->when($request->filled('to'), fn($q) => $q->whereDate('end_date','<=',$request->to))
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        $filters = [
+            'q' => $request->q,
+            'status' => $request->status,
+            'from' => $request->from,
+            'to' => $request->to,
+        ];
+
+        return view('admin.reserves', compact('bookings','filters'));
+    }
+
+    /**
+     * تایید رزرو (تغییر وضعیت به approved)
+     */
+    public function approve(Booking $booking)
+    {
+        if(in_array($booking->status,['approved','rejected'])){
+            return back()->with('status','این رزرو قبلاً بررسی شده است.');
+        }
+        $booking->update(['status'=>'approved']);
+        return back()->with('status','رزرو تایید شد.');
+    }
+
+    /**
+     * رد رزرو (تغییر وضعیت به rejected) با دلیل اختیاری لاگ شود
+     */
+    public function reject(Booking $booking, Request $request)
+    {
+        if(in_array($booking->status,['approved','rejected'])){
+            return back()->with('status','این رزرو قبلاً بررسی شده است.');
+        }
+        $reason = trim($request->reason ?? 'بدون دلیل مشخص');
+        \Log::notice('Booking rejected', ['booking_id'=>$booking->id,'reason'=>$reason]);
+        $booking->update(['status'=>'rejected']);
+        return back()->with('status','رزرو رد شد.');
+    }
 }

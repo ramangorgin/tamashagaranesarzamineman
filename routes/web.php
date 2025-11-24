@@ -59,6 +59,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function
     Route::patch('hosts/{host}/approve', [HostController::class, 'approve'])->name('hosts.approve');
     Route::patch('hosts/{host}/reject',  [HostController::class, 'reject'])->name('hosts.reject');
 
+    // رزروها (لیست همه رزروها + مدیریت وضعیت)
+    Route::get('reserves', [BookingController::class,'adminIndex'])->name('reserves.index');
+    Route::patch('bookings/{booking}/approve', [BookingController::class,'approve'])->name('bookings.approve');
+    Route::patch('bookings/{booking}/reject', [BookingController::class,'reject'])->name('bookings.reject');
+
 
 });
 
@@ -75,6 +80,9 @@ Route::prefix('host')->name('host.')->middleware('auth:host')->group(function ()
     Route::resource('stays', StayController::class)->except(['show']);
     Route::post('stays/{stay}/upload-image', [StayImageController::class, 'upload'])->name('stays.upload');
     Route::delete('images/{image}', [StayImageController::class, 'destroy'])->name('stays.image.destroy');
+
+    // لیست رزروهای مرتبط با اقامت‌گاه‌های میزبان
+    Route::get('reserves', [BookingController::class,'hostIndex'])->name('reserves');
 });
 
 /*

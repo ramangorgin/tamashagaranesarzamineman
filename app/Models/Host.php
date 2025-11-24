@@ -19,4 +19,10 @@ class Host extends Authenticatable
     ];
 
     protected $hidden = ['remember_token'];
+
+    // اقامت‌گاه‌های متعلق به این میزبان
+    public function stays()
+    {
+        return $this->hasMany(Stay::class);
+    }
 }
