@@ -5,7 +5,7 @@
 @section('content')
 
 <!-- ========================= HERO SECTION ========================= -->
-  <section class="hero-section text-center text-white d-flex align-items-center anim fade-up">
+  <section class="hero-section text-center text-white d-flex align-items-center anim fade-up p-0">
     <div class="container">
       <h1 class="fw-bold mb-3 anim fade-up delay-1">سفرتو با بهترین اقامتگاه شروع کن</h1>
       <p class="lead mb-4 anim fade-up delay-2">رزرو آسان، پشتیبانی ۲۴ ساعته، و تجربه‌ی اقامتی فراموش‌نشدنی در سراسر ایران</p>
