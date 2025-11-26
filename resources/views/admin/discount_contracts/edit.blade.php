@@ -38,7 +38,7 @@
                     <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label">تاریخ شروع</label>
                         <div class="input-group">
-                            <input type="text" id="start_date_display" class="form-control" value="{{ verta($contract->start_date)->format('Y/m/d') }}">
+                            <input type="text" id="start_date_display" data-jdp class="form-control" value="{{ verta($contract->start_date)->format('Y/m/d') }}" placeholder="انتخاب">
                             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                         </div>
                         <input type="hidden" name="start_date" id="start_date" value="{{ $contract->start_date->format('Y-m-d') }}">
@@ -46,7 +46,7 @@
                     <div class="col-md-6 mb-3 position-relative">
                         <label class="form-label">تاریخ پایان</label>
                         <div class="input-group">
-                            <input type="text" id="end_date_display" class="form-control" value="{{ verta($contract->end_date)->format('Y/m/d') }}">
+                            <input type="text" id="end_date_display" data-jdp class="form-control" value="{{ verta($contract->end_date)->format('Y/m/d') }}" placeholder="انتخاب">
                             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                         </div>
                         <input type="hidden" name="end_date" id="end_date" value="{{ $contract->end_date->format('Y-m-d') }}">
@@ -115,6 +115,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.10/dist/jalali-moment.browser.js"></script>
 <script>
 $(function() {
   // Validate only the main edit form (not the member form)
@@ -129,6 +130,41 @@ $(function() {
       });
     }
   });
+
+    // Wire JalaliDatePicker display fields to hidden Gregorian values
+    const sd = document.getElementById('start_date_display');
+    const ed = document.getElementById('end_date_display');
+    const sh = document.getElementById('start_date');
+    const eh = document.getElementById('end_date');
+    function greg(detail, fallback){
+        try{
+            if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+            if(detail?.date?.gregorian) return detail.date.gregorian;
+            if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+        }catch(_){}
+        return fallback;
+    }
+    function toJalaliStr(greg){
+        try{
+            if(!greg || !window.moment) return '';
+            const m = window.moment(greg,'YYYY-MM-DD');
+            if(m.isValid()) return m.locale('fa').format('jYYYY/jMM/jDD');
+        }catch(_){}
+        return '';
+    }
+    // Initialize visible Jalali from hidden Gregorian if needed
+    if(sd && sh && sh.value && !sd.value){ const j = toJalaliStr(sh.value); if(j) sd.value=j; }
+    if(ed && eh && eh.value && !ed.value){ const j = toJalaliStr(eh.value); if(j) ed.value=j; }
+    // Update hidden on picker changes
+    sd?.addEventListener('jdp:change', e => { if(sh) sh.value = greg(e.detail, sh.value); });
+    ed?.addEventListener('jdp:change', e => { if(eh) eh.value = greg(e.detail, eh.value); });
+    // Fallback on manual change
+    sd?.addEventListener('change', () => { if(sh && sd.value && window.moment){
+        const m = window.moment(sd.value,'jYYYY/jMM/jDD'); if(m.isValid()) sh.value = m.format('YYYY-MM-DD');
+    }});
+    ed?.addEventListener('change', () => { if(eh && ed.value && window.moment){
+        const m = window.moment(ed.value,'jYYYY/jMM/jDD'); if(m.isValid()) eh.value = m.format('YYYY-MM-DD');
+    }});
 });
 </script>
 @endpush

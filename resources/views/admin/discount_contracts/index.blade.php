@@ -140,6 +140,18 @@ document.addEventListener('DOMContentLoaded',function(){
   const td=document.getElementById('to_display');
   const fh=document.getElementById('from');
   const th=document.getElementById('to');
+    // Convert initial hidden Gregorian to visible Jalali (YYYY/MM/DD)
+    function toJalaliStr(greg){
+        try{
+            if(!greg) return '';
+            // Use jalali-moment if available; fallback to existing value
+            if(window.moment){
+                const m = window.moment(greg, 'YYYY-MM-DD');
+                if(m.isValid()) return m.locale('fa').format('jYYYY/jMM/jDD');
+            }
+        }catch(_){}
+        return '';
+    }
   function greg(detail, fallback){
     try{
       if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
@@ -148,10 +160,20 @@ document.addEventListener('DOMContentLoaded',function(){
     }catch(_){}
     return fallback;
   }
+    // Initialize visible fields from hidden Gregorian if present
+    if(fd && fh && fh.value && !fd.value){
+        const j = toJalaliStr(fh.value);
+        if(j) fd.value = j;
+    }
+    if(td && th && th.value && !td.value){
+        const j = toJalaliStr(th.value);
+        if(j) td.value = j;
+    }
   fd?.addEventListener('jdp:change',e=>{ if(fh) fh.value = greg(e.detail, fd.value); });
   td?.addEventListener('jdp:change',e=>{ if(th) th.value = greg(e.detail, td.value); });
   fd?.addEventListener('change',()=>{ if(fh) fh.value = fd.value; });
   td?.addEventListener('change',()=>{ if(th) th.value = td.value; });
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.10/dist/jalali-moment.browser.js"></script>
 @endpush
