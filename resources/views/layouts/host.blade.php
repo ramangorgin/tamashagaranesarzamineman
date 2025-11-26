@@ -19,6 +19,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{{ asset('css/fonts.css') }}" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset('vendor/jalalidatepicker/jalalidatepicker.min.css') }}">
 
   <style>
     body {
@@ -214,6 +215,8 @@
   </main>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ asset('vendor/jalalidatepicker/jalalidatepicker.min.js') }}"></script>
+  <script>try{ jalaliDatepicker.startWatch({ usePersianDigits:true }); }catch(e){ console.warn('JalaliDatePicker init failed', e); }</script>
   <script>
     // Sidebar: mirror admin overlay behavior (mobile)
     document.addEventListener('DOMContentLoaded',function(){

@@ -16,7 +16,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ asset('css/fonts.css') }}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+    <link rel="stylesheet" href="{{ asset('vendor/jalalidatepicker/jalalidatepicker.min.css') }}">
     <style>
         body {background-color:#f8f9fb;overflow-x:hidden;}
         .sidebar {position:fixed;top:0;right:0;width:240px;height:100vh;background-color:#1e293b;color:#fff;display:flex;flex-direction:column;transition:.3s;z-index:1050;}
@@ -136,8 +136,8 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
+    <script src="{{ asset('vendor/jalalidatepicker/jalalidatepicker.min.js') }}"></script>
+    <script>try{ jalaliDatepicker.startWatch({ usePersianDigits:true }); }catch(e){}</script>
     <script>
         document.addEventListener('DOMContentLoaded',function(){
             const sidebar=document.getElementById('sidebar');

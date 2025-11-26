@@ -4,7 +4,6 @@
 
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
 <style>
   .bookings-header{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
   .filter-box{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:.85rem 1rem;display:flex;flex-wrap:wrap;gap:.75rem;box-shadow:0 4px 12px rgba(0,0,0,.05)}
@@ -60,12 +59,12 @@
       <option value="cancelled" @selected($filters['status']==='cancelled')>لغوشده</option>
     </select>
     <div class="date-filter-group">
-      <input type="text" id="from_display" class="form-control form-control-sm" placeholder="از تاریخ" autocomplete="off">
+      <input type="text" id="from_display" data-jdp class="form-control form-control-sm" placeholder="از تاریخ" autocomplete="off" value="{{ $filters['from'] }}">
       <button type="button" class="calendar-btn" id="from_calendar_btn" aria-label="انتخاب تاریخ از"><i class="bi bi-calendar-event"></i></button>
       <input type="hidden" name="from" id="from" value="{{ $filters['from'] }}">
     </div>
     <div class="date-filter-group">
-      <input type="text" id="to_display" class="form-control form-control-sm" placeholder="تا تاریخ" autocomplete="off">
+      <input type="text" id="to_display" data-jdp class="form-control form-control-sm" placeholder="تا تاریخ" autocomplete="off" value="{{ $filters['to'] }}">
       <button type="button" class="calendar-btn" id="to_calendar_btn" aria-label="انتخاب تاریخ تا"><i class="bi bi-calendar-range"></i></button>
       <input type="hidden" name="to" id="to" value="{{ $filters['to'] }}">
     </div>
@@ -174,8 +173,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/persian-date@1.0.6/dist/persian-date.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function(){
     document.querySelectorAll('table.bookings-table tbody tr').forEach(function(row){
@@ -197,42 +194,25 @@
   });
 </script>
 <script>
-  $(function(){
-    function toEnglishDigits(str){return (str+'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))}
-    var fromPickerInstance = $('#from_display').persianDatepicker({
-      format:'YYYY/MM/DD',initialValue:false,autoClose:true,
-      onSelect:function(unix){
-        const g = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-        document.getElementById('from').value = toEnglishDigits(g);
-      }
-    });
-    var toPickerInstance = $('#to_display').persianDatepicker({
-      format:'YYYY/MM/DD',initialValue:false,autoClose:true,
-      onSelect:function(unix){
-        const g = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-        document.getElementById('to').value = toEnglishDigits(g);
-      }
-    });
-    $('#from_calendar_btn').on('click', function(){
-      try { if(fromPickerInstance && typeof fromPickerInstance.show==='function'){ fromPickerInstance.show(); return; } } catch(e) {}
-      $('#from_display').trigger('focus');
-    });
-    $('#to_calendar_btn').on('click', function(){
-      try { if(toPickerInstance && typeof toPickerInstance.show==='function'){ toPickerInstance.show(); return; } } catch(e) {}
-      $('#to_display').trigger('focus');
-    });
-    $('#from_display').on('click', function(){ $('#from_calendar_btn').click(); });
-    $('#to_display').on('click', function(){ $('#to_calendar_btn').click(); });
-    const fromVal='{{ $filters['from'] }}';
-    const toVal='{{ $filters['to'] }}';
-    function gToPersian(g){
-      if(!g) return '';
-      const parts=g.split('-').map(Number);
-      const unix=new Date(parts[0],parts[1]-1,parts[2]).getTime();
-      return new persianDate(unix).format('YYYY/MM/DD');
+  document.addEventListener('DOMContentLoaded',function(){
+    const fd=document.getElementById('from_display');
+    const td=document.getElementById('to_display');
+    const fh=document.getElementById('from');
+    const th=document.getElementById('to');
+    function extractGregorian(detail, fallback){
+      try{
+        if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+        if(detail?.date?.gregorian) return detail.date.gregorian;
+        if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+      }catch(_){}
+      return fallback;
     }
-    if(fromVal){ $('#from_display').val(gToPersian(fromVal)); }
-    if(toVal){ $('#to_display').val(gToPersian(toVal)); }
+    fd?.addEventListener('jdp:change',e=>{ if(fh) fh.value = extractGregorian(e.detail, fd.value); });
+    td?.addEventListener('jdp:change',e=>{ if(th) th.value = extractGregorian(e.detail, td.value); });
+    fd?.addEventListener('change',()=>{ if(fh) fh.value = fd.value; });
+    td?.addEventListener('change',()=>{ if(th) th.value = td.value; });
+    document.getElementById('from_calendar_btn')?.addEventListener('click',()=> fd?.focus());
+    document.getElementById('to_calendar_btn')?.addEventListener('click',()=> td?.focus());
   });
-</script>
+  </script>
 @endpush

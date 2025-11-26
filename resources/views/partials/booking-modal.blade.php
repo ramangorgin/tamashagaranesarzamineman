@@ -63,13 +63,13 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">تاریخ شروع</label>
-                <input type="text" id="startDateDisplay" class="form-control" placeholder="انتخاب">
+                <input type="text" id="startDateDisplay" data-jdp class="form-control" placeholder="انتخاب">
                 <input type="hidden" name="start_date" id="startDate">
                 <div id="startDateError" class="invalid-feedback"></div>
               </div>
               <div class="col-md-6">
                 <label class="form-label">تاریخ پایان</label>
-                <input type="text" id="endDateDisplay" class="form-control" placeholder="انتخاب">
+                <input type="text" id="endDateDisplay" data-jdp class="form-control" placeholder="انتخاب">
                 <input type="hidden" name="end_date" id="endDate">
                 <div id="endDateError" class="invalid-feedback"></div>
               </div>
@@ -238,7 +238,7 @@ function displayErrors(errors) {
   }
 }
 
-// نیاز به persianDatepicker و jQuery
+// انتخابگر تاریخ بر پایه JalaliDatePicker
 const stepsOrder=['phoneOtp','dates','guests','info','review'];
 let currentStep='phoneOtp';
 function goStep(name){
@@ -510,24 +510,24 @@ function startOtpTimer(){
 }
 function updateOtpLabel(){ $('#otpTimer').text('انقضا: '+otpSeconds+' ثانیه'); }
 
-/* Persian Date Pickers */
-$(function(){
-  if(typeof $.fn.persianDatepicker!=='undefined'){
-    $('#startDateDisplay').persianDatepicker({
-      format:'YYYY/MM/DD', autoClose:true,
-      onSelect:function(unix){
-        const g=new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-        $('#startDate').val(g);
-      }
-    });
-    $('#endDateDisplay').persianDatepicker({
-      format:'YYYY/MM/DD', autoClose:true,
-      onSelect:function(unix){
-        const g=new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-        $('#endDate').val(g);
-      }
-    });
+/* JalaliDatePicker change handlers */
+document.addEventListener('DOMContentLoaded',function(){
+  const sEl=document.getElementById('startDateDisplay');
+  const eEl=document.getElementById('endDateDisplay');
+  const hs=document.getElementById('startDate');
+  const he=document.getElementById('endDate');
+  function pickGregorian(detail, fallback){
+    try{
+      if(detail?.date?.gregorian?.date) return detail.date.gregorian.date; // preferred shape
+      if(detail?.date?.gregorian) return detail.date.gregorian;            // alt shape
+      if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+    }catch(_){}
+    return fallback;
   }
+  sEl?.addEventListener('jdp:change',function(ev){ hs && (hs.value = pickGregorian(ev.detail, sEl.value)); });
+  eEl?.addEventListener('jdp:change',function(ev){ he && (he.value = pickGregorian(ev.detail, eEl.value)); });
+  sEl?.addEventListener('change',function(){ hs && (hs.value = sEl.value); });
+  eEl?.addEventListener('change',function(){ he && (he.value = eEl.value); });
 });
 </script>
 @endpush

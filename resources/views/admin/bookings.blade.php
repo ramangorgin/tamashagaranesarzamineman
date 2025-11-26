@@ -3,7 +3,6 @@
 @section('title','مدیریت رزروها')
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
 <style>
   .admin-booking-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.1rem}
   .filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:.9rem 1rem;display:flex;flex-wrap:wrap;gap:.7rem;box-shadow:0 4px 12px rgba(0,0,0,.04)}
@@ -52,12 +51,12 @@
       <option value="cancelled" @selected($filters['status']==='cancelled')>لغو شده</option>
     </select>
     <div class="date-input-group">
-      <input type="text" id="from_display" class="form-control form-control-sm" placeholder="از تاریخ" autocomplete="off">
+      <input type="text" id="from_display" data-jdp class="form-control form-control-sm" placeholder="از تاریخ" autocomplete="off" value="{{ $filters['from'] }}">
       <button type="button" id="from_btn" aria-label="انتخاب از"><i class="bi bi-calendar-event"></i></button>
       <input type="hidden" name="from" id="from" value="{{ $filters['from'] }}">
     </div>
     <div class="date-input-group">
-      <input type="text" id="to_display" class="form-control form-control-sm" placeholder="تا تاریخ" autocomplete="off">
+      <input type="text" id="to_display" data-jdp class="form-control form-control-sm" placeholder="تا تاریخ" autocomplete="off" value="{{ $filters['to'] }}">
       <button type="button" id="to_btn" aria-label="انتخاب تا"><i class="bi bi-calendar-range"></i></button>
       <input type="hidden" name="to" id="to" value="{{ $filters['to'] }}">
     </div>
@@ -157,8 +156,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function(){
     document.querySelectorAll('table.admin-bookings tbody tr').forEach(function(r){
@@ -184,16 +181,25 @@
   });
 </script>
 <script>
-$(function(){
-  function toEnglishDigits(str){return (str+'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))}
-  var fromInstance = $('#from_display').persianDatepicker({format:'YYYY/MM/DD',initialValue:false,autoClose:true,onSelect:function(unix){const g=new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD'); $('#from').val(toEnglishDigits(g));}});
-  var toInstance = $('#to_display').persianDatepicker({format:'YYYY/MM/DD',initialValue:false,autoClose:true,onSelect:function(unix){const g=new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD'); $('#to').val(toEnglishDigits(g));}});
-  $('#from_btn').on('click',()=>{try{fromInstance.show();}catch(e){$('#from_display').trigger('focus');}});
-  $('#to_btn').on('click',()=>{try{toInstance.show();}catch(e){$('#to_display').trigger('focus');}});
-  const fromVal='{{ $filters['from'] }}', toVal='{{ $filters['to'] }}';
-  function gToPersian(g){if(!g) return '';const p=g.split('-').map(Number);const unix=new Date(p[0],p[1]-1,p[2]).getTime();return new persianDate(unix).format('YYYY/MM/DD');}
-  if(fromVal) $('#from_display').val(gToPersian(fromVal));
-  if(toVal) $('#to_display').val(gToPersian(toVal));
+document.addEventListener('DOMContentLoaded',function(){
+  const fd=document.getElementById('from_display');
+  const td=document.getElementById('to_display');
+  const fh=document.getElementById('from');
+  const th=document.getElementById('to');
+  function greg(detail, fallback){
+    try{
+      if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+      if(detail?.date?.gregorian) return detail.date.gregorian;
+      if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+    }catch(_){}
+    return fallback;
+  }
+  fd?.addEventListener('jdp:change',e=>{ if(fh) fh.value = greg(e.detail, fd.value); });
+  td?.addEventListener('jdp:change',e=>{ if(th) th.value = greg(e.detail, td.value); });
+  fd?.addEventListener('change',()=>{ if(fh) fh.value = fd.value; });
+  td?.addEventListener('change',()=>{ if(th) th.value = td.value; });
+  document.getElementById('from_btn')?.addEventListener('click',()=> fd?.focus());
+  document.getElementById('to_btn')?.addEventListener('click',()=> td?.focus());
 });
 </script>
 @endpush

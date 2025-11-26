@@ -36,7 +36,7 @@
                 <div class="col-md-2 position-relative">
                     <label class="form-label small mb-1">از تاریخ (شمسی)</label>
                     <div class="input-group">
-                        <input type="text" id="from_display" class="form-control" placeholder="انتخاب">
+                        <input type="text" id="from_display" data-jdp class="form-control" placeholder="انتخاب" value="{{ request('from') }}">
                         <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                     </div>
                     <input type="hidden" name="from" id="from" value="{{ request('from') }}">
@@ -44,7 +44,7 @@
                 <div class="col-md-2 position-relative">
                     <label class="form-label small mb-1">تا تاریخ (شمسی)</label>
                     <div class="input-group">
-                        <input type="text" id="to_display" class="form-control" placeholder="انتخاب">
+                        <input type="text" id="to_display" data-jdp class="form-control" placeholder="انتخاب" value="{{ request('to') }}">
                         <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                     </div>
                     <input type="hidden" name="to" id="to" value="{{ request('to') }}">
@@ -135,33 +135,23 @@
 
 @push('scripts')
 <script>
-function toEnglishDigits(str){return (str||'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
-function setDisplayFromGregorian(gDate, displayId){
-    if(!gDate) return;
+document.addEventListener('DOMContentLoaded',function(){
+  const fd=document.getElementById('from_display');
+  const td=document.getElementById('to_display');
+  const fh=document.getElementById('from');
+  const th=document.getElementById('to');
+  function greg(detail, fallback){
     try{
-        let p = new persianDate().fromGregorian(gDate).format('YYYY/MM/DD');
-        document.getElementById(displayId).value = p;
-    }catch(e){}
-}
-$(function(){
-    // Restore old (query) values to Jalali display
-    setDisplayFromGregorian($('#from').val(),'from_display');
-    setDisplayFromGregorian($('#to').val(),'to_display');
-
-    $('#from_display').persianDatepicker({
-        format:'YYYY/MM/DD', autoClose:true,
-        onSelect: function(unix){
-            let g = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-            $('#from').val(toEnglishDigits(g));
-        }
-    });
-    $('#to_display').persianDatepicker({
-        format:'YYYY/MM/DD', autoClose:true,
-        onSelect: function(unix){
-            let g = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-            $('#to').val(toEnglishDigits(g));
-        }
-    });
+      if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+      if(detail?.date?.gregorian) return detail.date.gregorian;
+      if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+    }catch(_){}
+    return fallback;
+  }
+  fd?.addEventListener('jdp:change',e=>{ if(fh) fh.value = greg(e.detail, fd.value); });
+  td?.addEventListener('jdp:change',e=>{ if(th) th.value = greg(e.detail, td.value); });
+  fd?.addEventListener('change',()=>{ if(fh) fh.value = fd.value; });
+  td?.addEventListener('change',()=>{ if(th) th.value = td.value; });
 });
 </script>
 @endpush

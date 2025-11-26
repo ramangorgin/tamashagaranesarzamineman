@@ -16,11 +16,11 @@
             <input type="text" class="form-control" placeholder="کجا می‌خوای بری؟">
           </div>
           <div class="col-md-3">
-            <input type="text" id="start_date_display" class="form-control" autocomplete="off" placeholder="تاریخ ورود">
+            <input type="text" id="start_date_display" data-jdp class="form-control" autocomplete="off" placeholder="تاریخ ورود">
             <input type="hidden" name="start_date" id="start_date">
           </div>
           <div class="col-md-3">
-            <input type="text" id="end_date_display" class="form-control" autocomplete="off" placeholder="تاریخ خروج">
+            <input type="text" id="end_date_display" data-jdp class="form-control" autocomplete="off" placeholder="تاریخ خروج">
             <input type="hidden" name="end_date" id="end_date">
           </div>
           <div class="col-md-2">
@@ -134,44 +134,39 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 <script>
-  // Jalali date pickers for start/end dates
-  $(document).ready(function() {
-    function toEnglishDigits(str){
-      var map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
-      return str.replace(/[۰-۹]/g, d => map[d] || d);
+  // JalaliDatePicker change handlers to populate hidden fields
+  document.addEventListener('DOMContentLoaded',function(){
+    const sd=document.getElementById('start_date_display');
+    const ed=document.getElementById('end_date_display');
+    const sh=document.getElementById('start_date');
+    const eh=document.getElementById('end_date');
+    function greg(detail, fallback){
+      try{
+        if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+        if(detail?.date?.gregorian) return detail.date.gregorian;
+        if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+      }catch(_){}
+      return fallback;
     }
+    sd?.addEventListener('jdp:change',e=>{ if(sh) sh.value = greg(e.detail, sd.value); });
+    ed?.addEventListener('jdp:change',e=>{ if(eh) eh.value = greg(e.detail, ed.value); });
+    sd?.addEventListener('change',()=>{ if(sh) sh.value = sd.value; });
+    ed?.addEventListener('change',()=>{ if(eh) eh.value = ed.value; });
 
-    // Init start date picker
-    $('#start_date_display').persianDatepicker({
-      format: 'YYYY/MM/DD',
-      initialValue: false,
-      autoClose: true,
-      toolbox: { calendarSwitch: { enabled: false } },
-      onSelect: function(unix){
-        var gregorian = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-        gregorian = toEnglishDigits(gregorian);
-        $('#start_date').val(gregorian);
-        // constrain end date min
-        if(window.endPicker){
-          endPicker.options.minDate = unix;
-        }
-      }
-    });
-
-    // Init end date picker with dependency on start
-    var endPicker = $('#end_date_display').persianDatepicker({
-      format: 'YYYY/MM/DD',
-      initialValue: false,
-      autoClose: true,
-      toolbox: { calendarSwitch: { enabled: false } },
-      onSelect: function(unix){
-        var gregorian = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-        gregorian = toEnglishDigits(gregorian);
-        $('#end_date').val(gregorian);
-      }
-    }).data('datepicker');
-    window.endPicker = endPicker; // expose for start picker minDate adjustment
+    // Explicitly attach pickers in case startWatch didn't bind yet
+    if(window.jalaliDatepicker && typeof jalaliDatepicker.attach==='function'){
+      try{ jalaliDatepicker.attach('#start_date_display', { autoHide:true }); }catch(e){}
+      try{ jalaliDatepicker.attach('#end_date_display',   { autoHide:true }); }catch(e){}
+    }
   });
 </script>
+@push('styles')
+<style>
+  /* Ensure calendar overlays above hero/search sections */
+  .jalali-datepicker{ z-index: 2000 !important; }
+  .jalali-datepicker .jalali-datepicker-legend{ z-index: 2001 !important; }
+  .jalali-datepicker-portal{ z-index: 2000 !important; }
+</style>
+@endpush
 @endpush
 @endsection

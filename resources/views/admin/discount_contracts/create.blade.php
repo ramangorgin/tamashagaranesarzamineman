@@ -49,7 +49,7 @@
             <div class="col-md-6 position-relative">
                 <label class="form-label">تاریخ شروع (شمسی)</label>
                 <div class="input-group">
-                    <input type="text" id="start_date_display" class="form-control" placeholder="انتخاب تاریخ">
+                    <input type="text" id="start_date_display" data-jdp class="form-control" placeholder="انتخاب تاریخ" value="{{ old('start_date') }}">
                     <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                 </div>
                 <input type="hidden" name="start_date" id="start_date" value="{{ old('start_date') }}">
@@ -58,7 +58,7 @@
             <div class="col-md-6 position-relative">
                 <label class="form-label">تاریخ پایان (شمسی)</label>
                 <div class="input-group">
-                    <input type="text" id="end_date_display" class="form-control" placeholder="انتخاب تاریخ">
+                    <input type="text" id="end_date_display" data-jdp class="form-control" placeholder="انتخاب تاریخ" value="{{ old('end_date') }}">
                     <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                 </div>
                 <input type="hidden" name="end_date" id="end_date" value="{{ old('end_date') }}">
@@ -81,47 +81,29 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-function toEnglishDigits(str){return (str||'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));}
-function setDisplayFromGregorian(gDate, displayId){
-    if(!gDate) return;
-    try{
-        let p = new persianDate().fromGregorian(gDate).format('YYYY/MM/DD');
-        document.getElementById(displayId).value = p;
-    }catch(e){}
-}
-$(function() {
-  // Restore old values to display (if validation failed)
-  setDisplayFromGregorian($('#start_date').val(),'start_date_display');
-  setDisplayFromGregorian($('#end_date').val(),'end_date_display');
-
-  $("#start_date_display").persianDatepicker({
-    format:'YYYY/MM/DD', initialValue:false, autoClose:true,
-    toolbox:{ calendarSwitch:{ enabled:false } },
-    onSelect: function(unix){
-      let g = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-      $('#start_date').val(toEnglishDigits(g));
+document.addEventListener('DOMContentLoaded',function(){
+    const sd=document.getElementById('start_date_display');
+    const ed=document.getElementById('end_date_display');
+    const sh=document.getElementById('start_date');
+    const eh=document.getElementById('end_date');
+    function greg(detail, fallback){
+        try{
+            if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+            if(detail?.date?.gregorian) return detail.date.gregorian;
+            if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+        }catch(_){}
+        return fallback;
     }
-  });
-  $("#end_date_display").persianDatepicker({
-    format:'YYYY/MM/DD', initialValue:false, autoClose:true,
-    toolbox:{ calendarSwitch:{ enabled:false } },
-    onSelect: function(unix){
-      let g = new persianDate(unix).toCalendar('gregorian').format('YYYY-MM-DD');
-      $('#end_date').val(toEnglishDigits(g));
-    }
-  });
-
-  $('#contractForm').on('submit', function(e){
-    if(!$('#start_date').val() || !$('#end_date').val()){
-      e.preventDefault();
-      Swal.fire({
-        icon:'warning',
-        title:'تاریخ ناقص',
-        text:'لطفاً تاریخ شروع و پایان را انتخاب کنید.',
-        confirmButtonText:'باشه'
-      });
-    }
-  });
+    sd?.addEventListener('jdp:change',e=>{ if(sh) sh.value = greg(e.detail, sd.value); });
+    ed?.addEventListener('jdp:change',e=>{ if(eh) eh.value = greg(e.detail, ed.value); });
+    sd?.addEventListener('change',()=>{ if(sh) sh.value = sd.value; });
+    ed?.addEventListener('change',()=>{ if(eh) eh.value = ed.value; });
+    document.getElementById('contractForm')?.addEventListener('submit',function(e){
+        if(!sh?.value || !eh?.value){
+            e.preventDefault();
+            Swal.fire({ icon:'warning', title:'تاریخ ناقص', text:'لطفاً تاریخ شروع و پایان را انتخاب کنید.', confirmButtonText:'باشه' });
+        }
+    });
 });
 </script>
 @endpush

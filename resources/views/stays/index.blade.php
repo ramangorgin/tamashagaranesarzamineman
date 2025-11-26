@@ -36,12 +36,12 @@
           @csrf
           <div>
             <label class="form-label small mb-1">شروع (شمسی)</label>
-            <input type="text" id="peak_start_display" class="form-control form-control-sm" placeholder="انتخاب">
+            <input type="text" id="peak_start_display" data-jdp class="form-control form-control-sm" placeholder="انتخاب">
             <input type="hidden" name="start_date" id="peak_start">
           </div>
           <div>
             <label class="form-label small mb-1">پایان (شمسی)</label>
-            <input type="text" id="peak_end_display" class="form-control form-control-sm" placeholder="انتخاب">
+            <input type="text" id="peak_end_display" data-jdp class="form-control form-control-sm" placeholder="انتخاب">
             <input type="hidden" name="end_date" id="peak_end">
           </div>
           <div class="pt-2">
@@ -264,15 +264,23 @@ function postPatch(url, data={}){
 </script>
 <script>
 @if($role==='admin')
-$(function(){
-  $('#peak_start_display').persianDatepicker({
-    format:'YYYY/MM/DD', autoClose:true,
-    onSelect:u=>$('#peak_start').val(new persianDate(u).toCalendar('gregorian').format('YYYY-MM-DD'))
-  });
-  $('#peak_end_display').persianDatepicker({
-    format:'YYYY/MM/DD', autoClose:true,
-    onSelect:u=>$('#peak_end').val(new persianDate(u).toCalendar('gregorian').format('YYYY-MM-DD'))
-  });
+document.addEventListener('DOMContentLoaded',function(){
+  const s = document.getElementById('peak_start_display');
+  const e = document.getElementById('peak_end_display');
+  const hs = document.getElementById('peak_start');
+  const he = document.getElementById('peak_end');
+  function greg(detail, fallback){
+    try{
+      if(detail?.date?.gregorian?.date) return detail.date.gregorian.date;
+      if(detail?.date?.gregorian) return detail.date.gregorian;
+      if(typeof detail?.date?.format==='function') return detail.date.format('YYYY-MM-DD','en');
+    }catch(_){}
+    return fallback;
+  }
+  s?.addEventListener('jdp:change', ev => { if(hs) hs.value = greg(ev.detail, s.value); });
+  e?.addEventListener('jdp:change', ev => { if(he) he.value = greg(ev.detail, e.value); });
+  s?.addEventListener('change', ()=> { if(hs) hs.value = s.value; });
+  e?.addEventListener('change', ()=> { if(he) he.value = e.value; });
 });
 @endif
 </script>

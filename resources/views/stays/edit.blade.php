@@ -10,7 +10,7 @@
 
 @section('breadcrumb-actions')
     @if(($role ?? null)==='admin')
-        <a href="{{ route('admin.stays.show',$stay) }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('stays.show',$stay) }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-eye"></i> مشاهده
         </a>
     @endif
@@ -374,7 +374,7 @@
     inp.addEventListener('blur',()=> inp.value=fmt(inp.value));
   });
 
-  // Geo cascading
+  // Geo cascading (static JSON like create.blade.php)
   const provinceSel=document.getElementById('province'),
         citySel=document.getElementById('city'),
         countySel=document.getElementById('county'),
@@ -383,49 +383,80 @@
         hCity=document.getElementById('city_name'),
         hCounty=document.getElementById('county_name');
   function opt(v,t){return `<option value="${v}">${t}</option>`;}
-  function reset(sel,ph,dis=true){ sel.innerHTML=opt('',ph); dis? sel.setAttribute('disabled','disabled'):sel.removeAttribute('disabled'); }
-  async function load(u){ const r=await fetch(u,{headers:{'Accept':'application/json'}}); if(!r.ok) throw 0; return r.json(); }
-  const routes={
-    provinces:"{{ route('geo.provinces') }}",
-    cities:"{{ route('geo.cities',['province'=>'__']) }}",
-    counties:"{{ route('geo.counties',['province'=>'__P','city'=>'__C']) }}",
-    villages:"{{ route('geo.villages',['province'=>'__P','city'=>'__C','county'=>'__K']) }}"
+  function reset(sel,ph,disable=true){ sel.innerHTML=opt('',ph); if(disable) sel.setAttribute('disabled','disabled'); else sel.removeAttribute('disabled'); }
+  let DATA_PROVINCES=null, DATA_CITIES=null, DATA_COUNTIES=null, DATA_VILLAGES=null;
+  const URLS={
+    provinces: "{{ asset('data/provinces.json') }}",
+    cities: "{{ asset('data/provinces_cities.json') }}",
+    counties: "{{ asset('data/provinces_cities_counties.json') }}",
+    villages: "{{ asset('data/provinces_cities_counties_villages.json') }}",
   };
-  function url(t,p={}){ if(t==='cities') return routes.cities.replace('__',p.province);
-    if(t==='counties') return routes.counties.replace('__P',p.province).replace('__C',p.city);
-    if(t==='villages') return routes.villages.replace('__P',p.province).replace('__C',p.city).replace('__K',p.county);
-    return routes.provinces; }
-  reset(provinceSel,'در حال بارگذاری...',false); reset(citySel,'ابتدا استان را انتخاب کنید'); reset(countySel,'ابتدا شهر را انتخاب کنید'); reset(villageSel,'ابتدا بخش را انتخاب کنید');
-  const oldProvince="{{ old('province_id',$stay->province_id) }}", oldCity="{{ old('city_id',$stay->city_id) }}", oldCounty="{{ old('county_id',$stay->county_id) }}", oldVillage="{{ old('village_name',$stay->village_name) }}";
-  load(url('provinces')).then(list=>{
-    provinceSel.innerHTML=opt('','انتخاب استان'); list.forEach(p=>provinceSel.insertAdjacentHTML('beforeend',opt(p.provinceId,p.provinceName)));
-    if(oldProvince){ provinceSel.value=oldProvince; hProvince.value="{{ old('province_name',$stay->province_name) }}"; provinceSel.dispatchEvent(new Event('change')); }
-  }).catch(()=>provinceSel.innerHTML=opt('', 'خطا در بارگذاری'));
+  const oldProvince="{{ old('province_id',$stay->province_id) }}",
+        oldCity="{{ old('city_id',$stay->city_id) }}",
+        oldCounty="{{ old('county_id',$stay->county_id) }}",
+        oldVillage="{{ old('village_name',$stay->village_name) }}";
+
+  async function loadProvinces(){
+    try{
+      if(!DATA_PROVINCES){ DATA_PROVINCES = await fetch(URLS.provinces,{headers:{'Accept':'application/json'}}).then(r=>r.json()); }
+      provinceSel.innerHTML=opt('','انتخاب استان');
+      DATA_PROVINCES.forEach(p=> provinceSel.insertAdjacentHTML('beforeend', opt(p.provinceId,p.provinceName)) );
+      provinceSel.removeAttribute('disabled');
+      if(oldProvince){ provinceSel.value=oldProvince; hProvince.value="{{ old('province_name',$stay->province_name) }}"; provinceSel.dispatchEvent(new Event('change')); }
+    }catch(e){ provinceSel.innerHTML=opt('', 'خطا در بارگذاری استان‌ها'); }
+  }
+
   provinceSel.addEventListener('change',()=>{
-    const pid=provinceSel.value; hProvince.value=provinceSel.options[provinceSel.selectedIndex]?.text||''; reset(citySel,'در حال بارگذاری...',false); reset(countySel,'ابتدا شهر را انتخاب کنید'); reset(villageSel,'ابتدا بخش را انتخاب کنید');
+    const pid=provinceSel.value; hProvince.value = provinceSel.options[provinceSel.selectedIndex]?.text || '';
+    reset(citySel,'در حال بارگذاری...',false); reset(countySel,'ابتدا شهر را انتخاب کنید'); reset(villageSel,'ابتدا بخش را انتخاب کنید');
     if(!pid){ reset(citySel,'انتخاب شهر'); return; }
-    load(url('cities',{province:pid})).then(rows=>{
-      citySel.innerHTML=opt('','انتخاب شهر'); citySel.removeAttribute('disabled'); rows.forEach(c=>citySel.insertAdjacentHTML('beforeend',opt(c.cityId,c.cityName)));
-      if(oldCity){ citySel.value=oldCity; hCity.value="{{ old('city_name',$stay->city_name) }}"; citySel.dispatchEvent(new Event('change')); }
-    }).catch(()=> citySel.innerHTML=opt('', 'خطا در بارگذاری شهر'));
+    (async ()=>{
+      try{
+        if(!DATA_CITIES){ DATA_CITIES = await fetch(URLS.cities,{headers:{'Accept':'application/json'}}).then(r=>r.json()); }
+        const cities = DATA_CITIES.filter(row=>row.provinceId===pid);
+        citySel.innerHTML=opt('','انتخاب شهر');
+        cities.forEach(c=> citySel.insertAdjacentHTML('beforeend', opt(c.cityId,c.cityName)) );
+        citySel.removeAttribute('disabled');
+        if(oldCity){ citySel.value=oldCity; hCity.value="{{ old('city_name',$stay->city_name) }}"; citySel.dispatchEvent(new Event('change')); }
+      }catch{ citySel.innerHTML=opt('', 'خطا در بارگذاری شهرها'); }
+    })();
   });
+
   citySel.addEventListener('change',()=>{
-    const pid=provinceSel.value,cid=citySel.value; hCity.value=citySel.options[citySel.selectedIndex]?.text||''; reset(countySel,'در حال بارگذاری...',false); reset(villageSel,'ابتدا بخش را انتخاب کنید');
+    const pid=provinceSel.value, cid=citySel.value; hCity.value = citySel.options[citySel.selectedIndex]?.text || '';
+    reset(countySel,'در حال بارگذاری...',false); reset(villageSel,'ابتدا بخش را انتخاب کنید');
     if(!cid){ reset(countySel,'انتخاب بخش'); return; }
-    load(url('counties',{province:pid,city:cid})).then(rows=>{
-      countySel.innerHTML=opt('','انتخاب بخش/شهرستان'); countySel.removeAttribute('disabled'); rows.forEach(c=>countySel.insertAdjacentHTML('beforeend',opt(c.countyId,c.countyName)));
-      if(oldCounty){ countySel.value=oldCounty; hCounty.value="{{ old('county_name',$stay->county_name) }}"; countySel.dispatchEvent(new Event('change')); }
-    }).catch(()=> countySel.innerHTML=opt('', 'خطا در بارگذاری بخش'));
+    (async ()=>{
+      try{
+        if(!DATA_COUNTIES){ DATA_COUNTIES = await fetch(URLS.counties,{headers:{'Accept':'application/json'}}).then(r=>r.json()); }
+        const counties = DATA_COUNTIES.filter(row=>row.provinceId===pid && row.cityId===cid);
+        countySel.innerHTML=opt('','انتخاب بخش/شهرستان');
+        counties.forEach(c=> countySel.insertAdjacentHTML('beforeend', opt(c.countyId,c.countyName)) );
+        countySel.removeAttribute('disabled');
+        if(oldCounty){ countySel.value=oldCounty; hCounty.value="{{ old('county_name',$stay->county_name) }}"; countySel.dispatchEvent(new Event('change')); }
+      }catch{ countySel.innerHTML=opt('', 'خطا در بارگذاری بخش'); }
+    })();
   });
+
   countySel.addEventListener('change',()=>{
-    const pid=provinceSel.value,cid=citySel.value,coid=countySel.value; hCounty.value=countySel.options[countySel.selectedIndex]?.text||''; reset(villageSel,'در حال بارگذاری...',false);
+    const pid=provinceSel.value, cid=citySel.value, coid=countySel.value; hCounty.value = countySel.options[countySel.selectedIndex]?.text || '';
+    reset(villageSel,'در حال بارگذاری...',false);
     if(!coid){ reset(villageSel,'(اختیاری) انتخاب روستا'); return; }
-    load(url('villages',{province:pid,city:cid,county:coid})).then(rows=>{
-      villageSel.innerHTML=opt('', '(اختیاری) انتخاب روستا'); villageSel.removeAttribute('disabled');
-      if(!rows.length) villageSel.insertAdjacentHTML('beforeend',opt('', 'روستایی ثبت نشده')); else rows.forEach(v=>villageSel.insertAdjacentHTML('beforeend',opt(v.villageName,v.villageName)));
-      if(oldVillage){ villageSel.value=oldVillage; }
-    }).catch(()=> villageSel.innerHTML=opt('', 'خطا در بارگذاری روستا'));
+    (async ()=>{
+      try{
+        if(!DATA_VILLAGES){ DATA_VILLAGES = await fetch(URLS.villages,{headers:{'Accept':'application/json'}}).then(r=>r.json()); }
+        const villages = DATA_VILLAGES.filter(row=>row.provinceId===pid && row.cityId===cid && row.countyId===coid);
+        villageSel.innerHTML=opt('', '(اختیاری) انتخاب روستا');
+        if(!villages.length) villageSel.insertAdjacentHTML('beforeend', opt('', 'روستایی ثبت نشده'));
+        else villages.forEach(v=> { if(v.villageName && v.villageName.trim()) villageSel.insertAdjacentHTML('beforeend', opt(v.villageName,v.villageName)); });
+        villageSel.removeAttribute('disabled');
+        if(oldVillage){ villageSel.value=oldVillage; }
+      }catch{ villageSel.innerHTML=opt('', 'خطا در بارگذاری روستاها'); }
+    })();
   });
+
+  reset(provinceSel,'در حال بارگذاری...',false); reset(citySel,'ابتدا استان را انتخاب کنید'); reset(countySel,'ابتدا شهر را انتخاب کنید'); reset(villageSel,'ابتدا بخش را انتخاب کنید');
+  loadProvinces();
 
   // Images
   const imagesInput=document.getElementById('imagesInput');
