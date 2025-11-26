@@ -8,30 +8,42 @@ use Illuminate\Http\Request;
 
 class HostController extends Controller
 {
-    // Minimal host creation to attach before creating a Stay
-    public function quickCreate()
-    {
-        return view('admin.hosts.quick_create');
-    }
-
     public function quickStore(Request $request)
     {
+        $phone = normalize_digits($request->input('phone'));
+        $existing = $phone ? Host::where('phone',$phone)->first() : null;
+        if($existing){
+            if ($request->wantsJson()) {
+                return response()->json($existing->only(['id','name','phone','national_id','status']));
+            }
+            return redirect()->route('admin.stays.create', ['host_id' => $existing->id])
+                ->with('success', 'میزبان موجود انتخاب شد. اکنون اقامت‌گاه را ثبت کنید.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:hosts,phone',
-            'national_id' => 'nullable|string|max:20|unique:hosts,national_id',
+            'phone' => 'required|string|max:20',
+            'national_id' => 'nullable|string|max:20',
+        ],[
+            'name.required' => 'نام الزامی است.',
+            'phone.required' => 'شماره موبایل الزامی است.',
+            'phone.max' => 'شماره موبایل نباید بیش از ۲۰ کاراکتر باشد.',
+            'national_id.max' => 'کد ملی نباید بیش از ۲۰ کاراکتر باشد.',
         ]);
 
         $host = Host::create([
             'name' => $data['name'],
-            'phone' => $data['phone'],
+            'phone' => $phone ?: $data['phone'],
             'national_id' => $data['national_id'] ?? null,
             'status' => 'approved',
         ]);
 
-        return redirect()
-            ->route('admin.stays.create', ['host_id' => $host->id])
-            ->with('success', 'میزبان با وضعیت تایید شده ایجاد شد. اکنون اقامت‌گاه را ثبت کنید.');
+        if ($request->wantsJson()) {
+            return response()->json($host->only(['id','name','phone','national_id','status']));
+        }
+
+        return redirect()->route('admin.stays.create', ['host_id' => $host->id])
+            ->with('success', 'میزبان ایجاد شد. حالا اقامت‌گاه را ثبت کنید.');
     }
 
     public function index(Request $request)
@@ -150,5 +162,35 @@ class HostController extends Controller
         $data = $request->validate(['reason' => 'nullable|string|max:500']);
         $host->update(['status' => 'rejected', 'rejection_reason' => $data['reason'] ?? null]);
         return back()->with('success','میزبان رد شد.');
+    }
+    /**
+     * AJAX: search hosts by name, phone, or national_id.
+     */
+    public function search(Request $request)
+    {
+        $q = trim($request->get('q',''));
+        if($q==='') return response()->json([]);
+        $hosts = Host::query()
+            ->where(function($w) use ($q){
+                $w->where('name','like',"%{$q}%")
+                  ->orWhere('phone','like',"%{$q}%")
+                  ->orWhere('national_id','like',"%{$q}%");
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id','name','phone','national_id','status']);
+        return response()->json($hosts);
+    }
+
+    /**
+     * AJAX: lookup host by phone; 404 if not found.
+     */
+    public function lookupByPhone(Request $request)
+    {
+        $phone = normalize_digits($request->get('phone',''));
+        if($phone==='') return response()->json(['message'=>'phone required'],422);
+        $host = Host::where('phone',$phone)->first(['id','name','phone','national_id','status']);
+        if(!$host) return response()->json(['message'=>'not found'],404);
+        return response()->json($host);
     }
 }

@@ -47,15 +47,10 @@ class StayController extends Controller
     {
         $role = $this->role();
         $categories = ['hotel','villa','apartment','ecolodge','suite','motel','house'];
-        // For admin: require a host_id, otherwise send to quick host creation
+        // Admin: allow opening create without host_id; inline host selection will handle
         $host = null;
-        if ($role === 'admin') {
-            $hostId = request('host_id');
-            if (!$hostId) {
-                return redirect()->route('admin.hosts.quick_create')
-                    ->with('warning', 'ابتدا میزبان را ایجاد کنید سپس اقامت‌گاه را ثبت نمایید.');
-            }
-            $host = \App\Models\Host::findOrFail($hostId);
+        if ($role === 'admin' && request('host_id')) {
+            $host = \App\Models\Host::findOrFail((int)request('host_id'));
         }
         return view('stays.create', compact('categories','role','host'));
     }

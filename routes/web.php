@@ -55,9 +55,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function
         Route::put('members/{discountContractMember}', [DiscountContractMemberController::class, 'update'])->name('discount_contract_members.update');
     });
 
-    // Quick host creation for attaching to a new Stay (place BEFORE resource to avoid {host} capture)
-    Route::get('hosts/quick-create', [HostController::class, 'quickCreate'])->name('hosts.quick_create');
-    Route::post('hosts/quick-create', [HostController::class, 'quickStore'])->name('hosts.quick_store');
+
+    // AJAX helpers for host selection on stay create
+    Route::get('hosts/search', [HostController::class,'search'])->name('hosts.search');
+    Route::get('hosts/lookup', [HostController::class,'lookupByPhone'])->name('hosts.lookup');
     Route::resource('hosts', HostController::class);
     Route::patch('hosts/{host}/approve', [HostController::class, 'approve'])->name('hosts.approve');
     Route::patch('hosts/{host}/reject',  [HostController::class, 'reject'])->name('hosts.reject');

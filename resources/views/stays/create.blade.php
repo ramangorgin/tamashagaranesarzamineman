@@ -15,20 +15,43 @@
       <h4 class="fw-bold text-primary text-center mb-4">
         <i class="bi bi-building-add me-2"></i> ثبت اقامت‌گاه جدید
       </h4>
-      @if(($role ?? null)==='admin' && isset($host))
-        <div class="alert alert-warning d-flex justify-content-between align-items-center small">
-          <div>
-            <i class="bi bi-person-badge me-2"></i>
-            ثبت برای میزبان: <strong>{{ $host->name ?: '—' }}</strong>
-            <span class="mx-2">|</span>
-            موبایل: <span dir="ltr">{{ $host->phone }}</span>
-            @if($host->national_id)
-              <span class="mx-2">|</span>
-              کد ملی: <span dir="ltr">{{ $host->national_id }}</span>
-            @endif
-          </div>
-          <div>
-            <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.hosts.quick_create') }}">تغییر میزبان</a>
+      @php $role = $role ?? (auth('admin')->check() ? 'admin' : 'host'); @endphp
+      @if($role==='admin')
+        <div class="card border-0 mb-3">
+          <div class="card-body p-3 d-flex flex-column gap-2">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="fw-semibold"><i class="bi bi-person-badge me-2"></i> انتخاب میزبان</div>
+              <div class="small text-muted">ابتدا میزبان را تعیین کنید</div>
+            </div>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label small">نام میزبان (جستجو فقط بر اساس نام)</label>
+                <input type="text" id="hostSearch" class="form-control" placeholder="مثال: علی رضایی" autocomplete="off">
+                <div id="hostSearchResults" class="list-group mt-1" style="max-height:220px;overflow:auto;display:none"></div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">موبایل (فقط جستجو با شماره)</label>
+                <input type="text" id="hostPhone" class="form-control" inputmode="tel" dir="ltr" placeholder="09XXXXXXXXX">
+              </div>
+              <div class="col-md-2 d-grid">
+                <label class="form-label small">&nbsp;</label>
+                <button type="button" id="btnQuickCreateHost" class="btn btn-outline-primary">ایجاد سریع</button>
+              </div>
+            </div>
+            <div id="hostSelectedBox" class="alert alert-warning d-flex justify-content-between align-items-center small" style="display:none">
+              <div>
+                <i class="bi bi-person-badge me-2"></i>
+                میزبان: <strong id="hostSelName">—</strong>
+                <span class="mx-2">|</span>
+                موبایل: <span id="hostSelPhone" dir="ltr"></span>
+                <span class="mx-2">|</span>
+                وضعیت: <span id="hostSelStatus"></span>
+              </div>
+              <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnChangeHost">تغییر</button>
+              </div>
+            </div>
+            <input type="hidden" name="host_id" id="host_id" value="{{ isset($host)?$host->id:'' }}">
           </div>
         </div>
       @endif
@@ -41,10 +64,6 @@
       @endif
       <form id="stayForm" method="POST" action="{{ isset($role)&&$role==='admin' ? route('admin.stays.store') : route('host.stays.store') }}" enctype="multipart/form-data">
         @csrf
-        @php $role = $role ?? (auth('admin')->check() ? 'admin' : 'host'); @endphp
-        @if(($role ?? null)==='admin' && isset($host))
-          <input type="hidden" name="host_id" value="{{ $host->id }}">
-        @endif
         {{-- Step indicators --}}
         <div class="d-flex flex-wrap justify-content-center mb-4 gap-2 small fw-semibold">
           <div class="step-dot active" data-step="1">مشخصات</div>
@@ -349,6 +368,12 @@
   document.querySelectorAll('.step-dot').forEach(d=> d.addEventListener('click',()=>{const s=parseInt(d.dataset.step); if(s<current) show(s);} ));
 
   function validateStep(step){
+    // Admin must select host first
+    const role='{{ $role }}';
+    if(role==='admin' && step===1){
+      const hid=document.getElementById('host_id').value;
+      if(!hid){ Swal.fire({icon:'warning',title:'ابتدا میزبان را انتخاب کنید'}); return false; }
+    }
     if(step===2 && !document.getElementById('lat').value){
       Swal.fire({icon:'warning',title:'مختصات انتخاب نشده'}); return false;
     }
@@ -488,6 +513,108 @@
   });
   reset(provinceSel,'در حال بارگذاری...',false); reset(citySel,'ابتدا استان را انتخاب کنید'); reset(countySel,'ابتدا شهر را انتخاب کنید'); reset(villageSel,'ابتدا بخش را انتخاب کنید');
   loadProvinces();
+
+  // Admin host selection logic
+  (function(){
+    const role='{{ $role }}';
+    if(role!=='admin') return;
+    const hostId=document.getElementById('host_id');
+    const box=document.getElementById('hostSelectedBox');
+    const selName=document.getElementById('hostSelName');
+    const selPhone=document.getElementById('hostSelPhone');
+    const selStatus=document.getElementById('hostSelStatus');
+    function statusToFa(s){
+      switch(String(s||'').toLowerCase()){
+        case 'approved': return 'تأیید شده';
+        case 'pending': return 'در انتظار بررسی';
+        case 'rejected': return 'رد شده';
+        default: return s||'—';
+      }
+    }
+    function bindHost(h){
+      hostId.value=h.id;
+      selName.textContent=h.name||'—';
+      selPhone.textContent=h.phone||'';
+      selStatus.textContent=statusToFa(h.status);
+      box.style.display='flex';
+    }
+    function clearHost(){
+      hostId.value='';
+      box.style.display='none';
+      // reset inputs and UI state
+      hostSearch.value='';
+      results.innerHTML='';
+      results.style.display='none';
+      hostPhone.value='';
+      // give a gentle cue and focus name field
+      Swal.fire({toast:true,icon:'info',title:'میزبان پاک شد. دوباره انتخاب کنید',position:'top',timer:1400,showConfirmButton:false});
+      setTimeout(()=> hostSearch.focus(), 50);
+    }
+
+    const hostSearch=document.getElementById('hostSearch');
+    const results=document.getElementById('hostSearchResults');
+    let t=null;
+    hostSearch.addEventListener('input',()=>{
+      // Enforce name-only: strip digits and phone-like characters
+      const cleaned = hostSearch.value.replace(/[0-9۰-۹٠-٩+\-_,.]/g,'');
+      if(cleaned !== hostSearch.value){ hostSearch.value = cleaned; }
+      const q=hostSearch.value.trim();
+      clearTimeout(t);
+      if(q.length<2){ results.style.display='none'; results.innerHTML=''; return; }
+      t=setTimeout(async ()=>{
+        try{
+          const res=await fetch("{{ route('admin.hosts.search') }}?q="+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+          const rows=await res.json();
+          results.innerHTML='';
+          rows.forEach(h=>{
+            const a=document.createElement('a');
+            a.href='#'; a.className='list-group-item list-group-item-action';
+            a.innerHTML=`<div class="d-flex justify-content-between"><div>${h.name||'—'}</div><div class="small" dir="ltr">${h.phone||''}</div></div><div class="small text-muted">${h.national_id||''} · ${h.status||''}</div>`;
+            a.addEventListener('click',(e)=>{ e.preventDefault(); bindHost(h); results.style.display='none'; });
+            results.appendChild(a);
+          });
+          results.style.display = rows.length ? 'block':'none';
+        }catch{ results.style.display='none'; }
+      },300);
+    });
+
+    const hostPhone=document.getElementById('hostPhone');
+    function toEnDigits(s){const fa='۰۱۲۳۴۵۶۷۸۹', ar='٠١٢٣٤٥٦٧٨٩'; let out=''; for(const ch of String(s)){const iFa=fa.indexOf(ch); if(iFa>-1){out+=String(iFa); continue;} const iAr=ar.indexOf(ch); if(iAr>-1){out+=String(iAr); continue;} out+=ch;} return out; }
+    ['input','blur','change'].forEach(ev=> hostPhone.addEventListener(ev,()=>{ hostPhone.value=toEnDigits(hostPhone.value).replace(/[^0-9]/g,''); }));
+    // On blur: only try to bind existing host by phone (no modal)
+    hostPhone.addEventListener('blur', async ()=>{
+      const p=hostPhone.value.trim(); if(!p) return;
+      try{
+        const res=await fetch("{{ route('admin.hosts.lookup') }}?phone="+encodeURIComponent(p),{headers:{'Accept':'application/json'}});
+        if(res.ok){ const h=await res.json(); bindHost(h); }
+      }catch{}
+    });
+
+    // Quick create instantly using phone (+ optional name from search field)
+    document.getElementById('btnQuickCreateHost').addEventListener('click', async ()=>{
+      const phone = hostPhone.value.trim();
+      if(!phone){ Swal.fire({icon:'warning',title:'ابتدا شماره موبایل را وارد کنید'}); return; }
+      try{
+        // If exists, bind
+        const chk=await fetch("{{ route('admin.hosts.lookup') }}?phone="+encodeURIComponent(phone),{headers:{'Accept':'application/json'}});
+        if(chk.ok){ const h=await chk.json(); bindHost(h); return; }
+      }catch{}
+      const name = (hostSearch.value||'').trim() || phone;
+      const form = new FormData();
+      form.append('_token','{{ csrf_token() }}');
+      form.append('name', name);
+      form.append('phone', phone);
+      try{
+        const resp = await fetch("{{ route('admin.hosts.quick_store') }}",{method:'POST', body: form, headers:{'Accept':'application/json'}});
+        if(resp.ok){ const h=await resp.json(); bindHost(h); Swal.fire({toast:true,icon:'success',title:'میزبان ایجاد شد',position:'top',timer:1200,showConfirmButton:false}); }
+        else{
+          const d = await resp.json().catch(()=>({message:'خطا'}));
+          Swal.fire({icon:'error',title:'خطا در ایجاد', text: d.message||'لطفاً ورودی‌ها را بررسی کنید'});
+        }
+      }catch{ Swal.fire({icon:'error',title:'خطا در ارتباط با سرور'}); }
+    });
+    document.getElementById('btnChangeHost').addEventListener('click',()=> clearHost());
+  })();
 
   // Images preview
   const imagesInput=document.getElementById('imagesInput');
