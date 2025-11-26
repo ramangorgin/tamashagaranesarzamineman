@@ -47,7 +47,17 @@ class StayController extends Controller
     {
         $role = $this->role();
         $categories = ['hotel','villa','apartment','ecolodge','suite','motel','house'];
-        return view('stays.create', compact('categories','role'));
+        // For admin: require a host_id, otherwise send to quick host creation
+        $host = null;
+        if ($role === 'admin') {
+            $hostId = request('host_id');
+            if (!$hostId) {
+                return redirect()->route('admin.hosts.quick_create')
+                    ->with('warning', 'ابتدا میزبان را ایجاد کنید سپس اقامت‌گاه را ثبت نمایید.');
+            }
+            $host = \App\Models\Host::findOrFail($hostId);
+        }
+        return view('stays.create', compact('categories','role','host'));
     }
 
     // STORE
@@ -101,6 +111,11 @@ class StayController extends Controller
                 'max_discount_peak'=>'required|numeric|min:0|max:100',
             ];
         }
+        if ($role === 'admin') {
+            $rules += [
+                'host_id' => 'required|integer|exists:hosts,id',
+            ];
+        }
 
         $data = $request->validate($rules);
 
@@ -112,8 +127,8 @@ class StayController extends Controller
 
         if ($role === 'host') {
             $data['host_id'] = $this->userId('host');
-        } else {
-            $data['host_id'] = null; // Admin-created stays have no host
+        } else { // admin
+            $data['host_id'] = (int)$request->input('host_id');
         }
 
         $stay = Stay::create($data);

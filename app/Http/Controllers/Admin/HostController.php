@@ -8,6 +8,32 @@ use Illuminate\Http\Request;
 
 class HostController extends Controller
 {
+    // Minimal host creation to attach before creating a Stay
+    public function quickCreate()
+    {
+        return view('admin.hosts.quick_create');
+    }
+
+    public function quickStore(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:hosts,phone',
+            'national_id' => 'nullable|string|max:20|unique:hosts,national_id',
+        ]);
+
+        $host = Host::create([
+            'name' => $data['name'],
+            'phone' => $data['phone'],
+            'national_id' => $data['national_id'] ?? null,
+            'status' => 'approved',
+        ]);
+
+        return redirect()
+            ->route('admin.stays.create', ['host_id' => $host->id])
+            ->with('success', 'میزبان با وضعیت تایید شده ایجاد شد. اکنون اقامت‌گاه را ثبت کنید.');
+    }
+
     public function index(Request $request)
     {
         $q = trim($request->get('q',''));

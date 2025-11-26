@@ -15,6 +15,23 @@
       <h4 class="fw-bold text-primary text-center mb-4">
         <i class="bi bi-building-add me-2"></i> ثبت اقامت‌گاه جدید
       </h4>
+      @if(($role ?? null)==='admin' && isset($host))
+        <div class="alert alert-warning d-flex justify-content-between align-items-center small">
+          <div>
+            <i class="bi bi-person-badge me-2"></i>
+            ثبت برای میزبان: <strong>{{ $host->name ?: '—' }}</strong>
+            <span class="mx-2">|</span>
+            موبایل: <span dir="ltr">{{ $host->phone }}</span>
+            @if($host->national_id)
+              <span class="mx-2">|</span>
+              کد ملی: <span dir="ltr">{{ $host->national_id }}</span>
+            @endif
+          </div>
+          <div>
+            <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.hosts.quick_create') }}">تغییر میزبان</a>
+          </div>
+        </div>
+      @endif
       @if($errors->any())
         <div class="alert alert-danger small">
           <ul class="mb-0">
@@ -25,6 +42,9 @@
       <form id="stayForm" method="POST" action="{{ isset($role)&&$role==='admin' ? route('admin.stays.store') : route('host.stays.store') }}" enctype="multipart/form-data">
         @csrf
         @php $role = $role ?? (auth('admin')->check() ? 'admin' : 'host'); @endphp
+        @if(($role ?? null)==='admin' && isset($host))
+          <input type="hidden" name="host_id" value="{{ $host->id }}">
+        @endif
         {{-- Step indicators --}}
         <div class="d-flex flex-wrap justify-content-center mb-4 gap-2 small fw-semibold">
           <div class="step-dot active" data-step="1">مشخصات</div>
@@ -167,7 +187,6 @@
               <label class="form-label">قیمت نفر اضافه <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="extra_person_price" class="form-control price-field" data-price-format value="0">
             </div>
-            @if($role !== 'admin')
               <div class="col-md-4">
                 <label class="form-label">درصد کمیسیون سایت</label>
                 <div class="input-group">
@@ -189,11 +208,9 @@
                   <span class="input-group-text">%</span>
                 </div>
               </div>
-            @else
               <input type="hidden" name="site_commission" value="0">
               <input type="hidden" name="max_discount_normal" value="0">
               <input type="hidden" name="max_discount_peak" value="0">
-            @endif
           </div>
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
