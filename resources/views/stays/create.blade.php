@@ -590,8 +590,16 @@
       }catch{}
     });
 
+    // Determine endpoint (fallback if quick_store route is absent)
+    const quickHostUrl = "{{ Route::has('admin.hosts.quick_store') ? route('admin.hosts.quick_store') : (Route::has('admin.hosts.store') ? route('admin.hosts.store') : '') }}";
+    const quickBtn = document.getElementById('btnQuickCreateHost');
+    if(!quickHostUrl){
+      quickBtn.disabled = true;
+      quickBtn.title = 'مسیر ایجاد میزبان در سرور یافت نشد';
+    }
+
     // Quick create instantly using phone (+ optional name from search field)
-    document.getElementById('btnQuickCreateHost').addEventListener('click', async ()=>{
+    quickBtn.addEventListener('click', async ()=>{
       const phone = hostPhone.value.trim();
       if(!phone){ Swal.fire({icon:'warning',title:'ابتدا شماره موبایل را وارد کنید'}); return; }
       try{
@@ -605,7 +613,7 @@
       form.append('name', name);
       form.append('phone', phone);
       try{
-        const resp = await fetch("{{ route('admin.hosts.quick_store') }}",{method:'POST', body: form, headers:{'Accept':'application/json'}});
+        const resp = await fetch(quickHostUrl,{method:'POST', body: form, headers:{'Accept':'application/json'}});
         if(resp.ok){ const h=await resp.json(); bindHost(h); Swal.fire({toast:true,icon:'success',title:'میزبان ایجاد شد',position:'top',timer:1200,showConfirmButton:false}); }
         else{
           const d = await resp.json().catch(()=>({message:'خطا'}));
