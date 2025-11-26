@@ -93,7 +93,7 @@
                                     <td>{{ $m->national_id ?: '-' }}</td>
                                     <td>{{ $m->phone ?: '-' }}</td>
                                     <td class="text-end">
-                                        <form method="POST" action="{{ route('admin.discount_contract_members.destroy',[$contract,$m]) }}" onsubmit="return confirm('حذف این عضو؟')">
+                                        <form method="POST" action="{{ route('admin.discount_contract_members.destroy',[$contract,$m]) }}" class="js-confirm-delete" data-message="حذف این عضو؟">
                                             @csrf @method('DELETE')
                                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                         </form>
@@ -165,6 +165,28 @@ $(function() {
     ed?.addEventListener('change', () => { if(eh && ed.value && window.moment){
         const m = window.moment(ed.value,'jYYYY/jMM/jDD'); if(m.isValid()) eh.value = m.format('YYYY-MM-DD');
     }});
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('.js-confirm-delete').forEach(function(form){
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            const msg = form.getAttribute('data-message') || 'حذف؟';
+            if(window.Swal){
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تأیید حذف',
+                    text: msg,
+                    showCancelButton: true,
+                    confirmButtonText: 'بله، حذف کن',
+                    cancelButtonText: 'انصراف'
+                }).then((res)=>{ if(res.isConfirmed) form.submit(); });
+            } else {
+                if(confirm(msg)) form.submit();
+            }
+        });
+    });
 });
 </script>
 @endpush

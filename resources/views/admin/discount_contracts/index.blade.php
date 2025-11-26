@@ -107,8 +107,7 @@
                                     <a href="{{ route('admin.discount_contracts.edit', $contract) }}" class="btn btn-outline-primary">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <form action="{{ route('admin.discount_contracts.destroy', $contract) }}" method="POST"
-                                          onsubmit="return confirm('حذف این قرارداد؟')">
+                                                                        <form action="{{ route('admin.discount_contracts.destroy', $contract) }}" method="POST" class="js-confirm-delete" data-message="حذف این قرارداد؟">
                                         @csrf @method('DELETE')
                                         <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
                                     </form>
@@ -173,7 +172,27 @@ document.addEventListener('DOMContentLoaded',function(){
   td?.addEventListener('jdp:change',e=>{ if(th) th.value = greg(e.detail, td.value); });
   fd?.addEventListener('change',()=>{ if(fh) fh.value = fd.value; });
   td?.addEventListener('change',()=>{ if(th) th.value = td.value; });
+    // SweetAlert confirm for delete forms
+    document.querySelectorAll('.js-confirm-delete').forEach(function(form){
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            const msg = form.getAttribute('data-message') || 'حذف؟';
+            if(window.Swal){
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تأیید حذف',
+                    text: msg,
+                    showCancelButton: true,
+                    confirmButtonText: 'بله، حذف کن',
+                    cancelButtonText: 'انصراف'
+                }).then((res)=>{ if(res.isConfirmed) form.submit(); });
+            } else {
+                if(confirm(msg)) form.submit();
+            }
+        });
+    });
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.10/dist/jalali-moment.browser.js"></script>
 @endpush
