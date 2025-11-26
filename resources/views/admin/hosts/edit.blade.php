@@ -98,6 +98,12 @@
     counties: "{{ asset('data/provinces_cities_counties.json') }}",
     villages: "{{ asset('data/provinces_cities_counties_villages.json') }}",
   };
+  const FALLBACK={
+    provinces: "{{ route('geo.provinces') }}",
+    cities: (pid)=> "{{ url('/geo/provinces') }}/"+pid+"/cities",
+    counties: (pid,cid)=> "{{ url('/geo/provinces') }}/"+pid+"/cities/"+cid+"/counties",
+    villages: (pid,cid,coid)=> "{{ url('/geo/provinces') }}/"+pid+"/cities/"+cid+"/counties/"+coid+"/villages",
+  };
 
   async function loadProvinces(){
     try{
@@ -106,7 +112,14 @@
       DATA_PROVINCES.forEach(p=> selP.insertAdjacentHTML('beforeend', opt(p.provinceId,p.provinceName)) );
       selP.removeAttribute('disabled');
       if(initP){ selP.value=initP; hP.value='{{ old('province_name',$host->province_name) }}'; selP.dispatchEvent(new Event('change')); }
-    }catch{ selP.innerHTML=opt('', 'خطا در بارگذاری استان‌ها'); }
+    }catch{
+      try{
+        const rows = await fetch(FALLBACK.provinces,{headers:{'Accept':'application/json'}}).then(r=>r.json());
+        selP.innerHTML=opt('','انتخاب استان'); rows.forEach(p=> selP.insertAdjacentHTML('beforeend', opt(p.id||p.provinceId,p.name||p.provinceName)) );
+        selP.removeAttribute('disabled');
+        if(initP){ selP.value=initP; hP.value='{{ old('province_name',$host->province_name) }}'; selP.dispatchEvent(new Event('change')); }
+      }catch{ selP.innerHTML=opt('', 'خطا در بارگذاری استان‌ها'); }
+    }
   }
 
   selP.addEventListener('change',()=>{
@@ -121,7 +134,14 @@
         cities.forEach(c=> selC.insertAdjacentHTML('beforeend', opt(c.cityId,c.cityName)) );
         selC.removeAttribute('disabled');
         if(initC){ selC.value=initC; hC.value='{{ old('city_name',$host->city_name) }}'; selC.dispatchEvent(new Event('change')); }
-      }catch{ selC.innerHTML=opt('', 'خطا در بارگذاری شهرها'); }
+      }catch{
+        try{
+          const rows = await fetch(FALLBACK.cities(selP.value),{headers:{'Accept':'application/json'}}).then(r=>r.json());
+          selC.innerHTML=opt('','انتخاب شهر'); rows.forEach(c=> selC.insertAdjacentHTML('beforeend', opt(c.id||c.cityId,c.name||c.cityName)) );
+          selC.removeAttribute('disabled');
+          if(initC){ selC.value=initC; hC.value='{{ old('city_name',$host->city_name) }}'; selC.dispatchEvent(new Event('change')); }
+        }catch{ selC.innerHTML=opt('', 'خطا در بارگذاری شهرها'); }
+      }
     })();
   });
 
@@ -137,7 +157,14 @@
         counties.forEach(c=> selCo.insertAdjacentHTML('beforeend', opt(c.countyId,c.countyName)) );
         selCo.removeAttribute('disabled');
         if(initCo){ selCo.value=initCo; hCo.value='{{ old('county_name',$host->county_name) }}'; selCo.dispatchEvent(new Event('change')); }
-      }catch{ selCo.innerHTML=opt('', 'خطا در بارگذاری بخش'); }
+      }catch{
+        try{
+          const rows = await fetch(FALLBACK.counties(selP.value,selC.value),{headers:{'Accept':'application/json'}}).then(r=>r.json());
+          selCo.innerHTML=opt('','انتخاب بخش/شهرستان'); rows.forEach(c=> selCo.insertAdjacentHTML('beforeend', opt(c.id||c.countyId,c.name||c.countyName)) );
+          selCo.removeAttribute('disabled');
+          if(initCo){ selCo.value=initCo; hCo.value='{{ old('county_name',$host->county_name) }}'; selCo.dispatchEvent(new Event('change')); }
+        }catch{ selCo.innerHTML=opt('', 'خطا در بارگذاری بخش'); }
+      }
     })();
   });
 
@@ -154,7 +181,16 @@
         else villages.forEach(v=> { if(v.villageName && v.villageName.trim()) selV.insertAdjacentHTML('beforeend', opt(v.villageName,v.villageName)); });
         selV.removeAttribute('disabled');
         if(initV){ selV.value=initV; }
-      }catch{ selV.innerHTML=opt('', 'خطا در بارگذاری روستاها'); }
+      }catch{
+        try{
+          const rows = await fetch(FALLBACK.villages(selP.value,selC.value,selCo.value),{headers:{'Accept':'application/json'}}).then(r=>r.json());
+          selV.innerHTML=opt('', '(اختیاری) انتخاب روستا');
+          if(!rows.length) selV.insertAdjacentHTML('beforeend', opt('', 'روستایی ثبت نشده'));
+          else rows.forEach(v=> { const name=v.name||v.villageName; if(name && name.trim()) selV.insertAdjacentHTML('beforeend', opt(name,name)); });
+          selV.removeAttribute('disabled');
+          if(initV){ selV.value=initV; }
+        }catch{ selV.innerHTML=opt('', 'خطا در بارگذاری روستاها'); }
+      }
     })();
   });
 

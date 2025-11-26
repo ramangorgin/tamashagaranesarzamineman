@@ -18,7 +18,3 @@ yarn-error.log
 /.idea
 /.vscode
 
-public/data/provinces.json
-public/data/provinces_cities.json
-public/data/provinces_cities_counties.json
-public/data/provinces_cities_counties_villages.json
