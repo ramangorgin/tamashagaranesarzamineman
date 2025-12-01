@@ -51,18 +51,21 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="btnChangeHost">تغییر</button>
               </div>
             </div>
-            <input type="hidden" name="host_id" id="host_id" value="{{ isset($host)?$host->id:'' }}">
+            <!-- moved hidden host_id input inside the form below -->
           </div>
         </div>
       @endif
-      @if($errors->any())
-        <div class="alert alert-danger small">
-          <ul class="mb-0">
-            @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-          </ul>
-        </div>
+      @if(($role ?? null)!=='admin')
+        @if($errors->any())
+          <div class="alert alert-danger small mb-3">
+            <ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+          </div>
+        @endif
       @endif
       <form id="stayForm" method="POST" action="{{ isset($role)&&$role==='admin' ? route('admin.stays.store') : route('host.stays.store') }}" enctype="multipart/form-data">
+        @if($role==='admin')
+          <input type="hidden" name="host_id" id="host_id" value="{{ isset($host)?$host->id:'' }}">
+        @endif
         @csrf
         {{-- Step indicators --}}
         <div class="d-flex flex-wrap justify-content-center mb-4 gap-2 small fw-semibold">
@@ -72,7 +75,9 @@
           <div class="step-dot" data-step="4">قیمت</div>
           <div class="step-dot" data-step="5">تصاویر</div>
           <div class="step-dot" data-step="6">قوانین</div>
-          <div class="step-dot" data-step="7">تأیید</div>
+          @if(($role ?? null)!=='admin')
+            <div class="step-dot" data-step="7">تأیید</div>
+          @endif
         </div>
         {{-- Step 1 --}}
         <div id="step1">
@@ -199,10 +204,21 @@
         <div id="step4" class="d-none">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label">قیمت هر نفر (ظرفیت پایه) <small class="text-muted">(ریال)</small></label>
-              <input type="text" inputmode="numeric" name="price_per_person" class="form-control price-field" data-price-format value="0" required>
+              <label class="form-label">نوع قیمت‌گذاری</label>
+              <select name="pricing_mode" id="pricing_mode" class="form-select" required>
+                <option value="per_person">به ازای هر نفر</option>
+                <option value="per_night">به ازای هر شب</option>
+              </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 pricing-per-person">
+              <label class="form-label">قیمت هر نفر (ظرفیت پایه) <small class="text-muted">(ریال)</small></label>
+              <input type="text" inputmode="numeric" name="price_per_person" id="price_per_person" class="form-control price-field" data-price-format value="0">
+            </div>
+            <div class="col-md-4 pricing-per-night d-none">
+              <label class="form-label">قیمت هر شب <small class="text-muted">(ریال)</small></label>
+              <input type="text" inputmode="numeric" name="price_per_night" id="price_per_night" class="form-control price-field" data-price-format value="0">
+            </div>
+            <div class="col-md-4 extra-person-group">
               <label class="form-label">قیمت نفر اضافه <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="extra_person_price" class="form-control price-field" data-price-format value="0">
             </div>
@@ -240,10 +256,12 @@
         <div id="step5" class="d-none">
           <div class="mb-3">
             <label class="form-label">تصاویر اقامت‌گاه (حداکثر 10)</label>
-            <input type="file" name="images[]" id="imagesInput" accept="image/*" multiple class="form-control">
-            <small class="text-muted d-block mt-1">روی ستاره کلیک کنید تا تصویر اصلی شود.</small>
+            <input type="file" name="images[]" id="imagesInput" accept="image/*" multiple>
+            <small class="text-muted d-block mt-2" style="cursor: pointer;">
+              برای افزودن تصویر، روی جعبه بالا کلیک کنید. هر بار یک تصویر انتخاب کنید و در صورت نیاز چندین بار کلیک نمایید.
+              با دوبار کلیک روی تصویر بندانگشتی، آن را به‌عنوان «تصویر اصلی» انتخاب کنید.
+            </small>
           </div>
-          <div id="imagesPreview" class="row g-3"></div>
           <input type="hidden" name="main_image_index" id="main_image_index">
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
@@ -284,20 +302,26 @@
           <div class="mt-3 small text-muted">نمونه‌ها: «برگزاری پارتی: ممنوع»، «پخش آهنگ: مجاز»</div>
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
-            <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
+            @if(($role ?? null)==='admin')
+              <button type="submit" class="btn btn-success">ثبت اقامت‌گاه <i class="bi bi-check2-circle"></i></button>
+            @else
+              <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
+            @endif
           </div>
         </div>
         {{-- Step 7: Review --}}
-        <div id="step7" class="d-none">
-          <div class="alert alert-info d-flex align-items-center">
-            <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-            بررسی نهایی و ارسال برای تأیید مدیر.
+        @if(($role ?? null)!=='admin')
+          <div id="step7" class="d-none">
+            <div class="alert alert-info d-flex align-items-center">
+              <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+              بررسی نهایی و ارسال برای تأیید مدیر.
+            </div>
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
+              <button type="submit" class="btn btn-success">ثبت اقامت‌گاه <i class="bi bi-check2-circle"></i></button>
+            </div>
           </div>
-          <div class="d-flex justify-content-between">
-            <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
-            <button type="submit" class="btn btn-success">ثبت اقامت‌گاه <i class="bi bi-check2-circle"></i></button>
-          </div>
-        </div>
+        @endif
       </form>
     </div>
   </div>
@@ -319,15 +343,36 @@
 .remove-img{position:absolute;bottom:6px;right:6px;background:#dc3545;color:#fff;border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .rule-row-removed{opacity:.4;text-decoration:line-through}
 .price-field{text-align:left;direction:ltr}
+/* FilePond styles */
+.filepond--root{border-radius:12px;overflow:hidden}
+.filepond--panel-root{border-radius:12px}
+.filepond--drop-label{
+  color:#334155; font-size:.95rem;
+}
+.filepond--item.is-main .filepond--item-panel{
+  box-shadow:0 0 0 2px #ffc107 inset;
+}
+.filepond--item.is-main::after{
+  content:'تصویر اصلی';
+  position:absolute; top:6px; left:6px;
+  background:#ffc107; color:#212529;
+  padding:4px 8px; border-radius:12px; font-size:.7rem;
+  box-shadow:0 0 0 2px rgba(255,193,7,.4);
+}
 </style>
+<link href="https://unpkg.com/filepond@4.30.4/dist/filepond.min.css" rel="stylesheet">
+<link href="https://unpkg.com/filepond-plugin-image-preview@4.6.11/dist/filepond-plugin-image-preview.min.css" rel="stylesheet">
 @endpush
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/filepond-plugin-image-preview@4.6.11/dist/filepond-plugin-image-preview.min.js"></script>
+<script src="https://unpkg.com/filepond@4.30.4/dist/filepond.min.js"></script>
 <script>
 (function(){
-  const totalSteps=7;
+  const role='{{ $role }}';
+  const totalSteps = role==='admin' ? 6 : 7;
   let current=1;
   let map, marker=null;
   function initMap(){
@@ -369,7 +414,6 @@
 
   function validateStep(step){
     // Admin must select host first
-    const role='{{ $role }}';
     if(role==='admin' && step===1){
       const hid=document.getElementById('host_id').value;
       if(!hid){ Swal.fire({icon:'warning',title:'ابتدا میزبان را انتخاب کنید'}); return false; }
@@ -378,8 +422,11 @@
       Swal.fire({icon:'warning',title:'مختصات انتخاب نشده'}); return false;
     }
     if(step===5){ // images limit
-      const files=document.getElementById('imagesInput').files;
-      if(files.length>10){ Swal.fire({icon:'error',title:'حداکثر 10 تصویر'}); return false; }
+      const inputEl=document.getElementById('imagesInput');
+      const pondCount = (typeof FilePond!=='undefined' && inputEl? FilePond.find(inputEl)?.getFiles().length : 0) || 0;
+      const filesLen = inputEl?.files?.length || 0;
+      const total = Math.max(pondCount, filesLen);
+      if(total>10){ Swal.fire({icon:'error',title:'حداکثر 10 تصویر'}); return false; }
     }
     const container=document.getElementById('step'+step);
     let invalid=false;
@@ -624,46 +671,50 @@
     document.getElementById('btnChangeHost').addEventListener('click',()=> clearHost());
   })();
 
-  // Images preview
+  // Images upload with FilePond
   const imagesInput=document.getElementById('imagesInput');
-  const previewContainer=document.getElementById('imagesPreview');
   const mainIndexField=document.getElementById('main_image_index');
-  imagesInput.addEventListener('change',()=>{
-    previewContainer.innerHTML='';
-    const files=[...imagesInput.files].slice(0,10);
-    files.forEach((file,i)=>{
-      const reader=new FileReader();
-      reader.onload=e=>{
-        const col=document.createElement('div');
-        col.className='col-6 col-md-3';
-        col.innerHTML=`<div class="image-box">
-          <img src="${e.target.result}" alt="">
-          <div class="main-badge" data-index="${i}"><i class="bi bi-star${i===0?' -fill':''}"></i><span>${i===0?'تصویر اصلی':'انتخاب بعنوان اصلی'}</span></div>
-          <button type="button" class="remove-img" data-index="${i}" title="حذف"><i class="bi bi-x-lg"></i></button>
-        </div>`;
-        previewContainer.appendChild(col);
-      };
-      reader.readAsDataURL(file);
-    });
-    mainIndexField.value='0';
+  FilePond.registerPlugin(FilePondPluginImagePreview);
+  const pond = FilePond.create(imagesInput, {
+    credits: false,
+    allowMultiple: true,
+    maxFiles: 10,
+    acceptedFileTypes: ['image/*'],
+    storeAsFile: true,
+    instantUpload: false,
+    labelIdle: 'برای افزودن تصویر کلیک کنید یا فایل را اینجا رها کنید',
+    labelInvalidField: 'فایل انتخاب‌شده معتبر نیست',
+    labelFileProcessing: 'در حال بارگذاری',
+    labelFileProcessingComplete: 'بارگذاری شد',
+    labelTapToCancel: 'لغو',
+    labelTapToUndo: 'بازگردانی',
   });
-  previewContainer.addEventListener('click',e=>{
-    const badge=e.target.closest('.main-badge');
-    if(badge){
-      const idx=badge.dataset.index;
-      mainIndexField.value=idx;
-      previewContainer.querySelectorAll('.main-badge').forEach(b=>{
-        const star=b.querySelector('i');
-        if(b.dataset.index===idx){ star.className='bi bi-star-fill'; b.querySelector('span').textContent='تصویر اصلی'; b.style.background='#ffc107'; }
-        else { star.className='bi bi-star'; b.querySelector('span').textContent='انتخاب بعنوان اصلی'; b.style.background='rgba(255,255,255,.85)'; }
-      });
-    }
-    const remove=e.target.closest('.remove-img');
-    if(remove){
-      const rIndex=parseInt(remove.dataset.index);
-      // Build new FileList (not trivial) -> simplest: alert user to reselect
-      Swal.fire({icon:'info',title:'برای حذف تصویر، لطفاً دوباره انتخاب نمایید',text:'مرورگر اجازه حذف تکی فایل انتخاب شده را نمی‌دهد. فایل‌ها را مجدداً انتخاب کنید.'});
-    }
+  function updateMainBadge(){
+    const files = pond.getFiles();
+    files.forEach((f,idx)=>{
+      const item = pond.element.querySelector(`[data-filepond-item-id="${f.id}"]`);
+      if(item){
+        item.classList.toggle('is-main', String(idx) === String(mainIndexField.value||'0'));
+      }
+    });
+  }
+  pond.on('addfile', ()=>{
+    if(mainIndexField.value===''){ mainIndexField.value='0'; }
+    updateMainBadge();
+  });
+  pond.on('removefile', ()=>{
+    const files = pond.getFiles();
+    let idx = parseInt(mainIndexField.value||'0',10);
+    if(isNaN(idx) || idx>=files.length) idx = files.length ? 0 : '';
+    mainIndexField.value = idx === '' ? '' : String(idx);
+    updateMainBadge();
+  });
+  pond.on('reorderfiles', updateMainBadge);
+  pond.on('activatefile', (file)=>{
+    const files=pond.getFiles();
+    const id = file?.id || file?.file?.id;
+    const idx = files.findIndex(f=>f.id===id);
+    if(idx>=0){ mainIndexField.value=String(idx); updateMainBadge(); }
   });
 
   // Rules dynamic
@@ -708,9 +759,7 @@
       if(!text) return;
       rules.push({
         rule_text:text,
-        is_allowed: tr.querySelector('.toggle-allowed').dataset.allowed==='1',
-        checkin_time: tr.querySelector('.checkin-time').value || null,
-        checkout_time: tr.querySelector('.checkout-time').value || null
+        is_allowed: tr.querySelector('.toggle-allowed').dataset.allowed==='1'
       });
     });
     rulesJsonField.value=JSON.stringify(rules);
@@ -725,6 +774,55 @@
     });
   });
 
+  // Pricing mode toggle
+  (function(){
+    const modeSel=document.getElementById('pricing_mode');
+    const perPerson=document.querySelectorAll('.pricing-per-person');
+    const perNight=document.querySelectorAll('.pricing-per-night');
+    const pricePerPerson=document.getElementById('price_per_person');
+    const pricePerNight=document.getElementById('price_per_night');
+    const extraGroup=document.querySelectorAll('.extra-person-group');
+    const extraInput=document.querySelector('input[name="extra_person_price"]');
+    function syncUI(){
+      const byNight = modeSel.value==='per_night';
+      perPerson.forEach(el=> el.classList.toggle('d-none', byNight));
+      perNight.forEach(el=> el.classList.toggle('d-none', !byNight));
+      // required swap
+      if(pricePerPerson) pricePerPerson.toggleAttribute('required', !byNight);
+      if(pricePerNight) pricePerNight.toggleAttribute('required', byNight);
+      // extra person visibility (hidden for per-night)
+      extraGroup.forEach(el=> el.classList.toggle('d-none', byNight));
+      if(extraInput){
+        extraInput.disabled = byNight;
+        if(byNight) extraInput.value='';
+      }
+    }
+    modeSel?.addEventListener('change', syncUI);
+    syncUI();
+  })();
+
+  // Capacity constraints: extra_capacity <= capacity - base_capacity
+  (function(){
+    const capacityInp = document.querySelector('input[name="capacity"]');
+    const baseInp = document.querySelector('input[name="base_capacity"]');
+    const extraInp = document.querySelector('input[name="extra_capacity"]');
+    if(!capacityInp || !baseInp || !extraInp) return;
+    function toInt(v){ const n=parseInt(String(v||'').replace(/[^\d]/g,''),10); return isNaN(n)?0:n; }
+    function updateMax(){
+      const cap = toInt(capacityInp.value);
+      const base = toInt(baseInp.value);
+      const maxExtra = Math.max(0, cap - base);
+      extraInp.setAttribute('max', String(maxExtra));
+      const cur = toInt(extraInp.value);
+      if(cur > maxExtra){ extraInp.value = String(maxExtra); }
+    }
+    ['input','change','blur'].forEach(ev=>{
+      capacityInp.addEventListener(ev, updateMax);
+      baseInp.addEventListener(ev, updateMax);
+      extraInp.addEventListener(ev, updateMax);
+    });
+    updateMax();
+  })();
   show(1);
 })();
 </script>

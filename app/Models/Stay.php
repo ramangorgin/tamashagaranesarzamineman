@@ -37,6 +37,8 @@ class Stay extends Model
         'western_toilets',
         'price_per_person',
         'extra_person_price',
+        'pricing_mode',
+        'price_per_night',
         'site_commission',
         'max_discount_normal',
         'max_discount_peak',

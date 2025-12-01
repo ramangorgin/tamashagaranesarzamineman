@@ -124,7 +124,7 @@
               <th>تأیید</th>
             @else
               <th>ظرفیت (پایه/کل)</th>
-              <th>قیمت پایه</th>
+              <th>قیمت</th>
               <th>کمیسیون%</th>
             @endif
             <th>وضعیت</th>
@@ -152,7 +152,14 @@
               </td>
             @else
               <td class="small">{{ $stay->base_capacity }} / {{ $stay->capacity }}</td>
-              <td class="small">{{ number_format($stay->price_per_person) }}</td>
+              <td class="small">
+                @php $mode=$stay->pricing_mode ?? 'per_person'; @endphp
+                @if($mode==='per_night')
+                  {{ number_format($stay->price_per_night) }} <span class="text-muted">/ شب</span>
+                @else
+                  {{ number_format($stay->price_per_person) }} <span class="text-muted">/ نفر</span>
+                @endif
+              </td>
               <td class="small">{{ rtrim(rtrim(number_format($stay->site_commission,2),'0'),'.') }}</td>
             @endif
 

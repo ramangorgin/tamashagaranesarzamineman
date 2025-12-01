@@ -106,10 +106,16 @@
       <div class="card border-0 shadow-lg rounded-4 sticky-top" style="top: 80px;">
         <div class="card-body">
           <h4 class="fw-bold text-dark mb-3">
-            <span class="text-primary">{{ number_format($stay->price_per_person ?? 0) }}</span>
-            <small class="text-muted fs-6">ریال / هر نفر (پایه)</small>
+            @php $mode = $stay->pricing_mode ?? 'per_person'; @endphp
+            @if($mode === 'per_night')
+              <span class="text-primary">{{ number_format($stay->price_per_night ?? 0) }}</span>
+              <small class="text-muted fs-6">ریال / هر شب</small>
+            @else
+              <span class="text-primary">{{ number_format($stay->price_per_person ?? 0) }}</span>
+              <small class="text-muted fs-6">ریال / هر نفر (پایه)</small>
+            @endif
           </h4>
-          @if(!empty($stay->extra_person_price))
+          @if(($stay->pricing_mode ?? 'per_person') === 'per_person' && !empty($stay->extra_person_price))
             <div class="small mb-3 text-muted">
               نفر اضافه: {{ number_format($stay->extra_person_price) }} ریال
             </div>

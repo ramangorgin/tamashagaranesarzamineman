@@ -150,10 +150,22 @@
         <div id="step4" class="d-none">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label">قیمت هر نفر (ریال)</label>
-              <input type="text" name="price_per_person" class="form-control price-field" data-price-format value="{{ old('price_per_person',number_format($stay->price_per_person)) }}" required>
+              <label class="form-label">نوع قیمت‌گذاری</label>
+              <select name="pricing_mode" id="pricing_mode" class="form-select" required>
+                @php $pm = old('pricing_mode',$stay->pricing_mode ?? 'per_person'); @endphp
+                <option value="per_person" @selected($pm==='per_person')>به ازای هر نفر</option>
+                <option value="per_night" @selected($pm==='per_night')>به ازای هر شب</option>
+              </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 pricing-per-person">
+              <label class="form-label">قیمت هر نفر (ریال)</label>
+              <input type="text" name="price_per_person" id="price_per_person" class="form-control price-field" data-price-format value="{{ old('price_per_person', $stay->price_per_person !== null ? number_format($stay->price_per_person) : '') }}">
+            </div>
+            <div class="col-md-4 pricing-per-night d-none">
+              <label class="form-label">قیمت هر شب (ریال)</label>
+              <input type="text" name="price_per_night" id="price_per_night" class="form-control price-field" data-price-format value="{{ old('price_per_night', $stay->price_per_night !== null ? number_format($stay->price_per_night) : '') }}">
+            </div>
+            <div class="col-md-4 extra-person-group">
               <label class="form-label">قیمت نفر اضافه (ریال)</label>
               <input type="text" name="extra_person_price" class="form-control price-field" data-price-format value="{{ old('extra_person_price',number_format($stay->extra_person_price)) }}">
             </div>
@@ -373,6 +385,55 @@
     inp.addEventListener('input',()=>{ const pos=inp.selectionStart; inp.value=fmt(inp.value); inp.setSelectionRange(pos,pos); });
     inp.addEventListener('blur',()=> inp.value=fmt(inp.value));
   });
+
+  // Pricing mode toggle
+  (function(){
+    const modeSel=document.getElementById('pricing_mode');
+    const perPerson=document.querySelectorAll('.pricing-per-person');
+    const perNight=document.querySelectorAll('.pricing-per-night');
+    const pricePerPerson=document.getElementById('price_per_person');
+    const pricePerNight=document.getElementById('price_per_night');
+    const extraGroup=document.querySelectorAll('.extra-person-group');
+    const extraInput=document.querySelector('input[name="extra_person_price"]');
+    function syncUI(){
+      const byNight = modeSel.value==='per_night';
+      perPerson.forEach(el=> el.classList.toggle('d-none', byNight));
+      perNight.forEach(el=> el.classList.toggle('d-none', !byNight));
+      if(pricePerPerson) pricePerPerson.toggleAttribute('required', !byNight);
+      if(pricePerNight) pricePerNight.toggleAttribute('required', byNight);
+      // hide/show extra person based on mode
+      extraGroup.forEach(el=> el.classList.toggle('d-none', byNight));
+      if(extraInput){
+        extraInput.disabled = byNight;
+        if(byNight) extraInput.value='';
+      }
+    }
+    modeSel?.addEventListener('change', syncUI);
+    syncUI();
+  })();
+
+  // Capacity constraints: extra_capacity <= capacity - base_capacity
+  (function(){
+    const capacityInp = document.querySelector('input[name="capacity"]');
+    const baseInp = document.querySelector('input[name="base_capacity"]');
+    const extraInp = document.querySelector('input[name="extra_capacity"]');
+    if(!capacityInp || !baseInp || !extraInp) return;
+    function toInt(v){ const n=parseInt(String(v||'').replace(/[^\d]/g,''),10); return isNaN(n)?0:n; }
+    function updateMax(){
+      const cap = toInt(capacityInp.value);
+      const base = toInt(baseInp.value);
+      const maxExtra = Math.max(0, cap - base);
+      extraInp.setAttribute('max', String(maxExtra));
+      const cur = toInt(extraInp.value);
+      if(cur > maxExtra){ extraInp.value = String(maxExtra); }
+    }
+    ['input','change','blur'].forEach(ev=>{
+      capacityInp.addEventListener(ev, updateMax);
+      baseInp.addEventListener(ev, updateMax);
+      extraInp.addEventListener(ev, updateMax);
+    });
+    updateMax();
+  })();
 
   // Geo cascading (static JSON like create.blade.php)
   const provinceSel=document.getElementById('province'),

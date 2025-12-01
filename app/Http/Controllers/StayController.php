@@ -64,6 +64,7 @@ class StayController extends Controller
         $request->merge([
             'price_per_person'   => $normalize($request->price_per_person),
             'extra_person_price' => $normalize($request->extra_person_price),
+            'price_per_night'    => $normalize($request->price_per_night),
         ]);
 
         $rules = [
@@ -90,7 +91,9 @@ class StayController extends Controller
             'bathrooms'=>'nullable|integer|min:0',
             'iranian_toilets'=>'nullable|integer|min:0',
             'western_toilets'=>'nullable|integer|min:0',
-            'price_per_person'=>'required|numeric|min:0',
+            'pricing_mode' => 'required|in:per_person,per_night',
+            'price_per_person'=>'required_if:pricing_mode,per_person|nullable|numeric|min:0',
+            'price_per_night'=>'required_if:pricing_mode,per_night|nullable|numeric|min:0',
             'extra_person_price'=>'nullable|numeric|min:0',
             'checkin_time'=>'nullable',
             'checkout_time'=>'nullable',
@@ -114,6 +117,13 @@ class StayController extends Controller
 
         $data = $request->validate($rules);
 
+        // Ensure irrelevant price is nulled for clarity
+        if (($data['pricing_mode'] ?? 'per_person') === 'per_person') {
+            $data['price_per_night'] = null;
+        } else {
+            $data['price_per_person'] = null;
+        }
+
         if ($role === 'admin') {
             $data['site_commission'] = 0;
             $data['max_discount_normal'] = 0;
@@ -127,6 +137,16 @@ class StayController extends Controller
         }
 
         $stay = Stay::create($data);
+
+        // If admin creates a stay, auto-approve and activate immediately
+        if ($role === 'admin') {
+            $stay->update([
+                'moderation_status'     => 'approved',
+                'approved_by_admin_id'  => $this->userId('admin'),
+                'approved_at'           => now(),
+                'is_active'             => true,
+            ]);
+        }
 
         // Rules
         if($request->filled('rules_json')){
@@ -176,6 +196,7 @@ class StayController extends Controller
         $request->merge([
             'price_per_person'   => $normalize($request->input('price_per_person')),
             'extra_person_price' => $normalize($request->input('extra_person_price')),
+            'price_per_night'    => $normalize($request->input('price_per_night')),
         ]);
 
         $rules = [
@@ -202,7 +223,9 @@ class StayController extends Controller
             'bathrooms'       => 'nullable|integer|min:0',
             'iranian_toilets' => 'nullable|integer|min:0',
             'western_toilets' => 'nullable|integer|min:0',
-            'price_per_person'   => 'required|numeric|min:0',
+            'pricing_mode'       => 'required|in:per_person,per_night',
+            'price_per_person'   => 'required_if:pricing_mode,per_person|nullable|numeric|min:0',
+            'price_per_night'    => 'required_if:pricing_mode,per_night|nullable|numeric|min:0',
             'extra_person_price' => 'nullable|numeric|min:0',
             'rules_json'         => 'nullable|string',
             'remove_image_ids'   => 'nullable|string',
@@ -220,6 +243,13 @@ class StayController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Ensure irrelevant price is nulled for clarity
+        if (($validated['pricing_mode'] ?? $stay->pricing_mode ?? 'per_person') === 'per_person') {
+            $validated['price_per_night'] = null;
+        } else {
+            $validated['price_per_person'] = null;
+        }
+
         if ($role === 'admin') {
             $validated['site_commission'] = 0;
             $validated['max_discount_normal'] = 0;
@@ -234,7 +264,7 @@ class StayController extends Controller
             'area','capacity','base_capacity','extra_capacity',
             'bedrooms','double_beds','single_beds','floor_beds',
             'iranian_toilets','western_toilets','bathrooms',
-            'price_per_person','extra_person_price',
+            'pricing_mode','price_per_person','price_per_night','extra_person_price',
             'site_commission','max_discount_normal','max_discount_peak',
         ])));
 
