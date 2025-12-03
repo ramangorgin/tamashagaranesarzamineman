@@ -133,6 +133,15 @@
                 موقعیت روی نقشه
                 <small class="text-muted ms-2">روی نقطه کلیک کنید</small>
               </label>
+              <div class="input-group mb-2">
+                  <input 
+                      type="text" 
+                      id="coordSearch" 
+                      class="form-control"
+                      placeholder="Paste coordinates (e.g., 35.6892, 51.3890)">
+                  <button class="btn btn-primary" id="applyCoordsBtn">لوکیشن کپی شده را جایگذاری کنید</button>
+              </div>
+
               <div id="map" style="height:380px;border:1px solid #dee2e6;border-radius:14px;"></div>
               <input type="hidden" name="latitude" id="lat">
               <input type="hidden" name="longitude" id="lng">
@@ -390,6 +399,55 @@
       Swal.fire({toast:true,position:'top',icon:'success',title:'مختصات ثبت شد',showConfirmButton:false,timer:1300});
     });
   }
+  function setLocationFromSearch() {
+    const input = document.getElementById("coordSearch").value.trim();
+
+    if (!input) {
+        Swal.fire({icon:'warning', title:'لطفا موقعیت را وارد کنید'});
+        return;
+    }
+
+    // Extract numbers (supports formats like "35.7,51.3" or "lat=35.7 lng=51.3")
+    const nums = input.match(/[-]?\d+(\.\d+)?/g);
+
+    if (!nums || nums.length < 2) {
+        Swal.fire({icon:'error', title:'موقعیت معتبر نیست'});
+        return;
+    }
+
+    const lat = parseFloat(nums[0]);
+    const lng = parseFloat(nums[1]);
+
+    if (isNaN(lat) || isNaN(lng)) {
+        Swal.fire({icon:'error', title:'موقعیت معتبر نیست'});
+        return;
+    }
+
+    // Update map
+    const latlng = [lat, lng];
+    map.setView(latlng, 14);
+
+    if (marker) marker.setLatLng(latlng);
+    else marker = L.marker(latlng).addTo(map);
+
+    // Update hidden fields
+    document.getElementById('lat').value = lat.toFixed(6);
+    document.getElementById('lng').value = lng.toFixed(6);
+
+    Swal.fire({
+        toast: true,
+        position: 'top',
+        icon: 'success',
+        title: 'موقعیت با موفقیت ثبت شد',
+        showConfirmButton: false,
+        timer: 1300
+    });
+}
+document.getElementById("coordSearch").addEventListener("keypress", e => {
+    if (e.key === "Enter") setLocationFromSearch();
+});
+
+
 
   function show(step){
     for(let i=1;i<=totalSteps;i++){
