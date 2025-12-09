@@ -99,8 +99,10 @@
                 </div>
               </div>
               <div class="mt-3 p-3 rounded bg-light small">
-                <div>قیمت هر نفر پایه: @faNum(number_format($stay->price_per_person)) تومان</div>
-                <div>قیمت هر نفر اضافه: @faNum(number_format($stay->extra_person_price ?? 0)) تومان</div>
+                <div>قیمت هر نفر پایه: {!! displayStayPrice($stay, 'per_person') !!} <span class="text-muted">ریال</span></div>
+                @if(!empty($stay->extra_person_price))
+                  <div>قیمت هر نفر اضافه: {!! displayStayPrice($stay, 'extra_person') !!} <span class="text-muted">ریال</span></div>
+                @endif
                 <div id="liveGuestsSummary" class="fw-bold text-primary mt-2"></div>
               </div>
               <button type="submit" class="btn btn-primary w-100 mt-3">ثبت ظرفیت</button>
@@ -455,7 +457,12 @@ function fillReview(data){
   $('#revNights').text(toFaDigits(data.nights));
   $('#revBase').text(toFaDigits(data.base_price.toLocaleString()));
   $('#revExtra').text(toFaDigits(data.extra_cost.toLocaleString()));
-  $('#revStayDiscount').text(toFaDigits(data.stay_discount_amount.toLocaleString())+` (${toFaDigits(data.stay_discount_percent)}%)`);
+  // Peak/discount adjustments are already included in base_price and extra_cost
+  if(data.stay_discount_percent > 0){
+    $('#revStayDiscount').text(toFaDigits(data.stay_discount_amount.toLocaleString())+` (${toFaDigits(data.stay_discount_percent)}%)`);
+  }else{
+    $('#revStayDiscount').text('—');
+  }
   if(data.org_discount_percent>0){
     $('#revOrgDiscount').text(toFaDigits(data.org_discount_amount.toLocaleString())+` (${toFaDigits(data.org_discount_percent)}%)`);
   }else{

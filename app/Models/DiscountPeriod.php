@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PeakPeriod extends Model
+class DiscountPeriod extends Model
 {
     use HasFactory;
 
@@ -18,11 +18,20 @@ class PeakPeriod extends Model
         'provinces' => 'array',
     ];
 
-    public static function isNowPeak(): bool
+    public static function isNowDiscount(): bool
     {
         $today = now()->toDateString();
         return self::whereDate('start_date','<=',$today)
                    ->whereDate('end_date','>=',$today)
                    ->exists();
     }
+
+    public static function getActiveDiscount(): ?self
+    {
+        $today = now()->toDateString();
+        return self::whereDate('start_date','<=',$today)
+                   ->whereDate('end_date','>=',$today)
+                   ->first();
+    }
 }
+

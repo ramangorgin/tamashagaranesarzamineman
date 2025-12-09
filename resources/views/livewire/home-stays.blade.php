@@ -36,7 +36,16 @@
                             @else
                                 <div class="d-flex align-items-center justify-content-center text-muted fw-semibold">بدون تصویر</div>
                             @endif
-                            @if($stay->is_peak)
+                            @php
+                                $priceInfo = $stay->getCurrentAdjustedPrice($stay->price_per_person ?? 0);
+                                $hasDiscount = $priceInfo['type'] === 'discount';
+                                $hasPeak = $priceInfo['type'] === 'peak';
+                            @endphp
+                            @if($hasDiscount)
+                                <span class="badge bg-danger text-white position-absolute top-0 end-0 m-2 shadow-sm" style="font-size: 0.75rem;">
+                                    <i class="bi bi-tag-fill"></i> {{ rtrim(rtrim(number_format($priceInfo['percent'], 1), '0'), '.') }}% تخفیف
+                                </span>
+                            @elseif($hasPeak)
                                 <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 shadow-sm">پیک</span>
                             @endif
                         </div>
@@ -56,9 +65,9 @@
                                 @endif
                             </div>
                             <div class="mt-auto">
-                                <div class="price-box d-flex align-items-baseline gap-1">
-                                    <span class="fw-bold text-primary">{{ number_format($stay->price_per_person ?? 0) }}</span>
-                                    <small class="text-muted">ریال / نفر</small>
+                                <div class="price-box">
+                                    {!! displayStayPrice($stay, 'per_person') !!}
+                                    <small class="text-muted d-block mt-1">ریال / نفر</small>
                                 </div>
                             </div>
                         </div>

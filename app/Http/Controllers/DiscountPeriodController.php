@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PeakPeriod;
 use App\Models\DiscountPeriod;
+use App\Models\PeakPeriod;
 use Illuminate\Http\Request;
 use Hekmatinasser\Verta\Verta;
 use Carbon\Carbon;
 
-class PeakPeriodController extends Controller
+class DiscountPeriodController extends Controller
 {
     public function store(Request $request)
     {
@@ -38,8 +38,8 @@ class PeakPeriodController extends Controller
             return back()->withErrors(['end_date' => 'تاریخ پایان نباید قبل از تاریخ شروع باشد.'])->withInput();
         }
 
-        // Check for overlap with discount periods
-        $overlap = DiscountPeriod::where(function($q) use ($data) {
+        // Check for overlap with peak periods
+        $overlap = PeakPeriod::where(function($q) use ($data) {
             $q->whereBetween('start_date', [$data['start_date'], $data['end_date']])
               ->orWhereBetween('end_date', [$data['start_date'], $data['end_date']])
               ->orWhere(function($qq) use ($data) {
@@ -49,20 +49,20 @@ class PeakPeriodController extends Controller
         })->exists();
 
         if ($overlap) {
-            return back()->withErrors(['overlap' => 'این بازه با بازه تخفیف فعال تداخل دارد.'])->withInput();
+            return back()->withErrors(['overlap' => 'این بازه با بازه پیک فعال تداخل دارد.'])->withInput();
         }
 
-        PeakPeriod::create($data);
+        DiscountPeriod::create($data);
         
         // Update all stays' final prices
         \App\Models\Stay::updateAllFinalPrices();
         
-        return back()->with('success','بازه پیک ثبت شد.');
+        return back()->with('success','بازه تخفیف ثبت شد.');
     }
 
-    public function destroy(PeakPeriod $peakPeriod)
+    public function destroy(DiscountPeriod $discountPeriod)
     {
-        $peakPeriod->delete();
+        $discountPeriod->delete();
         
         // Update all stays' final prices
         \App\Models\Stay::updateAllFinalPrices();
@@ -133,3 +133,4 @@ class PeakPeriodController extends Controller
         }
     }
 }
+

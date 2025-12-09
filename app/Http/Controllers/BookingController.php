@@ -10,6 +10,7 @@ use App\Models\Stay;
 use App\Models\User;
 use App\Models\DiscountContractMember;
 use App\Models\PeakPeriod;
+use App\Models\DiscountPeriod;
 use App\Models\Otp;
 use Ipe\Sdk\Facades\SmsIr;
 
@@ -114,14 +115,19 @@ class BookingController extends Controller
         if ($nights < 1) {
             return response()->json(['success' => false, 'message' => 'حداقل یک شب لازم است.'], 422);
         }
+        // Get base prices (already adjusted in views, but we need to recalculate for the booking date range)
         $base_price_per_night  = (int)$stay->price_per_person;
         $extra_price_per_night = (int)($stay->extra_person_price ?? 0);
-        $base_price = $base_price_per_night * (int)$request->base_guests * $nights;
-        $extra_cost = $extra_price_per_night * (int)$request->extra_guests * $nights;
-        $isPeakNow = method_exists(PeakPeriod::class, 'isNowPeak') ? PeakPeriod::isNowPeak() : (bool)$stay->is_peak;
-        $stay_discount_percent = (float)($isPeakNow ? $stay->max_discount_peak : $stay->max_discount_normal);
+        
+        // Apply peak/discount period adjustments for the booking date range
+        $adjusted_base_price = $stay->getAdjustedPriceForDateRange($request->start_date, $request->end_date, $base_price_per_night);
+        $adjusted_extra_price = $stay->getAdjustedPriceForDateRange($request->start_date, $request->end_date, $extra_price_per_night);
+        
+        $base_price = $adjusted_base_price * (int)$request->base_guests * $nights;
+        $extra_cost = $adjusted_extra_price * (int)$request->extra_guests * $nights;
+        
         $subtotal = $base_price + $extra_cost;
-        $stay_discount_amount = $subtotal * ($stay_discount_percent / 100);
+        $stay_discount_amount = 0; // Peak/discount adjustments are already in the price
 
         $full_name = trim($request->first_name . ' ' . $request->last_name);
         $contract = DiscountContractMember::with('contract')
@@ -144,12 +150,12 @@ class BookingController extends Controller
         return response()->json([
             'success' => true,
             'nights' => $nights,
-            'base_price' => $base_price,
-            'extra_cost' => $extra_cost,
-            'stay_discount_percent' => $stay_discount_percent,
-            'stay_discount_amount' => (int)round($stay_discount_amount),
-            'org_discount_percent' => $org_discount_percent,
-            'org_discount_amount' => (int)round($org_discount_amount),
+            'base_price' => $base_price, // Already includes peak/discount period adjustments
+            'extra_cost' => $extra_cost, // Already includes peak/discount period adjustments
+            'stay_discount_percent' => 0, // Peak/discount adjustments already applied to base prices
+            'stay_discount_amount' => 0, // Peak/discount adjustments already applied to base prices
+            'org_discount_percent' => $org_discount_percent, // DiscountContract discount (extra discount for specific people)
+            'org_discount_amount' => (int)round($org_discount_amount), // DiscountContract discount amount
             'final_price' => (int)$final_price,
             'has_contract' => (bool)$contract,
             'contract_id' => $contract?->id,
@@ -198,14 +204,16 @@ class BookingController extends Controller
             $base_price_per_night = (int) $stay->price_per_person;
             $extra_price_per_night = (int) ($stay->extra_person_price ?? 0);
 
-            $base_price = $base_price_per_night * (int)$request->base_guests * $nights;
-            $extra_cost = $extra_price_per_night * (int)$request->extra_guests * $nights;
+            // Apply peak/discount period adjustments for the booking date range
+            $adjusted_base_price = $stay->getAdjustedPriceForDateRange($request->start_date, $request->end_date, $base_price_per_night);
+            $adjusted_extra_price = $stay->getAdjustedPriceForDateRange($request->start_date, $request->end_date, $extra_price_per_night);
 
-            // Stay discount percent based on peak/non-peak (use max_discount_* as active percent)
-            $isPeakNow = method_exists(PeakPeriod::class, 'isNowPeak') ? PeakPeriod::isNowPeak() : (bool)$stay->is_peak;
-            $stay_discount = (float) ($isPeakNow ? $stay->max_discount_peak : $stay->max_discount_normal);
+            $base_price = $adjusted_base_price * (int)$request->base_guests * $nights;
+            $extra_cost = $adjusted_extra_price * (int)$request->extra_guests * $nights;
+
             $subtotal = $base_price + $extra_cost;
-            $stay_discount_amount = $subtotal * ($stay_discount / 100);
+            $stay_discount = 0; // Peak/discount adjustments are already in the price
+            $stay_discount_amount = 0;
 
             // Organizational contract
             $contract = DiscountContractMember::with('contract')

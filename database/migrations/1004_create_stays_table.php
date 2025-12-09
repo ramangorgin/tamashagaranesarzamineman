@@ -47,11 +47,11 @@ return new class extends Migration
             $table->unsignedSmallInteger('western_toilets')->default(0);
 
             // قیمت
-            $table->unsignedBigInteger('price_per_person')->default(0);
+            $table->enum('pricing_mode', ['per_person', 'per_night'])->default('per_person');
+            $table->unsignedBigInteger('price_per_night')->nullable();
+            $table->unsignedBigInteger('price_per_person')->nullable();
             $table->unsignedBigInteger('extra_person_price')->nullable();
             $table->decimal('site_commission', 5, 2)->default(0);
-            $table->decimal('max_discount_normal', 5, 2)->default(0);
-            $table->decimal('max_discount_peak', 5, 2)->default(0);
 
             // قوانین اصلی
             $table->time('checkin_time')->nullable();

@@ -108,16 +108,16 @@
           <h4 class="fw-bold text-dark mb-3">
             @php $mode = $stay->pricing_mode ?? 'per_person'; @endphp
             @if($mode === 'per_night')
-              <span class="text-primary">{{ number_format($stay->price_per_night ?? 0) }}</span>
-              <small class="text-muted fs-6">ریال / هر شب</small>
+              {!! displayStayPrice($stay, 'per_night') !!}
+              <small class="text-muted fs-6 d-block mt-1">ریال / هر شب</small>
             @else
-              <span class="text-primary">{{ number_format($stay->price_per_person ?? 0) }}</span>
-              <small class="text-muted fs-6">ریال / هر نفر (پایه)</small>
+              {!! displayStayPrice($stay, 'per_person') !!}
+              <small class="text-muted fs-6 d-block mt-1">ریال / هر نفر (پایه)</small>
             @endif
           </h4>
           @if(($stay->pricing_mode ?? 'per_person') === 'per_person' && !empty($stay->extra_person_price))
-            <div class="small mb-3 text-muted">
-              نفر اضافه: {{ number_format($stay->extra_person_price) }} ریال
+            <div class="small mb-3">
+              نفر اضافه: {!! displayStayPrice($stay, 'extra_person') !!} <span class="text-muted"></span>
             </div>
           @endif
           <ul class="list-unstyled text-muted small mb-4">

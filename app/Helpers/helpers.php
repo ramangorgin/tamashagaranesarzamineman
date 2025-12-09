@@ -35,3 +35,52 @@ if (!function_exists('normalize_digits')) {
         return strtr($value, $map);
     }
 }
+
+if (!function_exists('displayStayPrice')) {
+    /**
+     * Display stay price with discount/peak styling
+     * @param \App\Models\Stay $stay
+     * @param string $priceType 'per_person' or 'per_night' or 'extra_person'
+     * @return string HTML
+     */
+    function displayStayPrice($stay, $priceType = 'per_person')
+    {
+        $basePrice = 0;
+        if ($priceType === 'per_night') {
+            $basePrice = $stay->price_per_night ?? 0;
+        } elseif ($priceType === 'extra_person') {
+            $basePrice = $stay->extra_person_price ?? 0;
+        } else {
+            $basePrice = $stay->price_per_person ?? 0;
+        }
+
+        if ($basePrice <= 0) {
+            return '<span class="text-muted">—</span>';
+        }
+
+        // Always calculate current adjusted price (don't rely on cached final_price for display)
+        // This ensures prices are always up-to-date with current periods
+        $priceInfo = $stay->getCurrentAdjustedPrice($basePrice);
+        $finalPrice = $priceInfo['adjusted'];
+        $type = $priceInfo['type'];
+        $percent = $priceInfo['percent'];
+        
+        // If no adjustment, show simple price
+        if ($type === null || $basePrice == $finalPrice) {
+            return '<span class="fw-bold text-primary">' . number_format($finalPrice) . '</span>';
+        }
+
+        // Show with discount styling only (peak periods show adjusted price without styling)
+        if ($type === 'discount') {
+            $view = view('partials.price-with-discount', [
+                'original' => $basePrice,
+                'adjusted' => $finalPrice,
+                'percent' => $percent
+            ]);
+            return $view->render();
+        } else {
+            // Peak period - show increased price WITHOUT special styling (just the adjusted price)
+            return '<span class="fw-bold text-primary">' . number_format($finalPrice) . '</span>';
+        }
+    }
+}

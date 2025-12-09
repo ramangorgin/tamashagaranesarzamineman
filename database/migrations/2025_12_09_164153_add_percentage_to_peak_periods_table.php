@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('stays', function (Blueprint $table) {
-            $table->unsignedBigInteger('price_per_person')->nullable()->change();
+        Schema::table('peak_periods', function (Blueprint $table) {
+            $table->decimal('percentage', 5, 2)->default(0)->after('end_date');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('stays', function (Blueprint $table) {
-            $table->dropColumn('price_per_person');
+        Schema::table('peak_periods', function (Blueprint $table) {
+            $table->dropColumn('percentage');
         });
     }
 };

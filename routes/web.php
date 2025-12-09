@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DiscountContractMemberController;
 use App\Http\Controllers\Admin\HostController;
 use App\Http\Controllers\GeoController;
 use App\Http\Controllers\PeakPeriodController;
+use App\Http\Controllers\DiscountPeriodController;
 
 Route::get('/', fn() => view('home'))->name('home');
 
@@ -47,6 +48,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function
     // Peak periods CRUD (only store & destroy needed for the inline form)
     Route::post('peak-periods', [PeakPeriodController::class,'store'])->name('peak_periods.store');
     Route::delete('peak-periods/{peakPeriod}', [PeakPeriodController::class,'destroy'])->name('peak_periods.destroy');
+    
+    // Discount periods CRUD (only store & destroy needed for the inline form)
+    Route::post('discount-periods', [DiscountPeriodController::class,'store'])->name('discount_periods.store');
+    Route::delete('discount-periods/{discountPeriod}', [DiscountPeriodController::class,'destroy'])->name('discount_periods.destroy');
     // Nested member routes
     Route::prefix('discount_contracts/{discountContract}')->group(function () {
         Route::post('members', [DiscountContractMemberController::class, 'store'])->name('discount_contract_members.store');

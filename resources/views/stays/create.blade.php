@@ -138,8 +138,8 @@
                       type="text" 
                       id="coordSearch" 
                       class="form-control"
-                      placeholder="Paste coordinates (e.g., 35.6892, 51.3890)">
-                  <button class="btn btn-primary" id="applyCoordsBtn">لوکیشن کپی شده را جایگذاری کنید</button>
+                      placeholder="مختصات کپی شده را جایگذاری کنید">
+                  <button class="btn btn-primary" id="applyCoordsBtn">جایگذاری</button>
               </div>
 
               <div id="map" style="height:380px;border:1px solid #dee2e6;border-radius:14px;"></div>
@@ -234,27 +234,25 @@
               <div class="col-md-4">
                 <label class="form-label">درصد کمیسیون سایت</label>
                 <div class="input-group">
-                  <input type="number" name="site_commission" min="0" max="100" step="0.5" value="10" class="form-control" required>
+                  <input type="number" name="site_commission" min="0" max="100" step="0.5" class="form-control" required>
                   <span class="input-group-text">%</span>
                 </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">حداکثر تخفیف (عادی)</label>
+              <div class="col-md-4">
+                <label class="form-label">کف تغییر قیمت (٪)</label>
                 <div class="input-group">
-                  <input type="number" name="max_discount_normal" min="0" max="100" step="0.5" value="20" class="form-control" required>
+                  <input type="number" name="min_price_adjustment" min="0" max="100" step="0.5" class="form-control" required>
                   <span class="input-group-text">%</span>
                 </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">حداکثر تخفیف (پیک)</label>
+              <div class="col-md-4">
+                <label class="form-label">سقف تغییر قیمت (٪)</label>
                 <div class="input-group">
-                  <input type="number" name="max_discount_peak" min="0" max="100" step="0.5" value="10" class="form-control" required>
+                  <input type="number" name="max_price_adjustment" min="0" max="100" step="0.5" class="form-control" required>
                   <span class="input-group-text">%</span>
                 </div>
               </div>
               <input type="hidden" name="site_commission" value="0">
-              <input type="hidden" name="max_discount_normal" value="0">
-              <input type="hidden" name="max_discount_peak" value="0">
           </div>
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>

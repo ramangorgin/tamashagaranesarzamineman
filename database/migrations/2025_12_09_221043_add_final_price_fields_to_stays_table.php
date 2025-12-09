@@ -6,26 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('stays', function (Blueprint $table) {
-            $table->enum('pricing_mode', ['per_person', 'per_night'])->default('per_person')->after('extra_person_price');
-            $table->unsignedBigInteger('price_per_night')->nullable()->after('pricing_mode');
+            $table->bigInteger('final_price_per_person')->nullable()->after('price_per_person');
+            $table->bigInteger('final_price_per_night')->nullable()->after('price_per_night');
+            $table->bigInteger('final_extra_person_price')->nullable()->after('extra_person_price');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('stays', function (Blueprint $table) {
-            $table->dropColumn(['pricing_mode', 'price_per_night']);
+            $table->dropColumn(['final_price_per_person', 'final_price_per_night', 'final_extra_person_price']);
         });
     }
 };
-
 

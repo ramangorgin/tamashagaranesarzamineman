@@ -105,8 +105,8 @@ class StayController extends Controller
         if ($role !== 'admin') {
             $rules += [
                 'site_commission'=>'required|numeric|min:0|max:100',
-                'max_discount_normal'=>'required|numeric|min:0|max:100',
-                'max_discount_peak'=>'required|numeric|min:0|max:100',
+                'min_price_adjustment'=>'required|numeric|min:0|max:100',
+                'max_price_adjustment'=>'required|numeric|min:0|max:100',
             ];
         }
         if ($role === 'admin') {
@@ -124,11 +124,6 @@ class StayController extends Controller
             $data['price_per_person'] = null;
         }
 
-        if ($role === 'admin') {
-            $data['site_commission'] = 0;
-            $data['max_discount_normal'] = 0;
-            $data['max_discount_peak'] = 0;
-        }
 
         if ($role === 'host') {
             $data['host_id'] = $this->userId('host');
@@ -137,6 +132,9 @@ class StayController extends Controller
         }
 
         $stay = Stay::create($data);
+        
+        // Update final prices based on current periods
+        $stay->updateFinalPrices();
 
         // If admin creates a stay, auto-approve and activate immediately
         if ($role === 'admin') {
@@ -182,7 +180,7 @@ class StayController extends Controller
     {
         $role = $this->role();
         if($role==='host' && $stay->host_id !== $this->userId('host')) abort(403);
-        $stay->load(['images','rules']);
+        $stay->load(['images','rules','host']);
         return view('stays.edit', compact('stay','role'));
     }
 
@@ -236,8 +234,8 @@ class StayController extends Controller
         if ($role !== 'admin') {
             $rules += [
                 'site_commission'    => 'required|numeric|min:0|max:100',
-                'max_discount_normal'=> 'required|numeric|min:0|max:100',
-                'max_discount_peak'  => 'required|numeric|min:0|max:100',
+                'min_price_adjustment'=> 'required|numeric|min:0|max:100',
+                'max_price_adjustment'  => 'required|numeric|min:0|max:100',
             ];
         }
 
@@ -252,11 +250,15 @@ class StayController extends Controller
 
         if ($role === 'admin') {
             $validated['site_commission'] = 0;
-            $validated['max_discount_normal'] = 0;
-            $validated['max_discount_peak'] = 0;
+            $validated['min_price_adjustment'] = 0;
+            $validated['max_price_adjustment'] = 0;
+            // Allow admin to change host_id
+            if ($request->has('host_id')) {
+                $validated['host_id'] = (int)$request->input('host_id');
+            }
         }
 
-        $stay->update(array_intersect_key($validated, array_flip([
+        $updateFields = [
             'title','category',
             'province_id','province_name','city_id','city_name',
             'county_id','county_name','village_name','address',
@@ -265,8 +267,19 @@ class StayController extends Controller
             'bedrooms','double_beds','single_beds','floor_beds',
             'iranian_toilets','western_toilets','bathrooms',
             'pricing_mode','price_per_person','price_per_night','extra_person_price',
-            'site_commission','max_discount_normal','max_discount_peak',
-        ])));
+            'site_commission','min_price_adjustment','max_price_adjustment',
+        ];
+        
+        if ($role === 'admin' && isset($validated['host_id'])) {
+            $updateFields[] = 'host_id';
+        }
+
+        $stay->update(array_intersect_key($validated, array_flip($updateFields)));
+        
+        // Update final prices if price fields changed
+        if (isset($validated['price_per_person']) || isset($validated['price_per_night']) || isset($validated['extra_person_price'])) {
+            $stay->updateFinalPrices();
+        }
 
         // Rules
         if($request->filled('rules_json')){
