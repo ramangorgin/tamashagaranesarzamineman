@@ -74,9 +74,10 @@
           <div class="step-dot" data-step="3">ظرفیت</div>
           <div class="step-dot" data-step="4">قیمت</div>
           <div class="step-dot" data-step="5">تصاویر</div>
-          <div class="step-dot" data-step="6">قوانین</div>
+          <div class="step-dot" data-step="6">امکانات</div>
+          <div class="step-dot" data-step="7">قوانین</div>
           @if(($role ?? null)!=='admin')
-            <div class="step-dot" data-step="7">تأیید</div>
+            <div class="step-dot" data-step="8">تأیید</div>
           @endif
         </div>
         {{-- Step 1 --}}
@@ -88,12 +89,39 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">دسته‌بندی</label>
-              <select name="category" class="form-select" required>
+              <select name="category" id="category" class="form-select" required>
                 @php $cats=['hotel','villa','apartment','ecolodge','suite','motel','house']; @endphp
                 @foreach($cats as $c)
                   <option value="{{ $c }}">{{ stayTypeToPersian($c) }}</option>
                 @endforeach
               </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">توضیحات</label>
+              <textarea name="description" id="description" class="form-control"></textarea>
+              <small class="text-muted">توضیحات کامل اقامت‌گاه (اختیاری)</small>
+            </div>
+          </div>
+          {{-- Hotel-specific fields --}}
+          <div id="hotelFields" class="d-none mt-4">
+            <hr>
+            <h5 class="mb-3">اطلاعات هتل</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">ستاره هتل</label>
+                <select name="star_rating" class="form-select">
+                  <option value="">انتخاب کنید</option>
+                  <option value="1">1 ستاره</option>
+                  <option value="2">2 ستاره</option>
+                  <option value="3">3 ستاره</option>
+                  <option value="4">4 ستاره</option>
+                  <option value="5">5 ستاره</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">شماره پروانه</label>
+                <input type="text" name="license_number" id="license_number" class="form-control">
+              </div>
             </div>
           </div>
           <div class="mt-4 text-end">
@@ -154,7 +182,8 @@
         </div>
         {{-- Step 3: Capacity --}}
         <div id="step3" class="d-none">
-          <div class="row g-3">
+          {{-- Non-hotel capacity fields --}}
+          <div id="nonHotelCapacity" class="row g-3">
             <div class="col-md-3">
               <label class="form-label">ظرفیت پایه</label>
               <input type="number" min="1" name="base_capacity" class="form-control" value="1" required>
@@ -169,40 +198,19 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">متراژ (متر)</label>
-              <input type="number" min="0" name="area" class="form-control">
+              <input type="text" name="area" class="form-control" data-price-format placeholder="">
             </div>
-            <div class="col-12">
-              <div class="row g-3 mt-1">
-                <div class="col-6 col-md-3">
-                  <label class="form-label">اتاق خواب</label>
-                  <input type="number" min="0" name="bedrooms" class="form-control" value="1">
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label">تخت دبل</label>
-                  <input type="number" min="0" name="double_beds" class="form-control" value="0">
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label">تخت سینگل</label>
-                  <input type="number" min="0" name="single_beds" class="form-control" value="0">
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label">سوییت / کف‌خواب</label>
-                  <input type="number" min="0" name="floor_beds" class="form-control" value="0">
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label">حمام</label>
-                  <input type="number" min="0" name="bathrooms" class="form-control" value="0">
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label">سرویس ایرانی</label>
-                  <input type="number" min="0" name="iranian_toilets" class="form-control" value="0">
-                </div>
-                <div class="col-6 col-md-3">
-                  <label class="form-label">سرویس فرنگی</label>
-                  <input type="number" min="0" name="western_toilets" class="form-control" value="0">
-                </div>
-              </div>
+          </div>
+          {{-- Hotel room types builder --}}
+          <div id="hotelRoomTypes" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">انواع اتاق‌ها</h5>
+              <button type="button" class="btn btn-sm btn-primary" id="addRoomTypeBtn">
+                <i class="bi bi-plus-lg"></i> افزودن نوع اتاق
+              </button>
             </div>
+            <div id="roomTypesContainer"></div>
+            <input type="hidden" name="room_types_json" id="room_types_json">
           </div>
           <div class="mt-4 d-flex justify-content-between">
             <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
@@ -211,15 +219,15 @@
         </div>
         {{-- Step 4: Pricing --}}
         <div id="step4" class="d-none">
-          <div class="row g-3">
-            <div class="col-md-4">
+          <div class="row g-3" id="pricingFields">
+            <div class="col-md-4" id="pricingModeField">
               <label class="form-label">نوع قیمت‌گذاری</label>
               <select name="pricing_mode" id="pricing_mode" class="form-select" required>
                 <option value="per_person">به ازای هر نفر</option>
                 <option value="per_night">به ازای هر شب</option>
               </select>
             </div>
-            <div class="col-md-4 pricing-per-person">
+            <div class="col-md-4 pricing-per-person" id="pricePerPersonField">
               <label class="form-label">قیمت هر نفر (ظرفیت پایه) <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="price_per_person" id="price_per_person" class="form-control price-field" data-price-format value="0">
             </div>
@@ -227,7 +235,7 @@
               <label class="form-label">قیمت هر شب <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="price_per_night" id="price_per_night" class="form-control price-field" data-price-format value="0">
             </div>
-            <div class="col-md-4 extra-person-group">
+            <div class="col-md-4 extra-person-group" id="extraPersonPriceField">
               <label class="form-label">قیمت نفر اضافه <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="extra_person_price" class="form-control price-field" data-price-format value="0">
             </div>
@@ -275,8 +283,36 @@
             <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
           </div>
         </div>
-        {{-- Step 6: Rules --}}
+        {{-- Step 6: Amenities --}}
         <div id="step6" class="d-none">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="form-label mb-0">امکانات اقامت‌گاه</label>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="addAmenityBtn">
+              <i class="bi bi-plus-lg"></i> افزودن امکان
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0" id="amenitiesTable">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:25%">امکان</th>
+                  <th style="width:40%">توضیحات (اختیاری)</th>
+                  <th style="width:16%">وضعیت</th>
+                  <th style="width:19%">حذف</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <textarea name="amenities_json" id="amenities_json" class="d-none"></textarea>
+          <div class="mt-3 small text-muted">امکانات موجود یا غیرموجود در اقامت‌گاه را مشخص کنید</div>
+          <div class="mt-4 d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary prev-btn"><i class="bi bi-arrow-right-short"></i> قبلی</button>
+            <button type="button" class="btn btn-primary next-btn">مرحله بعد <i class="bi bi-arrow-left-short"></i></button>
+          </div>
+        </div>
+        {{-- Step 7: Rules --}}
+        <div id="step7" class="d-none">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">ساعت ورود</label>
@@ -316,9 +352,9 @@
             @endif
           </div>
         </div>
-        {{-- Step 7: Review --}}
+        {{-- Step 8: Review --}}
         @if(($role ?? null)!=='admin')
-          <div id="step7" class="d-none">
+          <div id="step8" class="d-none">
             <div class="alert alert-info d-flex align-items-center">
               <i class="bi bi-info-circle-fill me-2 fs-5"></i>
               بررسی نهایی و ارسال برای تأیید مدیر.
@@ -338,8 +374,10 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-.step-dot{background:#e9ecef;color:#6c757d;padding:6px 10px;border-radius:18px;min-width:70px;text-align:center;transition:.25s;cursor:pointer;font-size:.75rem;}
+.step-dot{background:#e9ecef;color:#6c757d;padding:6px 10px;border-radius:18px;min-width:70px;text-align:center;transition:.25s;cursor:pointer;font-size:.75rem;user-select:none;}
+.step-dot:hover{background:#dee2e6;transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,0,0,.1);}
 .step-dot.active{background:#0d6efd;color:#fff;box-shadow:0 0 0 3px rgba(13,110,253,.15);}
+.step-dot.active:hover{background:#0b5ed7;transform:translateY(-1px);}
 #map{position:relative;overflow:hidden;height:380px;border:1px solid #dee2e6;border-radius:14px;}
 /* Prevent global img rules from breaking Leaflet tiles */
 .leaflet-container img{max-width:none!important;}
@@ -376,10 +414,11 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://unpkg.com/filepond-plugin-image-preview@4.6.11/dist/filepond-plugin-image-preview.min.js"></script>
 <script src="https://unpkg.com/filepond@4.30.4/dist/filepond.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
 <script>
 (function(){
   const role='{{ $role }}';
-  const totalSteps = role==='admin' ? 6 : 7;
+  const totalSteps = role==='admin' ? 7 : 8;
   let current=1;
   let map, marker=null;
   function initMap(){
@@ -398,6 +437,13 @@
     });
   }
   function setLocationFromSearch() {
+    // Ensure map is initialized
+    if (!map) {
+      initMap();
+      setTimeout(() => setLocationFromSearch(), 100);
+      return;
+    }
+
     const input = document.getElementById("coordSearch").value.trim();
 
     if (!input) {
@@ -421,6 +467,12 @@
         return;
     }
 
+    // Validate coordinate ranges
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        Swal.fire({icon:'error', title:'مختصات خارج از محدوده معتبر است'});
+        return;
+    }
+
     // Update map
     const latlng = [lat, lng];
     map.setView(latlng, 14);
@@ -440,10 +492,18 @@
         showConfirmButton: false,
         timer: 1300
     });
-}
-document.getElementById("coordSearch").addEventListener("keypress", e => {
+  }
+
+  // Add event listeners for coordinate input
+  document.getElementById("coordSearch").addEventListener("keypress", e => {
     if (e.key === "Enter") setLocationFromSearch();
-});
+  });
+
+  // Add click event listener for the apply button
+  document.getElementById("applyCoordsBtn").addEventListener("click", e => {
+    e.preventDefault();
+    setLocationFromSearch();
+  });
 
 
 
@@ -458,38 +518,88 @@ document.getElementById("coordSearch").addEventListener("keypress", e => {
     }
     current=step;
     if(step===2){ initMap(); setTimeout(()=> map.invalidateSize(), 150); }
-    window.scrollTo({top:0,behavior:'smooth'});
+    if(step===4){ setTimeout(()=>{ if(typeof togglePricingFields === 'function') togglePricingFields(); }, 100); }
+    // Remove auto-scroll - commented out
+    // window.scrollTo({top:0,behavior:'smooth'});
   }
   document.querySelectorAll('.next-btn').forEach(b=>b.addEventListener('click',()=>{
     if(!validateStep(current)) return;
     if(current<totalSteps) show(current+1);
-    if(current===6) syncRulesJson();
+    if(current===6) syncAmenitiesJson();
+    if(current===7) syncRulesJson();
   }));
   document.querySelectorAll('.prev-btn').forEach(b=>b.addEventListener('click',()=>{ if(current>1) show(current-1); }));
-  document.querySelectorAll('.step-dot').forEach(d=> d.addEventListener('click',()=>{const s=parseInt(d.dataset.step); if(s<current) show(s);} ));
+  
+  // Make step dots clickable - allow navigation to any step
+  document.querySelectorAll('.step-dot').forEach(d=> {
+    d.style.cursor = 'pointer'; // Visual feedback that it's clickable
+    d.addEventListener('click',()=>{
+      const targetStep = parseInt(d.dataset.step);
+      if(targetStep === current) return; // Already on this step
+      
+      // If going forward, validate all previous steps
+      if(targetStep > current) {
+        let allValid = true;
+        for(let i = 1; i < targetStep; i++) {
+          if(!validateStep(i, true)) { // true = silent validation (no alerts)
+            allValid = false;
+            break;
+          }
+        }
+        if(!allValid) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'لطفاً مراحل قبلی را تکمیل کنید',
+            text: 'برای رفتن به این مرحله، ابتدا باید مراحل قبلی را به درستی تکمیل کنید.'
+          });
+          return;
+        }
+      }
+      
+      // Navigate to the step
+      show(targetStep);
+      if(targetStep === 6) syncAmenitiesJson();
+      if(targetStep === 7) syncRulesJson();
+    });
+  });
 
-  function validateStep(step){
+  function validateStep(step, silent = false){
     // Admin must select host first
     if(role==='admin' && step===1){
       const hid=document.getElementById('host_id').value;
-      if(!hid){ Swal.fire({icon:'warning',title:'ابتدا میزبان را انتخاب کنید'}); return false; }
+      if(!hid){ 
+        if(!silent) Swal.fire({icon:'warning',title:'ابتدا میزبان را انتخاب کنید'}); 
+        return false; 
+      }
     }
     if(step===2 && !document.getElementById('lat').value){
-      Swal.fire({icon:'warning',title:'مختصات انتخاب نشده'}); return false;
+      if(!silent) Swal.fire({icon:'warning',title:'مختصات انتخاب نشده'}); 
+      return false;
     }
     if(step===5){ // images limit
       const inputEl=document.getElementById('imagesInput');
       const pondCount = (typeof FilePond!=='undefined' && inputEl? FilePond.find(inputEl)?.getFiles().length : 0) || 0;
       const filesLen = inputEl?.files?.length || 0;
       const total = Math.max(pondCount, filesLen);
-      if(total>10){ Swal.fire({icon:'error',title:'حداکثر 10 تصویر'}); return false; }
+      if(total>10){ 
+        if(!silent) Swal.fire({icon:'error',title:'حداکثر 10 تصویر'}); 
+        return false; 
+      }
     }
     const container=document.getElementById('step'+step);
     let invalid=false;
     container.querySelectorAll('[required]').forEach(inp=>{
-      if(!inp.value){ inp.classList.add('is-invalid'); invalid=true; } else inp.classList.remove('is-invalid');
+      if(!inp.value){ 
+        inp.classList.add('is-invalid'); 
+        invalid=true; 
+      } else { 
+        inp.classList.remove('is-invalid'); 
+      }
     });
-    if(invalid){ Swal.fire({icon:'error',title:'فیلدهای ضروری خالی است'}); return false; }
+    if(invalid){ 
+      if(!silent) Swal.fire({icon:'error',title:'فیلدهای ضروری خالی است'}); 
+      return false; 
+    }
     return true;
   }
 
@@ -821,13 +931,133 @@ document.getElementById("coordSearch").addEventListener("keypress", e => {
     rulesJsonField.value=JSON.stringify(rules);
   }
 
-  // Submit handler: convert price strings (remove commas)
+  // Amenities dynamic
+  const amenitiesTableBody=document.querySelector('#amenitiesTable tbody');
+  const addAmenityBtn=document.getElementById('addAmenityBtn');
+  const amenitiesJsonField=document.getElementById('amenities_json');
+  let amenityCounter=0;
+  
+  // Predefined amenities list
+  const predefinedAmenities = [
+    'پارکینگ', 'سیستم گرمایشی', 'سیستم سرمایش', 'تلویزیون', 'مبلمان', 'آسانسور', 
+    'اینترنت', 'سرایدار/نگهبان', 'سرو غذا', 'یخچال', 'اجاق گاز', 'وسایل آشپزخانه',
+    'میز غذاخوری', 'حمام', 'توالت ایرانی', 'توالت فرنگی', 'اقلام بهداشتی',
+    'تلفن ثابت', 'ماشین لباسشویی', 'مایکروفر', 'اتو', 'سشوار', 'جارو برقی',
+    'کباب پز', 'صبحانه رایگان', 'استخر', 'جکوزی', 'سونا', 'لابی', 'رستوران',
+    'صبحانه', 'پذیرش 24 ساعته'
+  ];
+  
+  addAmenityBtn.addEventListener('click',()=>{
+    if(amenityCounter>=50){ Swal.fire({icon:'warning',title:'حداکثر 50 امکان'}); return; }
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>
+        <select class="form-select form-select-sm amenity-name" required>
+          <option value="">انتخاب امکان</option>
+          ${predefinedAmenities.map(a => `<option value="${a}">${a}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" class="form-control form-control-sm amenity-description" placeholder="توضیحات اختیاری"></td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-success toggle-amenity" data-has="1"><i class="bi bi-check-circle"></i></button>
+      </td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-amenity"><i class="bi bi-trash3"></i></button>
+      </td>`;
+    amenitiesTableBody.appendChild(tr);
+    amenityCounter++;
+  });
+  amenitiesTableBody.addEventListener('click',e=>{
+    const btn=e.target.closest('.toggle-amenity');
+    if(btn){
+      const has=btn.dataset.has==='1';
+      btn.dataset.has=has?'0':'1';
+      btn.classList.toggle('btn-success', !has);
+      btn.classList.toggle('btn-danger', has);
+      btn.innerHTML=has?'<i class="bi bi-x-circle"></i>':'<i class="bi bi-check-circle"></i>';
+    }
+    const remove=e.target.closest('.remove-amenity');
+    if(remove){
+      const tr=remove.closest('tr');
+      tr.classList.add('rule-row-removed');
+      setTimeout(()=>{ tr.remove(); amenityCounter--; },250);
+    }
+  });
+  function syncAmenitiesJson(){
+    const amenities=[];
+    amenitiesTableBody.querySelectorAll('tr').forEach(tr=>{
+      const name=tr.querySelector('.amenity-name')?.value?.trim();
+      if(!name) return;
+      amenities.push({
+        name:name,
+        description: tr.querySelector('.amenity-description')?.value?.trim() || '',
+        has: tr.querySelector('.toggle-amenity').dataset.has==='1'
+      });
+    });
+    amenitiesJsonField.value=JSON.stringify(amenities);
+  }
+
+  // Submit handler: convert price strings (remove commas) and handle hotel room types
   document.getElementById('stayForm').addEventListener('submit',function(e){
     if(!validateStep(current)){ e.preventDefault(); return; }
+    syncAmenitiesJson();
     syncRulesJson();
+    
+    // Update description from CKEditor
+    if (typeof descriptionEditor !== 'undefined' && descriptionEditor && descriptionEditor.getData) {
+      document.getElementById('description').value = descriptionEditor.getData();
+    }
+    
+    // Convert price strings (remove commas)
     this.querySelectorAll('[data-price-format]').forEach(inp=>{
       inp.value=inp.value.replace(/,/g,'');
     });
+    
+    // Handle hotel room types
+    if (categorySelect && categorySelect.value === 'hotel') {
+      syncRoomTypesJson();
+      const roomTypesJson = roomTypesJsonField.value;
+      if (!roomTypesJson || roomTypesJson === '[]') {
+        e.preventDefault();
+        Swal.fire({icon: 'error', title: 'حداقل یک نوع اتاق باید تعریف شود'});
+        return false;
+      }
+      
+      // Remove any existing room type hidden inputs
+      this.querySelectorAll('input[name^="room_types"]').forEach(el => el.remove());
+      
+      // Convert room_types_json to room_types array for backend
+      const roomTypes = JSON.parse(roomTypesJson);
+      roomTypes.forEach((rt, index) => {
+        // Add regular fields
+        ['title', 'capacity', 'base_capacity', 'extra_capacity', 'area', 'price_per_night', 'total_rooms'].forEach(key => {
+          if (rt[key] !== undefined && rt[key] !== null) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `room_types[${index}][${key}]`;
+            input.value = rt[key];
+            this.appendChild(input);
+          }
+        });
+        
+        // Add beds array
+        if (rt.beds && Array.isArray(rt.beds)) {
+          rt.beds.forEach((bed, bedIndex) => {
+            const bedIdInput = document.createElement('input');
+            bedIdInput.type = 'hidden';
+            bedIdInput.name = `room_types[${index}][beds][${bedIndex}][bed_id]`;
+            bedIdInput.value = bed.bed_id;
+            this.appendChild(bedIdInput);
+            
+            const bedQtyInput = document.createElement('input');
+            bedQtyInput.type = 'hidden';
+            bedQtyInput.name = `room_types[${index}][beds][${bedIndex}][quantity]`;
+            bedQtyInput.value = bed.quantity;
+            this.appendChild(bedQtyInput);
+          });
+        }
+      });
+    }
   });
 
   // Pricing mode toggle
@@ -880,6 +1110,445 @@ document.getElementById("coordSearch").addEventListener("keypress", e => {
     updateMax();
   })();
   show(1);
+
+  // CKEditor initialization
+  let descriptionEditor;
+  if (typeof ClassicEditor !== 'undefined') {
+    ClassicEditor
+      .create(document.querySelector('#description'), {
+        language: 'fa',
+        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', 'insertTable', '|', 'undo', 'redo']
+      })
+      .then(editor => {
+        descriptionEditor = editor;
+      })
+      .catch(error => {
+        console.error('CKEditor initialization error:', error);
+      });
+  }
+
+  // Convert Persian/Arabic digits to English for license number
+  (function(){
+    const licenseInput = document.getElementById('license_number');
+    if(licenseInput){
+      function toEnDigits(s){
+        const fa='۰۱۲۳۴۵۶۷۸۹', ar='٠١٢٣٤٥٦٧٨٩';
+        let out='';
+        for(const ch of String(s)){
+          const iFa=fa.indexOf(ch);
+          if(iFa>-1){out+=String(iFa); continue;}
+          const iAr=ar.indexOf(ch);
+          if(iAr>-1){out+=String(iAr); continue;}
+          out+=ch;
+        }
+        return out;
+      }
+      ['input','blur','change'].forEach(ev=>{
+        licenseInput.addEventListener(ev,()=>{
+          licenseInput.value=toEnDigits(licenseInput.value);
+        });
+      });
+    }
+  })();
+
+  // Category change handler
+  const categorySelect = document.getElementById('category');
+  const hotelFields = document.getElementById('hotelFields');
+  const nonHotelCapacity = document.getElementById('nonHotelCapacity');
+  const hotelRoomTypes = document.getElementById('hotelRoomTypes');
+  
+  function toggleHotelFields() {
+    const isHotel = categorySelect.value === 'hotel';
+    if (isHotel) {
+      hotelFields.classList.remove('d-none');
+      nonHotelCapacity.classList.add('d-none');
+      hotelRoomTypes.classList.remove('d-none');
+      // Make non-hotel capacity fields not required
+      nonHotelCapacity.querySelectorAll('[required]').forEach(el => {
+        el.removeAttribute('required');
+      });
+    } else {
+      hotelFields.classList.add('d-none');
+      nonHotelCapacity.classList.remove('d-none');
+      hotelRoomTypes.classList.add('d-none');
+      // Make non-hotel capacity fields required again
+      nonHotelCapacity.querySelectorAll('input[type="number"]').forEach(el => {
+        if (el.name === 'base_capacity' || el.name === 'capacity') {
+          el.setAttribute('required', 'required');
+        }
+      });
+    }
+  }
+  
+  categorySelect.addEventListener('change', toggleHotelFields);
+  toggleHotelFields(); // Initial check
+
+  // Hide pricing fields for hotels
+  function togglePricingFields() {
+    const isHotel = categorySelect.value === 'hotel';
+    const pricingModeField = document.getElementById('pricingModeField');
+    const pricePerPersonField = document.getElementById('pricePerPersonField');
+    const extraPersonPriceField = document.getElementById('extraPersonPriceField');
+    const pricingModeSelect = document.getElementById('pricing_mode');
+    
+    if (isHotel) {
+      // Hide pricing fields for hotels
+      if (pricingModeField) pricingModeField.style.display = 'none';
+      if (pricePerPersonField) pricePerPersonField.style.display = 'none';
+      if (extraPersonPriceField) extraPersonPriceField.style.display = 'none';
+      if (pricingModeSelect) pricingModeSelect.removeAttribute('required');
+    } else {
+      // Show pricing fields for non-hotels
+      if (pricingModeField) pricingModeField.style.display = '';
+      if (pricePerPersonField) pricePerPersonField.style.display = '';
+      if (extraPersonPriceField) extraPersonPriceField.style.display = '';
+      if (pricingModeSelect) pricingModeSelect.setAttribute('required', 'required');
+    }
+  }
+  
+  categorySelect.addEventListener('change', togglePricingFields);
+
+  // Room type builder
+  let roomTypeCounter = 0;
+  const roomTypesContainer = document.getElementById('roomTypesContainer');
+  const roomTypesJsonField = document.getElementById('room_types_json');
+  const bedsData = @json($beds ?? []);
+
+  function getBedCapacity(bedCode) {
+    return ['double', 'queen', 'king'].includes(bedCode) ? 2 : 1;
+  }
+
+  function calculateTotalBedCapacity(beds) {
+    let total = 0;
+    beds.forEach(bed => {
+      const bedModel = bedsData.find(b => b.id == bed.bed_id);
+      if (bedModel) {
+        total += bed.quantity * getBedCapacity(bedModel.code);
+      }
+    });
+    return total;
+  }
+
+  function addRoomType() {
+    const roomTypeId = roomTypeCounter++;
+    const roomTypeDiv = document.createElement('div');
+    roomTypeDiv.className = 'card mb-3 room-type-card';
+    roomTypeDiv.dataset.roomTypeId = roomTypeId;
+    roomTypeDiv.innerHTML = `
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">نوع اتاق #${roomTypeId + 1}</h6>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-room-type">
+          <i class="bi bi-trash3"></i> حذف
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">عنوان نوع اتاق <span class="text-danger">*</span></label>
+            <input type="text" class="form-control room-type-title" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">ظرفیت کل <span class="text-danger">*</span></label>
+            <input type="number" min="1" class="form-control room-type-capacity" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">ظرفیت پایه <span class="text-danger">*</span></label>
+            <input type="number" min="1" class="form-control room-type-base-capacity" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">ظرفیت اضافه</label>
+            <input type="number" min="0" class="form-control room-type-extra-capacity" value="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">متراژ (متر)</label>
+            <input type="text" class="form-control room-type-area" data-price-format placeholder="">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">قیمت هر شب (ریال) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control room-type-price price-field" data-price-format placeholder="" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">تعداد اتاق‌ها <span class="text-danger">*</span></label>
+            <input type="number" min="1" class="form-control room-type-total-rooms" value="1" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">ترکیب تخت‌ها <span class="text-danger">*</span></label>
+            <div class="beds-container">
+              <div class="d-flex gap-2 mb-2">
+                <select class="form-select bed-select" style="max-width:200px;">
+                  <option value="">انتخاب تخت</option>
+                  ${bedsData.map(bed => `<option value="${bed.id}" data-code="${bed.code}">${bed.title_fa}</option>`).join('')}
+                </select>
+                <input type="number" min="1" class="form-control bed-quantity" placeholder="" style="max-width:100px;">
+                <button type="button" class="btn btn-sm btn-outline-primary add-bed-btn">افزودن</button>
+              </div>
+              <div class="beds-list"></div>
+              <small class="text-muted d-block mt-2">مجموع ظرفیت تخت‌ها: <span class="bed-total-capacity">0</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    roomTypesContainer.appendChild(roomTypeDiv);
+    
+    // Apply price formatting to area and price fields in this room type (must be after appending to DOM)
+    const areaInput = roomTypeDiv.querySelector('.room-type-area');
+    const priceInput = roomTypeDiv.querySelector('.room-type-price');
+    
+    if (areaInput && typeof formatPrice === 'function') {
+      areaInput.addEventListener('input', function() {
+        const caret = this.selectionStart;
+        this.value = formatPrice(this.value);
+        this.setSelectionRange(caret, caret);
+      });
+      areaInput.addEventListener('blur', function() {
+        this.value = formatPrice(this.value);
+      });
+    }
+    
+    if (priceInput && typeof formatPrice === 'function') {
+      priceInput.addEventListener('input', function() {
+        const caret = this.selectionStart;
+        this.value = formatPrice(this.value);
+        this.setSelectionRange(caret, caret);
+      });
+      priceInput.addEventListener('blur', function() {
+        this.value = formatPrice(this.value);
+      });
+    }
+    
+    // Add bed functionality
+    const addBedBtn = roomTypeDiv.querySelector('.add-bed-btn');
+    const bedSelect = roomTypeDiv.querySelector('.bed-select');
+    const bedQuantity = roomTypeDiv.querySelector('.bed-quantity');
+    const bedsList = roomTypeDiv.querySelector('.beds-list');
+    const bedTotalCapacity = roomTypeDiv.querySelector('.bed-total-capacity');
+    const capacityInput = roomTypeDiv.querySelector('.room-type-capacity');
+    
+    let roomBeds = [];
+    
+    function updateBedTotalCapacity() {
+      const total = calculateTotalBedCapacity(roomBeds);
+      bedTotalCapacity.textContent = total;
+    }
+    
+    function canAddBed(bedId, quantity) {
+      const bedModel = bedsData.find(b => b.id == bedId);
+      if (!bedModel) return false;
+      
+      const currentTotal = calculateTotalBedCapacity(roomBeds);
+      const bedCapacity = getBedCapacity(bedModel.code);
+      const additionalCapacity = bedCapacity * quantity;
+      const roomCapacity = parseInt(capacityInput.value) || 0;
+      
+      return (currentTotal + additionalCapacity) <= roomCapacity;
+    }
+    
+    addBedBtn.addEventListener('click', () => {
+      const bedId = bedSelect.value;
+      const quantity = parseInt(bedQuantity.value) || 1;
+      if (!bedId) {
+        Swal.fire({icon: 'warning', title: 'لطفاً نوع تخت را انتخاب کنید'});
+        return;
+      }
+      
+      // Check if adding this bed would exceed capacity
+      if (!canAddBed(bedId, quantity)) {
+        const bedModel = bedsData.find(b => b.id == bedId);
+        if (bedModel) {
+          const currentTotal = calculateTotalBedCapacity(roomBeds);
+          const bedCapacity = getBedCapacity(bedModel.code);
+          const roomCapacity = parseInt(capacityInput.value) || 0;
+          Swal.fire({
+            icon: 'warning',
+            title: 'ظرفیت کافی نیست',
+            text: `افزودن این تخت باعث می‌شود مجموع ظرفیت تخت‌ها (${currentTotal + (bedCapacity * quantity)}) از ظرفیت کل اتاق (${roomCapacity}) بیشتر شود.`
+          });
+        }
+        return;
+      }
+      
+      const bedModel = bedsData.find(b => b.id == bedId);
+      if (!bedModel) return;
+      
+      // Check if bed already exists
+      const existing = roomBeds.find(b => b.bed_id == bedId);
+      if (existing) {
+        // Check if increasing quantity would exceed capacity
+        const currentTotal = calculateTotalBedCapacity(roomBeds);
+        const bedCapacity = getBedCapacity(bedModel.code);
+        const newTotal = currentTotal - (bedCapacity * existing.quantity) + (bedCapacity * (existing.quantity + quantity));
+        const roomCapacity = parseInt(capacityInput.value) || 0;
+        
+        if (newTotal <= roomCapacity) {
+          existing.quantity += quantity;
+        } else {
+          // Show alert if would exceed capacity
+          Swal.fire({
+            icon: 'warning',
+            title: 'ظرفیت کافی نیست',
+            text: `افزودن این تعداد تخت باعث می‌شود مجموع ظرفیت تخت‌ها (${newTotal}) از ظرفیت کل اتاق (${roomCapacity}) بیشتر شود.`
+          });
+          return;
+        }
+      } else {
+        roomBeds.push({bed_id: parseInt(bedId), quantity: quantity});
+      }
+      
+      renderBedsList();
+      bedSelect.value = '';
+      bedQuantity.value = '';
+      updateCapacityConstraints();
+    });
+    
+    function renderBedsList() {
+      bedsList.innerHTML = '';
+      roomBeds.forEach((bed, index) => {
+        const bedModel = bedsData.find(b => b.id == bed.bed_id);
+        if (!bedModel) return;
+        const bedDiv = document.createElement('div');
+        bedDiv.className = 'badge bg-primary me-2 mb-2 p-2';
+        bedDiv.innerHTML = `
+          ${bedModel.title_fa} × ${bed.quantity}
+          <button type="button" class="btn-close btn-close-white ms-2" data-bed-index="${index}"></button>
+        `;
+        bedsList.appendChild(bedDiv);
+      });
+      updateBedTotalCapacity();
+    }
+    
+    bedsList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (btn) {
+        const index = parseInt(btn.dataset.bedIndex);
+        roomBeds.splice(index, 1);
+        renderBedsList();
+      }
+    });
+    
+    // Capacity validation - input-level constraints only, no alerts
+    const baseCapacityInput = roomTypeDiv.querySelector('.room-type-base-capacity');
+    const extraCapacityInput = roomTypeDiv.querySelector('.room-type-extra-capacity');
+    
+    function updateCapacityConstraints() {
+      const capacity = parseInt(capacityInput.value) || 1;
+      const baseCapacity = parseInt(baseCapacityInput.value) || 1;
+      
+      // Set max for base capacity (cannot exceed total capacity)
+      baseCapacityInput.setAttribute('max', capacity);
+      if (baseCapacity > capacity) {
+        baseCapacityInput.value = capacity;
+      }
+      
+      // Set max for extra capacity (cannot exceed total - base)
+      const maxExtra = Math.max(0, capacity - (parseInt(baseCapacityInput.value) || 1));
+      extraCapacityInput.setAttribute('max', maxExtra);
+      const extraCapacity = parseInt(extraCapacityInput.value) || 0;
+      if (extraCapacity > maxExtra) {
+        extraCapacityInput.value = maxExtra;
+      }
+    }
+    
+    capacityInput.addEventListener('input', updateCapacityConstraints);
+    capacityInput.addEventListener('change', updateCapacityConstraints);
+    baseCapacityInput.addEventListener('input', updateCapacityConstraints);
+    baseCapacityInput.addEventListener('change', updateCapacityConstraints);
+    extraCapacityInput.addEventListener('input', updateCapacityConstraints);
+    extraCapacityInput.addEventListener('change', updateCapacityConstraints);
+    
+    // Initialize constraints
+    updateCapacityConstraints();
+    
+    // Remove room type
+    roomTypeDiv.querySelector('.remove-room-type').addEventListener('click', () => {
+      roomTypeDiv.remove();
+      syncRoomTypesJson();
+    });
+    
+    // Store beds array in data attribute
+    roomTypeDiv.dataset.beds = JSON.stringify(roomBeds);
+    
+    // Update beds when changed
+    const observer = new MutationObserver(() => {
+      roomTypeDiv.dataset.beds = JSON.stringify(roomBeds);
+    });
+    observer.observe(bedsList, {childList: true});
+  }
+
+  function syncRoomTypesJson() {
+    const roomTypes = [];
+    document.querySelectorAll('.room-type-card').forEach(card => {
+      const title = card.querySelector('.room-type-title').value;
+      const capacity = parseInt(card.querySelector('.room-type-capacity').value) || 0;
+      const baseCapacity = parseInt(card.querySelector('.room-type-base-capacity').value) || 0;
+      const extraCapacity = parseInt(card.querySelector('.room-type-extra-capacity').value) || 0;
+      const area = card.querySelector('.room-type-area').value ? parseInt(card.querySelector('.room-type-area').value.replace(/,/g, '')) : null;
+      const pricePerNight = card.querySelector('.room-type-price').value.replace(/,/g, '');
+      const totalRooms = parseInt(card.querySelector('.room-type-total-rooms').value) || 0;
+      const beds = JSON.parse(card.dataset.beds || '[]');
+      
+      if (title && capacity > 0 && baseCapacity > 0 && totalRooms > 0 && beds.length > 0) {
+        roomTypes.push({
+          title: title,
+          capacity: capacity,
+          base_capacity: baseCapacity,
+          extra_capacity: extraCapacity,
+          area: area,
+          price_per_night: pricePerNight,
+          total_rooms: totalRooms,
+          beds: beds
+        });
+      }
+    });
+    roomTypesJsonField.value = JSON.stringify(roomTypes);
+  }
+
+  document.getElementById('addRoomTypeBtn').addEventListener('click', addRoomType);
+
+  // Validate step 3 for hotels
+  const originalValidateStep = validateStep;
+  validateStep = function(step, silent = false) {
+    if (step === 3 && categorySelect.value === 'hotel') {
+      const roomTypes = document.querySelectorAll('.room-type-card');
+      if (roomTypes.length === 0) {
+        if (!silent) Swal.fire({icon: 'warning', title: 'حداقل یک نوع اتاق باید تعریف شود'});
+        return false;
+      }
+      let allValid = true;
+      roomTypes.forEach(card => {
+        const title = card.querySelector('.room-type-title').value;
+        const capacity = parseInt(card.querySelector('.room-type-capacity').value) || 0;
+        const baseCapacity = parseInt(card.querySelector('.room-type-base-capacity').value) || 0;
+        const totalRooms = parseInt(card.querySelector('.room-type-total-rooms').value) || 0;
+        const pricePerNight = card.querySelector('.room-type-price').value.replace(/,/g, '');
+        const beds = JSON.parse(card.dataset.beds || '[]');
+        
+        if (!title || capacity < 1 || baseCapacity < 1 || totalRooms < 1 || !pricePerNight || beds.length === 0) {
+          allValid = false;
+        }
+        
+        // Validate bed capacity does not exceed room capacity
+        const bedTotal = calculateTotalBedCapacity(beds);
+        if (bedTotal > capacity) {
+          allValid = false;
+          if (!silent) {
+            Swal.fire({
+              icon: 'error',
+              title: 'خطا در نوع اتاق',
+              text: `مجموع ظرفیت تخت‌ها (${bedTotal}) نمی‌تواند بیشتر از ظرفیت کل (${capacity}) باشد.`
+            });
+          }
+        }
+      });
+      if (!allValid) {
+        if (!silent) Swal.fire({icon: 'error', title: 'لطفاً تمام فیلدهای نوع اتاق را به درستی تکمیل کنید'});
+        return false;
+      }
+      syncRoomTypesJson();
+    }
+    return originalValidateStep(step, silent);
+  };
+
 })();
 </script>
 @endpush

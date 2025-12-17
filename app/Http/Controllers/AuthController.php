@@ -35,90 +35,187 @@ class AuthController extends Controller
      */
     public function sendOtp(Request $request, $role)
     {
-        $request->validate(['phone' => 'required|regex:/^09\d{9}$/']);
-
-        if (!in_array($role, ['admin', 'host', 'user'])) {
-            return back()->with('error', 'نقش نامعتبر است.');
-        }
-
-        $code = rand(100000, 999999);
-        $expiresAt = Carbon::now()->addMinutes(3);
-
-        Otp::updateOrCreate(
-            ['phone' => $request->phone],
-            ['code' => $code, 'expires_at' => $expiresAt]
-        );
-
-        $mobile = $request->phone;
-        $templateId = 857262; 
-        $parameters = [
-            [
-                "name" => "Code",
-                "value" => (string)$code
-            ]
-        ];
-
-        // لاگ قبل از ارسال
-        Log::info('OTP generating', [
-            'phone' => $mobile,
-            'role' => $role,
-            'templateId' => $templateId,
-            'code' => $code,
-            'expires_at' => $expiresAt->toDateTimeString()
-        ]);
-
-        /* Original Sms.ir sending block kept for future use
         try {
-            $response = SmsIr::verifySend($mobile, $templateId, $parameters);
-            Log::info('OTP sms.ir response', [
-                'phone' => $mobile,
-                'status' => $response->status ?? null,
-                'message' => $response->message ?? null,
-                'data' => $response->data ?? null,
-            ]);
-            if (empty($response->status) || !in_array($response->status, [true, 1, 'Success', 'OK'])) {
-                return back()->with('error', 'ارسال کد تایید ناموفق بود. لطفاً دوباره تلاش کنید.');
+            $request->validate(['phone' => 'required|regex:/^09\d{9}$/']);
+
+            if (!in_array($role, ['admin', 'host', 'user'])) {
+                $errorMsg = 'نقش نامعتبر است.';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['error' => $errorMsg], 400);
+                }
+                return back()->with('error', $errorMsg);
             }
-            return back()->with('success', 'کد تایید ارسال شد.');
-        } catch (\Ipe\Sdk\Exceptions\SmsException $e) {
-            Log::error('sms.ir SmsException while sending OTP', [
+
+            $code = rand(100000, 999999);
+            $expiresAt = Carbon::now()->addMinutes(3);
+
+            Otp::updateOrCreate(
+                ['phone' => $request->phone],
+                ['code' => $code, 'expires_at' => $expiresAt]
+            );
+
+            $mobile = $request->phone;
+            $templateId = 857262; 
+            $parameters = [
+                [
+                    "name" => "Code",
+                    "value" => (string)$code
+                ]
+            ];
+
+            $env = app()->environment();
+            // Expanded local detection to ensure it works on local machines
+            $isLocal = in_array($env, ['local', 'development']) 
+                || config('app.debug', false) 
+                || $request->ip() === '127.0.0.1' 
+                || $request->ip() === '::1'
+                || str_contains($request->getHost(), 'localhost');
+
+            // لاگ قبل از ارسال
+            Log::info('OTP generating', [
+                'phone' => $mobile,
+                'role' => $role,
+                'templateId' => $templateId,
+                'code' => $code,
+                'expires_at' => $expiresAt->toDateTimeString(),
+                'environment' => $env,
+                'is_local' => $isLocal,
+                'host' => $request->getHost()
+            ]);
+
+            // در محیط local: فقط لاگ می‌کنیم و پیامک ارسال نمی‌شود
+            // یا اگر ارسال پیامک با خطا مواجه شد ولی محیط دیباگ بود
+            if ($isLocal) {
+                Log::info('OTP Code (Local Environment - SMS not sent)', [
+                    'phone' => $mobile,
+                    'role' => $role,
+                    'code' => $code,
+                    'message' => 'کد OTP در محیط local فقط در لاگ ثبت می‌شود و پیامک ارسال نمی‌شود.'
+                ]);
+                
+                $successMsg = 'کد تایید با موفقیت تولید شد. کد: ' . $code . ' (حالت Local)';
+                
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $successMsg,
+                        'code' => $code
+                    ]);
+                }
+                return back()->with('success', $successMsg);
+            }
+
+            // در محیط production: ارسال پیامک از طریق Melipayamak
+            $url = 'https://console.melipayamak.com/api/send/shared/e9741f18ee7e494792c4b49f6c7572e9';
+            $data = array('bodyId' => 386622, 'to' => $mobile, 'args' => [(string)$code]);
+            $data_string = json_encode($data);
+            
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($data_string)
+            ]);
+            
+            $result = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            // بررسی خطای curl
+            if ($curlError) {
+                Log::error('Melipayamak curl error', [
+                    'phone' => $mobile,
+                    'code' => $code,
+                    'error' => $curlError
+                ]);
+                $errorMsg = 'خطا در ارتباط با سرویس پیامک. لطفاً دوباره تلاش کنید.';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['error' => $errorMsg], 500);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
+            // بررسی پاسخ HTTP
+            if ($httpCode !== 200) {
+                Log::error('Melipayamak HTTP error', [
+                    'phone' => $mobile,
+                    'code' => $code,
+                    'http_code' => $httpCode,
+                    'response' => $result
+                ]);
+                $errorMsg = 'خطا در ارسال پیامک. لطفاً دوباره تلاش کنید.';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['error' => $errorMsg], $httpCode);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
+            // بررسی پاسخ JSON
+            $response = json_decode($result, true);
+            Log::info('Melipayamak response', [
                 'phone' => $mobile,
                 'code' => $code,
-                'error' => $e->getMessage(),
-                'status_code' => $e->getCode(),
+                'http_code' => $httpCode,
+                'response' => $response
             ]);
-            return back()->with('error', 'خطای سرویس پیامک: ' . $e->getMessage());
+
+            // بررسی موفقیت ارسال (بسته به فرمت پاسخ Melipayamak ممکن است نیاز به تنظیم باشد)
+            $successMsg = 'کد تایید ارسال شد.';
+            if (isset($response['status']) && $response['status'] === 'OK') {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $successMsg]);
+                }
+                return back()->with('success', $successMsg);
+            } elseif (isset($response['strRetStatus']) && $response['strRetStatus'] === 'Ok') {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $successMsg]);
+                }
+                return back()->with('success', $successMsg);
+            } elseif ($httpCode === 200 && !isset($response['error'])) {
+                // اگر HTTP 200 است و خطایی در پاسخ نیست، احتمالاً موفق بوده
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $successMsg]);
+                }
+                return back()->with('success', $successMsg);
+            } else {
+                Log::warning('Melipayamak unexpected response', [
+                    'phone' => $mobile,
+                    'code' => $code,
+                    'response' => $response
+                ]);
+                $errorMsg = 'خطا در ارسال پیامک. لطفاً دوباره تلاش کنید.';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['error' => $errorMsg], 500);
+                }
+                return back()->with('error', $errorMsg);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'error' => 'شماره تلفن وارد شده معتبر نیست.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            return back()->withErrors($e->errors())->withInput();
         } catch (Exception $e) {
-            Log::error('Unexpected exception sending OTP', [
-                'phone' => $mobile,
-                'code' => $code,
+            Log::error('Unexpected exception in sendOtp', [
+                'phone' => $request->phone ?? 'unknown',
+                'role' => $role,
                 'error' => $e->getMessage(),
+                'trace' => substr($e->getTraceAsString(), 0, 600)
             ]);
-            return back()->with('error', 'خطای غیرمنتظره در ارسال پیامک.');
+            $errorMsg = 'خطای غیرمنتظره در ارسال کد.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => $errorMsg], 500);
+            }
+            return back()->with('error', $errorMsg);
         }
-        */
-
-       // Melipayamak Console
-
-        $url = 'https://console.melipayamak.com/api/send/shared/e9741f18ee7e494792c4b49f6c7572e9';
-        $data = array('bodyId' => 386622, 'to' => $mobile, 'args' => [(string)$code]);
-        $data_string = json_encode($data);
-        $ch = curl_init($url);                          
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                      
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
-
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER,
-        array('Content-Type: application/json',
-                'Content-Length: ' . strlen($data_string))
-        );
-        $result = curl_exec($ch);
-        curl_close($ch);
-
-        return back()->with('error', 'خطا در سرویس پیامک. لطفا با پشتیبانی تماس بگیرید.');
-    
     }
 
     /**

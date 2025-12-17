@@ -13,6 +13,7 @@ class Stay extends Model
         'host_id',
         'admin_id',
         'title',
+        'description',
         'category',
         'province_id',
         'province_name',
@@ -83,6 +84,11 @@ class Stay extends Model
     public function rules()
     {
         return $this->hasMany(StayRule::class);
+    }
+
+    public function hotel()
+    {
+        return $this->hasOne(Hotel::class);
     }
 
     // Approver admin

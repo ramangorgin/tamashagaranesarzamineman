@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Stay;
+use App\Models\Hotel;
+use App\Models\HotelRoomType;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StayController extends Controller
 {
@@ -52,7 +55,8 @@ class StayController extends Controller
         if ($role === 'admin' && request('host_id')) {
             $host = \App\Models\Host::findOrFail((int)request('host_id'));
         }
-        return view('stays.create', compact('categories','role','host'));
+        $beds = \App\Models\Bed::all();
+        return view('stays.create', compact('categories','role','host','beds'));
     }
 
     // STORE
@@ -69,6 +73,7 @@ class StayController extends Controller
 
         $rules = [
             'title'=>'required|string|max:255',
+            'description'=>'nullable|string',
             'category'=>'required|string|in:hotel,villa,apartment,ecolodge,suite,motel,house',
             'province_id'=>'nullable|string|max:10',
             'province_name'=>'nullable|string|max:80',
@@ -101,6 +106,32 @@ class StayController extends Controller
             'images.*'=>'nullable|image|max:2048',
             'main_image_index'=>'nullable|integer|min:0',
         ];
+
+        // Hotel-specific validation rules
+        $isHotel = $request->input('category') === 'hotel';
+        if ($isHotel) {
+            $rules += [
+                'star_rating' => 'nullable|integer|min:1|max:5',
+                'license_number' => 'nullable|string|max:255',
+                'has_lobby' => 'nullable|boolean',
+                'has_elevator' => 'nullable|boolean',
+                'has_restaurant' => 'nullable|boolean',
+                'has_parking' => 'nullable|boolean',
+                'has_breakfast' => 'nullable|boolean',
+                'has_24h_reception' => 'nullable|boolean',
+                'room_types' => 'required|array|min:1',
+                'room_types.*.title' => 'required|string|max:255',
+                'room_types.*.capacity' => 'required|integer|min:1',
+                'room_types.*.base_capacity' => 'required|integer|min:1',
+                'room_types.*.extra_capacity' => 'nullable|integer|min:0',
+                'room_types.*.area' => 'nullable|integer|min:0',
+                'room_types.*.price_per_night' => 'required|numeric|min:0',
+                'room_types.*.total_rooms' => 'required|integer|min:1',
+                'room_types.*.beds' => 'required|array|min:1',
+                'room_types.*.beds.*.bed_id' => 'required|integer|exists:beds,id',
+                'room_types.*.beds.*.quantity' => 'required|integer|min:1',
+            ];
+        }
         // host needs commission & discounts; admin auto-zero
         if ($role !== 'admin') {
             $rules += [
@@ -124,55 +155,145 @@ class StayController extends Controller
             $data['price_per_person'] = null;
         }
 
-
         if ($role === 'host') {
             $data['host_id'] = $this->userId('host');
         } else { // admin
             $data['host_id'] = (int)$request->input('host_id');
         }
 
-        $stay = Stay::create($data);
-        
-        // Update final prices based on current periods
-        $stay->updateFinalPrices();
+        // Use database transaction for hotel creation
+        DB::beginTransaction();
+        try {
+            $stay = Stay::create($data);
+            
+            // Update final prices based on current periods
+            $stay->updateFinalPrices();
 
-        // If admin creates a stay, auto-approve and activate immediately
-        if ($role === 'admin') {
-            $stay->update([
-                'moderation_status'     => 'approved',
-                'approved_by_admin_id'  => $this->userId('admin'),
-                'approved_at'           => now(),
-                'is_active'             => true,
-            ]);
-        }
+            // If admin creates a stay, auto-approve and activate immediately
+            if ($role === 'admin') {
+                $stay->update([
+                    'moderation_status'     => 'approved',
+                    'approved_by_admin_id'  => $this->userId('admin'),
+                    'approved_at'           => now(),
+                    'is_active'             => true,
+                ]);
+            }
 
-        // Rules
-        if($request->filled('rules_json')){
-            $rulesArr = json_decode($request->rules_json,true) ?: [];
-            foreach($rulesArr as $r){
-                if(!empty($r['rule_text'])){
-                    $stay->rules()->create([
-                        'rule_text'=>trim($r['rule_text']),
-                        'is_allowed'=>!empty($r['is_allowed'])
+            // Hotel-specific creation
+            if ($isHotel) {
+                // Validate capacity constraints for room types
+                $roomTypes = $request->input('room_types', []);
+                foreach ($roomTypes as $index => $roomType) {
+                    $baseCapacity = (int)($roomType['base_capacity'] ?? 0);
+                    $capacity = (int)($roomType['capacity'] ?? 0);
+                    $extraCapacity = (int)($roomType['extra_capacity'] ?? 0);
+                    
+                    if ($baseCapacity > $capacity) {
+                        DB::rollBack();
+                        return back()->withErrors([
+                            "room_types.{$index}.base_capacity" => 'ظرفیت پایه نمی‌تواند بیشتر از ظرفیت کل باشد.'
+                        ])->withInput();
+                    }
+                    
+                    if ($extraCapacity < 0) {
+                        DB::rollBack();
+                        return back()->withErrors([
+                            "room_types.{$index}.extra_capacity" => 'ظرفیت اضافی نمی‌تواند منفی باشد.'
+                        ])->withInput();
+                    }
+                    
+                    // Validate bed quantities match capacity
+                    $beds = $roomType['beds'] ?? [];
+                    $totalBedCapacity = 0;
+                    foreach ($beds as $bed) {
+                        $bedModel = \App\Models\Bed::find($bed['bed_id']);
+                        if ($bedModel) {
+                            $bedCapacity = $bed['quantity'] ?? 0;
+                            // Single bed = 1, double = 2, queen = 2, king = 2, extra = 1
+                            $capacityPerBed = in_array($bedModel->code, ['double', 'queen', 'king']) ? 2 : 1;
+                            $totalBedCapacity += ($bedCapacity * $capacityPerBed);
+                        }
+                    }
+                    
+                    if ($totalBedCapacity !== $capacity) {
+                        DB::rollBack();
+                        return back()->withErrors([
+                            "room_types.{$index}.beds" => "مجموع ظرفیت تخت‌ها ({$totalBedCapacity}) باید با ظرفیت کل ({$capacity}) برابر باشد."
+                        ])->withInput();
+                    }
+                }
+
+                // Create hotel record
+                $hotel = Hotel::create([
+                    'stay_id' => $stay->id,
+                    'star_rating' => $request->input('star_rating'),
+                    'license_number' => $request->input('license_number'),
+                    'has_lobby' => (bool)$request->input('has_lobby', false),
+                    'has_elevator' => (bool)$request->input('has_elevator', false),
+                    'has_restaurant' => (bool)$request->input('has_restaurant', false),
+                    'has_parking' => (bool)$request->input('has_parking', false),
+                    'has_breakfast' => (bool)$request->input('has_breakfast', false),
+                    'has_24h_reception' => (bool)$request->input('has_24h_reception', false),
+                ]);
+
+                // Create room types
+                foreach ($roomTypes as $roomTypeData) {
+                    $normalizePrice = fn($v) => $v !== null ? preg_replace('/[^\d]/', '', $v) : null;
+                    $pricePerNight = $normalizePrice($roomTypeData['price_per_night'] ?? 0);
+                    
+                    $roomType = HotelRoomType::create([
+                        'hotel_id' => $hotel->id,
+                        'title' => $roomTypeData['title'],
+                        'capacity' => (int)$roomTypeData['capacity'],
+                        'base_capacity' => (int)$roomTypeData['base_capacity'],
+                        'extra_capacity' => (int)($roomTypeData['extra_capacity'] ?? 0),
+                        'area' => isset($roomTypeData['area']) ? (int)$roomTypeData['area'] : null,
+                        'price_per_night' => (int)$pricePerNight,
+                        'total_rooms' => (int)$roomTypeData['total_rooms'],
+                    ]);
+
+                    // Attach beds
+                    $bedsToAttach = [];
+                    foreach ($roomTypeData['beds'] ?? [] as $bed) {
+                        $bedsToAttach[$bed['bed_id']] = ['quantity' => (int)$bed['quantity']];
+                    }
+                    $roomType->beds()->attach($bedsToAttach);
+                }
+            }
+
+            // Rules
+            if($request->filled('rules_json')){
+                $rulesArr = json_decode($request->rules_json,true) ?: [];
+                foreach($rulesArr as $r){
+                    if(!empty($r['rule_text'])){
+                        $stay->rules()->create([
+                            'rule_text'=>trim($r['rule_text']),
+                            'is_allowed'=>!empty($r['is_allowed'])
+                        ]);
+                    }
+                }
+            }
+
+            // Images
+            if($request->hasFile('images')){
+                $mainIdx = (int)$request->input('main_image_index',0);
+                foreach($request->file('images') as $i=>$file){
+                    $path = $file->store('stays','public');
+                    $stay->images()->create([
+                        'path'=>'storage/'.$path,
+                        'is_main'=> $i===$mainIdx
                     ]);
                 }
             }
-        }
 
-        // Images
-        if($request->hasFile('images')){
-            $mainIdx = (int)$request->input('main_image_index',0);
-            foreach($request->file('images') as $i=>$file){
-                $path = $file->store('stays','public');
-                $stay->images()->create([
-                    'path'=>'storage/'.$path,
-                    'is_main'=> $i===$mainIdx
-                ]);
-            }
-        }
+            DB::commit();
 
-        $redirectRoute = $role==='admin' ? 'admin.stays.edit' : 'host.stays.edit';
-        return redirect()->route($redirectRoute,$stay)->with('success','اقامت‌گاه ایجاد شد.');
+            $redirectRoute = $role==='admin' ? 'admin.stays.edit' : 'host.stays.edit';
+            return redirect()->route($redirectRoute,$stay)->with('success','اقامت‌گاه ایجاد شد.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'خطا در ایجاد اقامت‌گاه: ' . $e->getMessage()])->withInput();
+        }
     }
 
     // EDIT FORM
