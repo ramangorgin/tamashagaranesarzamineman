@@ -239,26 +239,56 @@
               <label class="form-label">قیمت نفر اضافه <small class="text-muted">(ریال)</small></label>
               <input type="text" inputmode="numeric" name="extra_person_price" class="form-control price-field" data-price-format value="0">
             </div>
-              <div class="col-md-4">
-                <label class="form-label">درصد کمیسیون سایت</label>
-                <div class="input-group">
-                  <input type="number" name="site_commission" min="0" max="100" step="0.5" class="form-control" required>
+              <div class="col-md-4" id="commissionField">
+                <label class="form-label d-flex justify-content-between align-items-center">
+                  <span>کمیسیون سایت</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary commission-toggle" data-mode="percent" style="font-size:0.75rem;">
+                    <i class="bi bi-arrow-repeat"></i> درصد/مبلغ
+                  </button>
+                </label>
+                <div class="input-group commission-input-group" data-mode="percent">
+                  <input type="number" name="site_commission" id="site_commission" min="0" max="100" step="0.5" class="form-control commission-percent" required>
                   <span class="input-group-text">%</span>
                 </div>
+                <div class="input-group commission-input-group d-none" data-mode="price">
+                  <input type="text" id="site_commission_price" class="form-control commission-price" data-price-format placeholder="">
+                  <span class="input-group-text">ریال</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="commissionInfo"></small>
               </div>
-              <div class="col-md-4">
-                <label class="form-label">کف تغییر قیمت (٪)</label>
-                <div class="input-group">
-                  <input type="number" name="min_price_adjustment" min="0" max="100" step="0.5" class="form-control" required>
+              <div class="col-md-4" id="minAdjustmentField">
+                <label class="form-label d-flex justify-content-between align-items-center">
+                  <span>کف تغییر قیمت</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary min-adjustment-toggle" data-mode="percent" style="font-size:0.75rem;">
+                    <i class="bi bi-arrow-repeat"></i> درصد/مبلغ
+                  </button>
+                </label>
+                <div class="input-group min-adjustment-input-group" data-mode="percent">
+                  <input type="number" name="min_price_adjustment" id="min_price_adjustment" min="0" max="100" step="0.5" class="form-control min-adjustment-percent" required>
                   <span class="input-group-text">%</span>
                 </div>
+                <div class="input-group min-adjustment-input-group d-none" data-mode="price">
+                  <input type="text" id="min_price_adjustment_price" class="form-control min-adjustment-price" data-price-format placeholder="">
+                  <span class="input-group-text">ریال</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="minAdjustmentInfo"></small>
               </div>
-              <div class="col-md-4">
-                <label class="form-label">سقف تغییر قیمت (٪)</label>
-                <div class="input-group">
-                  <input type="number" name="max_price_adjustment" min="0" max="100" step="0.5" class="form-control" required>
+              <div class="col-md-4" id="maxAdjustmentField">
+                <label class="form-label d-flex justify-content-between align-items-center">
+                  <span>سقف تغییر قیمت</span>
+                  <button type="button" class="btn btn-sm btn-outline-secondary max-adjustment-toggle" data-mode="percent" style="font-size:0.75rem;">
+                    <i class="bi bi-arrow-repeat"></i> درصد/مبلغ
+                  </button>
+                </label>
+                <div class="input-group max-adjustment-input-group" data-mode="percent">
+                  <input type="number" name="max_price_adjustment" id="max_price_adjustment" min="0" max="100" step="0.5" class="form-control max-adjustment-percent" required>
                   <span class="input-group-text">%</span>
                 </div>
+                <div class="input-group max-adjustment-input-group d-none" data-mode="price">
+                  <input type="text" id="max_price_adjustment_price" class="form-control max-adjustment-price" data-price-format placeholder="">
+                  <span class="input-group-text">ریال</span>
+                </div>
+                <small class="text-muted d-block mt-1" id="maxAdjustmentInfo"></small>
               </div>
               <input type="hidden" name="site_commission" value="0">
           </div>
@@ -518,7 +548,12 @@
     }
     current=step;
     if(step===2){ initMap(); setTimeout(()=> map.invalidateSize(), 150); }
-    if(step===4){ setTimeout(()=>{ if(typeof togglePricingFields === 'function') togglePricingFields(); }, 100); }
+    if(step===4){ 
+      setTimeout(()=>{ 
+        if(typeof togglePricingFields === 'function') togglePricingFields();
+        if(typeof updateCommissionValidation === 'function') updateCommissionValidation();
+      }, 100); 
+    }
     // Remove auto-scroll - commented out
     // window.scrollTo({top:0,behavior:'smooth'});
   }
@@ -575,6 +610,54 @@
     if(step===2 && !document.getElementById('lat').value){
       if(!silent) Swal.fire({icon:'warning',title:'مختصات انتخاب نشده'}); 
       return false;
+    }
+    if(step===4 && role !== 'admin') {
+      // Validate commission and price adjustments
+      function getBasePrice() {
+        const isHotel = categorySelect && categorySelect.value === 'hotel';
+        if (isHotel) {
+          const roomTypes = document.querySelectorAll('.room-type-card');
+          if (roomTypes.length === 0) return 0;
+          let totalPrice = 0;
+          let count = 0;
+          roomTypes.forEach(card => {
+            const priceInput = card.querySelector('.room-type-price');
+            if (priceInput && priceInput.value) {
+              const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+              if (price > 0) {
+                totalPrice += price;
+                count++;
+              }
+            }
+          });
+          return count > 0 ? Math.round(totalPrice / count) : 0;
+        } else {
+          const modeSel = document.getElementById('pricing_mode');
+          const isPerNight = modeSel && modeSel.value === 'per_night';
+          const priceInput = isPerNight ? document.getElementById('price_per_night') : document.getElementById('price_per_person');
+          if (priceInput && priceInput.value) {
+            return parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          }
+        }
+        return 0;
+      }
+      
+      const basePrice = getBasePrice();
+      if (basePrice > 0) {
+        const commissionPercent = parseFloat(document.getElementById('site_commission').value) || 0;
+        const minAdjustmentPercent = parseFloat(document.getElementById('min_price_adjustment').value) || 0;
+        
+        if (minAdjustmentPercent > commissionPercent) {
+          if (!silent) {
+            Swal.fire({
+              icon: 'error',
+              title: 'خطا در کف تغییر قیمت',
+              text: `کف تغییر قیمت (${minAdjustmentPercent}%) نمی‌تواند بیشتر از درصد کمیسیون (${commissionPercent}%) باشد.`
+            });
+          }
+          return false;
+        }
+      }
     }
     if(step===5){ // images limit
       const inputEl=document.getElementById('imagesInput');
@@ -1008,6 +1091,74 @@
       document.getElementById('description').value = descriptionEditor.getData();
     }
     
+    // Convert commission/adjustment price inputs to percentages if in price mode
+    function getBasePrice() {
+      const isHotel = categorySelect && categorySelect.value === 'hotel';
+      if (isHotel) {
+        const roomTypes = document.querySelectorAll('.room-type-card');
+        if (roomTypes.length === 0) return 0;
+        let totalPrice = 0;
+        let count = 0;
+        roomTypes.forEach(card => {
+          const priceInput = card.querySelector('.room-type-price');
+          if (priceInput && priceInput.value) {
+            const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+            if (price > 0) {
+              totalPrice += price;
+              count++;
+            }
+          }
+        });
+        return count > 0 ? Math.round(totalPrice / count) : 0;
+      } else {
+        const modeSel = document.getElementById('pricing_mode');
+        const isPerNight = modeSel && modeSel.value === 'per_night';
+        const priceInput = isPerNight ? document.getElementById('price_per_night') : document.getElementById('price_per_person');
+        if (priceInput && priceInput.value) {
+          return parseInt(priceInput.value.replace(/,/g, '')) || 0;
+        }
+      }
+      return 0;
+    }
+    
+    function priceToPercent(price, basePrice) {
+      if (!basePrice || !price) return 0;
+      return parseFloat(((price / basePrice) * 100).toFixed(2));
+    }
+    
+    const basePrice = getBasePrice();
+    if (basePrice > 0) {
+      // Commission
+      const commissionToggle = document.querySelector('.commission-toggle');
+      if (commissionToggle && commissionToggle.dataset.mode === 'price') {
+        const priceInput = document.getElementById('site_commission_price');
+        if (priceInput && priceInput.value) {
+          const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          document.getElementById('site_commission').value = priceToPercent(price, basePrice);
+        }
+      }
+      
+      // Min adjustment
+      const minToggle = document.querySelector('.min-adjustment-toggle');
+      if (minToggle && minToggle.dataset.mode === 'price') {
+        const priceInput = document.getElementById('min_price_adjustment_price');
+        if (priceInput && priceInput.value) {
+          const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          document.getElementById('min_price_adjustment').value = priceToPercent(price, basePrice);
+        }
+      }
+      
+      // Max adjustment
+      const maxToggle = document.querySelector('.max-adjustment-toggle');
+      if (maxToggle && maxToggle.dataset.mode === 'price') {
+        const priceInput = document.getElementById('max_price_adjustment_price');
+        if (priceInput && priceInput.value) {
+          const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          document.getElementById('max_price_adjustment').value = priceToPercent(price, basePrice);
+        }
+      }
+    }
+    
     // Convert price strings (remove commas)
     this.querySelectorAll('[data-price-format]').forEach(inp=>{
       inp.value=inp.value.replace(/,/g,'');
@@ -1082,9 +1233,276 @@
         extraInput.disabled = byNight;
         if(byNight) extraInput.value='';
       }
+      // Update commission/adjustment calculations when price mode changes
+      if(typeof updateCommissionValidation === 'function') updateCommissionValidation();
     }
     modeSel?.addEventListener('change', syncUI);
     syncUI();
+  })();
+
+  // Commission and price adjustment: percentage/price toggle and validation
+  (function(){
+    function getBasePrice() {
+      const isHotel = categorySelect && categorySelect.value === 'hotel';
+      if (isHotel) {
+        // For hotels, get average price from room types
+        const roomTypes = document.querySelectorAll('.room-type-card');
+        if (roomTypes.length === 0) return 0;
+        let totalPrice = 0;
+        let count = 0;
+        roomTypes.forEach(card => {
+          const priceInput = card.querySelector('.room-type-price');
+          if (priceInput && priceInput.value) {
+            const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+            if (price > 0) {
+              totalPrice += price;
+              count++;
+            }
+          }
+        });
+        return count > 0 ? Math.round(totalPrice / count) : 0;
+      } else {
+        // For non-hotels, get price_per_person or price_per_night
+        const modeSel = document.getElementById('pricing_mode');
+        const isPerNight = modeSel && modeSel.value === 'per_night';
+        const priceInput = isPerNight ? document.getElementById('price_per_night') : document.getElementById('price_per_person');
+        if (priceInput && priceInput.value) {
+          return parseInt(priceInput.value.replace(/,/g, '')) || 0;
+        }
+      }
+      return 0;
+    }
+
+    function percentToPrice(percent, basePrice) {
+      if (!basePrice || !percent) return 0;
+      return Math.round((basePrice * percent) / 100);
+    }
+
+    function priceToPercent(price, basePrice) {
+      if (!basePrice || !price) return 0;
+      return parseFloat(((price / basePrice) * 100).toFixed(2));
+    }
+
+    function updateCommissionValidation() {
+      const basePrice = getBasePrice();
+      if (!basePrice) return;
+
+      // Get commission percentage
+      const commissionPercent = parseFloat(document.getElementById('site_commission').value) || 0;
+      const commissionAmount = percentToPrice(commissionPercent, basePrice);
+      
+      // Update commission info
+      const commissionInfo = document.getElementById('commissionInfo');
+      if (commissionInfo) {
+        commissionInfo.textContent = `کمیسیون: ${commissionAmount.toLocaleString('fa-IR')} ریال (${commissionPercent}%)`;
+      }
+
+      // Calculate max min_price_adjustment (cannot exceed commission percentage)
+      const minAdjustmentPercent = parseFloat(document.getElementById('min_price_adjustment').value) || 0;
+      const maxMinAdjustment = commissionPercent; // Cannot exceed commission
+      
+      // Update min adjustment input max
+      const minAdjustmentInput = document.getElementById('min_price_adjustment');
+      if (minAdjustmentInput) {
+        minAdjustmentInput.setAttribute('max', maxMinAdjustment);
+        if (minAdjustmentPercent > maxMinAdjustment) {
+          minAdjustmentInput.value = maxMinAdjustment;
+          Swal.fire({
+            icon: 'warning',
+            title: 'توجه',
+            text: `کف تغییر قیمت نمی‌تواند بیشتر از درصد کمیسیون (${maxMinAdjustment}%) باشد.`
+          });
+        }
+      }
+
+      // Update min adjustment info
+      const minAdjustmentInfo = document.getElementById('minAdjustmentInfo');
+      if (minAdjustmentInfo) {
+        const minAdjustmentAmount = percentToPrice(minAdjustmentPercent, basePrice);
+        const ownerReceives = basePrice - commissionAmount;
+        minAdjustmentInfo.textContent = `حداکثر: ${maxMinAdjustment}% | مبلغ: ${minAdjustmentAmount.toLocaleString('fa-IR')} ریال | صاحب اقامت‌گاه دریافت می‌کند: ${ownerReceives.toLocaleString('fa-IR')} ریال`;
+      }
+
+      // Update max adjustment info
+      const maxAdjustmentPercent = parseFloat(document.getElementById('max_price_adjustment').value) || 0;
+      const maxAdjustmentInfo = document.getElementById('maxAdjustmentInfo');
+      if (maxAdjustmentInfo) {
+        const maxAdjustmentAmount = percentToPrice(maxAdjustmentPercent, basePrice);
+        maxAdjustmentInfo.textContent = `مبلغ: ${maxAdjustmentAmount.toLocaleString('fa-IR')} ریال (${maxAdjustmentPercent}%)`;
+      }
+    }
+
+    // Toggle between percentage and price for commission
+    const commissionToggle = document.querySelector('.commission-toggle');
+    if (commissionToggle) {
+      commissionToggle.addEventListener('click', function() {
+        const currentMode = this.dataset.mode;
+        const newMode = currentMode === 'percent' ? 'price' : 'percent';
+        this.dataset.mode = newMode;
+        
+        const percentGroup = document.querySelector('.commission-input-group[data-mode="percent"]');
+        const priceGroup = document.querySelector('.commission-input-group[data-mode="price"]');
+        const percentInput = document.getElementById('site_commission');
+        const priceInput = document.getElementById('site_commission_price');
+        
+        if (newMode === 'price') {
+          percentGroup.classList.add('d-none');
+          priceGroup.classList.remove('d-none');
+          // Convert percentage to price
+          const basePrice = getBasePrice();
+          const percent = parseFloat(percentInput.value) || 0;
+          if (basePrice > 0 && percent > 0) {
+            priceInput.value = formatPrice(String(percentToPrice(percent, basePrice)));
+          }
+          percentInput.removeAttribute('required');
+          priceInput.setAttribute('required', 'required');
+        } else {
+          percentGroup.classList.remove('d-none');
+          priceGroup.classList.add('d-none');
+          // Convert price to percentage
+          const basePrice = getBasePrice();
+          const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          if (basePrice > 0 && price > 0) {
+            percentInput.value = priceToPercent(price, basePrice);
+          }
+          priceInput.removeAttribute('required');
+          percentInput.setAttribute('required', 'required');
+        }
+        updateCommissionValidation();
+      });
+    }
+
+    // Toggle for min adjustment
+    const minAdjustmentToggle = document.querySelector('.min-adjustment-toggle');
+    if (minAdjustmentToggle) {
+      minAdjustmentToggle.addEventListener('click', function() {
+        const currentMode = this.dataset.mode;
+        const newMode = currentMode === 'percent' ? 'price' : 'percent';
+        this.dataset.mode = newMode;
+        
+        const percentGroup = document.querySelector('.min-adjustment-input-group[data-mode="percent"]');
+        const priceGroup = document.querySelector('.min-adjustment-input-group[data-mode="price"]');
+        const percentInput = document.getElementById('min_price_adjustment');
+        const priceInput = document.getElementById('min_price_adjustment_price');
+        
+        if (newMode === 'price') {
+          percentGroup.classList.add('d-none');
+          priceGroup.classList.remove('d-none');
+          const basePrice = getBasePrice();
+          const percent = parseFloat(percentInput.value) || 0;
+          if (basePrice > 0 && percent > 0) {
+            priceInput.value = formatPrice(String(percentToPrice(percent, basePrice)));
+          }
+          percentInput.removeAttribute('required');
+          priceInput.setAttribute('required', 'required');
+        } else {
+          percentGroup.classList.remove('d-none');
+          priceGroup.classList.add('d-none');
+          const basePrice = getBasePrice();
+          const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          if (basePrice > 0 && price > 0) {
+            percentInput.value = priceToPercent(price, basePrice);
+          }
+          priceInput.removeAttribute('required');
+          percentInput.setAttribute('required', 'required');
+        }
+        updateCommissionValidation();
+      });
+    }
+
+    // Toggle for max adjustment
+    const maxAdjustmentToggle = document.querySelector('.max-adjustment-toggle');
+    if (maxAdjustmentToggle) {
+      maxAdjustmentToggle.addEventListener('click', function() {
+        const currentMode = this.dataset.mode;
+        const newMode = currentMode === 'percent' ? 'price' : 'percent';
+        this.dataset.mode = newMode;
+        
+        const percentGroup = document.querySelector('.max-adjustment-input-group[data-mode="percent"]');
+        const priceGroup = document.querySelector('.max-adjustment-input-group[data-mode="price"]');
+        const percentInput = document.getElementById('max_price_adjustment');
+        const priceInput = document.getElementById('max_price_adjustment_price');
+        
+        if (newMode === 'price') {
+          percentGroup.classList.add('d-none');
+          priceGroup.classList.remove('d-none');
+          const basePrice = getBasePrice();
+          const percent = parseFloat(percentInput.value) || 0;
+          if (basePrice > 0 && percent > 0) {
+            priceInput.value = formatPrice(String(percentToPrice(percent, basePrice)));
+          }
+          percentInput.removeAttribute('required');
+          priceInput.setAttribute('required', 'required');
+        } else {
+          percentGroup.classList.remove('d-none');
+          priceGroup.classList.add('d-none');
+          const basePrice = getBasePrice();
+          const price = parseInt(priceInput.value.replace(/,/g, '')) || 0;
+          if (basePrice > 0 && price > 0) {
+            percentInput.value = priceToPercent(price, basePrice);
+          }
+          priceInput.removeAttribute('required');
+          percentInput.setAttribute('required', 'required');
+        }
+        updateCommissionValidation();
+      });
+    }
+
+    // Update validation when inputs change
+    const commissionInput = document.getElementById('site_commission');
+    const minAdjustmentInput = document.getElementById('min_price_adjustment');
+    const maxAdjustmentInput = document.getElementById('max_price_adjustment');
+    const pricePerPerson = document.getElementById('price_per_person');
+    const pricePerNight = document.getElementById('price_per_night');
+    const pricingMode = document.getElementById('pricing_mode');
+
+    [commissionInput, minAdjustmentInput, maxAdjustmentInput, pricePerPerson, pricePerNight, pricingMode].forEach(input => {
+      if (input) {
+        input.addEventListener('input', updateCommissionValidation);
+        input.addEventListener('change', updateCommissionValidation);
+      }
+    });
+
+    // Update when price inputs change (for price mode)
+    const commissionPriceInput = document.getElementById('site_commission_price');
+    const minAdjustmentPriceInput = document.getElementById('min_price_adjustment_price');
+    const maxAdjustmentPriceInput = document.getElementById('max_price_adjustment_price');
+
+    [commissionPriceInput, minAdjustmentPriceInput, maxAdjustmentPriceInput].forEach(input => {
+      if (input) {
+        input.addEventListener('input', function() {
+          const basePrice = getBasePrice();
+          const price = parseInt(this.value.replace(/,/g, '')) || 0;
+          if (basePrice > 0 && price > 0) {
+            // Convert to percentage and update hidden field
+            const percent = priceToPercent(price, basePrice);
+            if (this.id === 'site_commission_price') {
+              document.getElementById('site_commission').value = percent;
+            } else if (this.id === 'min_price_adjustment_price') {
+              document.getElementById('min_price_adjustment').value = percent;
+            } else if (this.id === 'max_price_adjustment_price') {
+              document.getElementById('max_price_adjustment').value = percent;
+            }
+          }
+          updateCommissionValidation();
+        });
+      }
+    });
+
+    // Also update when room types change (for hotels)
+    if (typeof syncRoomTypesJson === 'function') {
+      const originalSync = syncRoomTypesJson;
+      syncRoomTypesJson = function() {
+        originalSync();
+        updateCommissionValidation();
+      };
+    }
+
+    // Make function globally available
+    window.updateCommissionValidation = updateCommissionValidation;
+
+    // Initial update
+    setTimeout(updateCommissionValidation, 500);
   })();
 
   // Capacity constraints: extra_capacity <= capacity - base_capacity
