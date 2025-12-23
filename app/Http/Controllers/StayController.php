@@ -301,8 +301,9 @@ class StayController extends Controller
     {
         $role = $this->role();
         if($role==='host' && $stay->host_id !== $this->userId('host')) abort(403);
-        $stay->load(['images','rules','host']);
-        return view('stays.edit', compact('stay','role'));
+        $stay->load(['images','rules','host','hotel.roomTypes.beds']);
+        $beds = \App\Models\Bed::all();
+        return view('stays.edit', compact('stay','role','beds'));
     }
 
     // UPDATE

@@ -451,6 +451,9 @@
   const totalSteps = role==='admin' ? 7 : 8;
   let current=1;
   let map, marker=null;
+  
+  // Define roomTypesJsonField at top level so it's accessible everywhere
+  const roomTypesJsonField = document.getElementById('room_types_json');
   function initMap(){
     if(map) return;
     map = L.map('map').setView([32,53],5);
@@ -1082,9 +1085,10 @@
 
   // Submit handler: convert price strings (remove commas) and handle hotel room types
   document.getElementById('stayForm').addEventListener('submit',function(e){
-    if(!validateStep(current)){ e.preventDefault(); return; }
-    syncAmenitiesJson();
-    syncRulesJson();
+    try {
+      if(!validateStep(current)){ e.preventDefault(); return; }
+      syncAmenitiesJson();
+      syncRulesJson();
     
     // Update description from CKEditor
     if (typeof descriptionEditor !== 'undefined' && descriptionEditor && descriptionEditor.getData) {
@@ -1166,7 +1170,14 @@
     
     // Handle hotel room types
     if (categorySelect && categorySelect.value === 'hotel') {
-      syncRoomTypesJson();
+      if (typeof syncRoomTypesJson === 'function') {
+        syncRoomTypesJson();
+      }
+      if (!roomTypesJsonField) {
+        e.preventDefault();
+        Swal.fire({icon: 'error', title: 'خطا در فرم', text: 'فیلد room_types_json یافت نشد'});
+        return false;
+      }
       const roomTypesJson = roomTypesJsonField.value;
       if (!roomTypesJson || roomTypesJson === '[]') {
         e.preventDefault();
@@ -1208,6 +1219,16 @@
           });
         }
       });
+    }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      e.preventDefault();
+      Swal.fire({
+        icon: 'error',
+        title: 'خطا در ارسال فرم',
+        text: 'لطفاً خطاهای فرم را بررسی کنید: ' + (error.message || 'خطای نامشخص')
+      });
+      return false;
     }
   });
 
@@ -1629,7 +1650,7 @@
   // Room type builder
   let roomTypeCounter = 0;
   const roomTypesContainer = document.getElementById('roomTypesContainer');
-  const roomTypesJsonField = document.getElementById('room_types_json');
+  // roomTypesJsonField is already defined at top level (line 456)
   const bedsData = @json($beds ?? []);
 
   function getBedCapacity(bedCode) {
