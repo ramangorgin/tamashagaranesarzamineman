@@ -104,7 +104,7 @@ class Stay extends Model
         return $this->calculateAdjustedPrice($basePrice, $today);
     }
     
-    protected function calculateAdjustedPrice($basePrice, $date)
+    public function calculateAdjustedPrice($basePrice, $date)
     {
         $adjustedPrice = $basePrice;
         $type = null;

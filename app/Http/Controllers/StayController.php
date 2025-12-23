@@ -528,7 +528,7 @@ class StayController extends Controller
                 abort(404);
             }
         }
-        $stay->loadMissing(['images','rules','host']);
+        $stay->loadMissing(['images','rules','host','hotel.roomTypes.beds']);
         return view('stays.show', compact('stay','role'));
     }
   
