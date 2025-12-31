@@ -113,7 +113,7 @@
         </div>
     </header>
     @include('partials.auth-modal')
-
+    @include('partials.snackbar')
 
     <!-- ========================= MAIN ========================= -->
     <main class="container-fluid p-0">

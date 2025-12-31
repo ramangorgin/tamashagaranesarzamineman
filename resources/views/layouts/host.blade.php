@@ -211,6 +211,7 @@
         </div>
       </div>
     @endif
+    @include('partials.snackbar')
     @yield('content')
   </main>
 

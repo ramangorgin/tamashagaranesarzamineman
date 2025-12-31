@@ -13,7 +13,9 @@ class Booking extends Model
         'user_id',
         'stay_id',
         'start_date',
+        'start_time',
         'end_date',
+        'end_time',
         'base_guests',
         'extra_guests',
         'base_price',
@@ -34,6 +36,8 @@ class Booking extends Model
     protected $casts = [
         'start_date'   => 'date',
         'end_date'     => 'date',
+        'start_time'   => 'datetime:H:i',
+        'end_time'     => 'datetime:H:i',
         'refunded_at'  => 'datetime',
     ];
 

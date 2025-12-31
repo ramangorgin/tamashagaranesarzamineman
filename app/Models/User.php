@@ -13,11 +13,26 @@ class User extends Authenticatable
 
      protected $fillable = ['full_name', 'national_id', 'phone'];
 
-
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Accessor for backward compatibility (name -> full_name)
+     */
+    public function getNameAttribute()
+    {
+        return $this->full_name;
+    }
+
+    /**
+     * Mutator for backward compatibility (name -> full_name)
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['full_name'] = $value;
+    }
 
     /**
     * relations with OTPs table
@@ -41,10 +56,14 @@ class User extends Authenticatable
     }
     public function getOrganizationalDiscountAttribute()
     {
+        // ONLY phone OR national_id (NOT full_name)
         $member = \App\Models\DiscountContractMember::where(function ($query) {
-            $query->where('full_name', $this->name)
-                ->orWhere('phone', $this->phone)
-                ->orWhere('national_id', $this->national_id ?? null);
+            if (!empty($this->phone)) {
+                $query->where('phone', $this->phone);
+            }
+            if (!empty($this->national_id)) {
+                $query->orWhere('national_id', $this->national_id);
+            }
         })
         ->whereHas('contract', function ($query) {
             $query->where('start_date', '<=', now())

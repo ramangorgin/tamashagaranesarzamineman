@@ -46,16 +46,19 @@ class DiscountContract extends Model
             && $today->lessThanOrEqualTo($end);
     }
 
-    // Find best discount for given identifiers
+    // Find best discount for given identifiers (ONLY phone OR national_id, NOT full_name)
     public static function findForMember(array $data): ?self
     {
         $today = Carbon::today();
         $query = static::query()->active()->with('members')
             ->whereHas('members', function ($q) use ($data) {
                 $q->where(function ($w) use ($data) {
-                    if (!empty($data['national_id'])) $w->orWhere('national_id', $data['national_id']);
-                    if (!empty($data['phone'])) $w->orWhere('phone', $data['phone']);
-                    if (!empty($data['full_name'])) $w->orWhere('full_name', $data['full_name']);
+                    if (!empty($data['phone'])) {
+                        $w->where('phone', $data['phone']);
+                    }
+                    if (!empty($data['national_id'])) {
+                        $w->orWhere('national_id', $data['national_id']);
+                    }
                 });
             })
             ->orderByDesc('discount_percent')

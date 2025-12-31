@@ -105,6 +105,21 @@ Route::get('/payment/test/{booking}', function (\App\Models\Booking $booking) {
     return view('test-payment', compact('booking'));
 })->name('payment.test');
 
+Route::post('/payment/test/{booking}/complete', function (\App\Models\Booking $booking) {
+    // Update booking status to paid (or completed)
+    $booking->update(['status' => 'paid']);
+    return redirect()->route('bookings.ticket', $booking)->with('success', 'پرداخت با موفقیت انجام شد!');
+})->name('payment.test.complete');
+
+Route::get('/bookings/{booking}/ticket', function (\App\Models\Booking $booking) {
+    $booking->load(['stay.host', 'user', 'stay']);
+    // Ensure user relationship is loaded
+    if (!$booking->user) {
+        abort(404, 'User not found for this booking');
+    }
+    return view('bookings.ticket', compact('booking'));
+})->name('bookings.ticket');
+
 /*
 | Geo
 */
