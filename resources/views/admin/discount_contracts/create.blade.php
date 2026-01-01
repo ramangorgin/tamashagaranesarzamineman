@@ -101,7 +101,13 @@ document.addEventListener('DOMContentLoaded',function(){
     document.getElementById('contractForm')?.addEventListener('submit',function(e){
         if(!sh?.value || !eh?.value){
             e.preventDefault();
-            Swal.fire({ icon:'warning', title:'تاریخ ناقص', text:'لطفاً تاریخ شروع و پایان را انتخاب کنید.', confirmButtonText:'باشه' });
+            Swal.fire({ 
+              icon:'warning', 
+              title:'تاریخ ناقص', 
+              text:'لطفاً تاریخ شروع و پایان را انتخاب کنید.', 
+              confirmButtonText:'باشه',
+              confirmButtonColor:'#f59e0b'
+            });
         }
     });
 });

@@ -25,12 +25,24 @@
       </h4>
 
       @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            if (window.showSuccess) {
+              window.showSuccess('{{ addslashes(session('success')) }}');
+            }
+          });
+        </script>
       @endif
       @if($errors->any())
-        <div class="alert alert-danger small mb-3">
-          <ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            @foreach($errors->all() as $e)
+              if (window.showError) {
+                window.showError('{{ addslashes($e) }}');
+              }
+            @endforeach
+          });
+        </script>
       @endif
 
       @if($role==='admin')
@@ -485,7 +497,9 @@
       if(marker) marker.setLatLng(e.latlng); else marker=L.marker(e.latlng).addTo(map);
       latField.value=lat.toFixed(6); lngField.value=lng.toFixed(6);
       document.getElementById('coordText').textContent=latField.value+', '+lngField.value;
-      Swal.fire({toast:true,icon:'success',title:'مختصات ثبت شد',position:'top',showConfirmButton:false,timer:1300});
+      if (window.showSuccess) {
+        window.showSuccess('مختصات ثبت شد', 3000);
+      }
     });
   }
   function setLocationFromSearch() {
@@ -1214,7 +1228,9 @@
       results.innerHTML='';
       results.style.display='none';
       hostPhone.value='';
-      Swal.fire({toast:true,icon:'info',title:'میزبان پاک شد. دوباره انتخاب کنید',position:'top',timer:1400,showConfirmButton:false});
+      if (window.showInfo) {
+        window.showInfo('میزبان پاک شد. دوباره انتخاب کنید', 3000);
+      }
       setTimeout(()=> hostSearch.focus(), 50);
     }
 
@@ -1276,7 +1292,13 @@
       form.append('phone', phone);
       try{
         const resp = await fetch(quickHostUrl,{method:'POST', body: form, headers:{'Accept':'application/json'}});
-        if(resp.ok){ const h=await resp.json(); bindHost(h); Swal.fire({toast:true,icon:'success',title:'میزبان ایجاد شد',position:'top',timer:1200,showConfirmButton:false}); }
+        if(resp.ok){ 
+          const h=await resp.json(); 
+          bindHost(h); 
+          if (window.showSuccess) {
+            window.showSuccess('میزبان ایجاد شد', 3000);
+          }
+        }
         else{
           const d = await resp.json().catch(()=>({message:'خطا'}));
           Swal.fire({icon:'error',title:'خطا در ایجاد', text: d.message||'لطفاً ورودی‌ها را بررسی کنید'});

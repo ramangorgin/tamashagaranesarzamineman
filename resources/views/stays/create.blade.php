@@ -57,9 +57,15 @@
       @endif
       @if(($role ?? null)!=='admin')
         @if($errors->any())
-          <div class="alert alert-danger small mb-3">
-            <ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              @foreach($errors->all() as $e)
+                if (window.showError) {
+                  window.showError('{{ addslashes($e) }}');
+                }
+              @endforeach
+            });
+          </script>
         @endif
       @endif
       <form id="stayForm" method="POST" action="{{ isset($role)&&$role==='admin' ? route('admin.stays.store') : route('host.stays.store') }}" enctype="multipart/form-data">
@@ -466,7 +472,9 @@
       if(marker) marker.setLatLng(e.latlng); else marker=L.marker(e.latlng).addTo(map);
       document.getElementById('lat').value=lat.toFixed(6);
       document.getElementById('lng').value=lng.toFixed(6);
-      Swal.fire({toast:true,position:'top',icon:'success',title:'مختصات ثبت شد',showConfirmButton:false,timer:1300});
+      if (window.showSuccess) {
+        window.showSuccess('مختصات ثبت شد', 3000);
+      }
     });
   }
   function setLocationFromSearch() {
@@ -480,7 +488,9 @@
     const input = document.getElementById("coordSearch").value.trim();
 
     if (!input) {
-        Swal.fire({icon:'warning', title:'لطفا موقعیت را وارد کنید'});
+        if (window.showWarning) {
+          window.showWarning('لطفا موقعیت را وارد کنید');
+        }
         return;
     }
 
@@ -488,7 +498,9 @@
     const nums = input.match(/[-]?\d+(\.\d+)?/g);
 
     if (!nums || nums.length < 2) {
-        Swal.fire({icon:'error', title:'موقعیت معتبر نیست'});
+        if (window.showError) {
+          window.showError('موقعیت معتبر نیست');
+        }
         return;
     }
 
@@ -496,13 +508,17 @@
     const lng = parseFloat(nums[1]);
 
     if (isNaN(lat) || isNaN(lng)) {
-        Swal.fire({icon:'error', title:'موقعیت معتبر نیست'});
+        if (window.showError) {
+          window.showError('موقعیت معتبر نیست');
+        }
         return;
     }
 
     // Validate coordinate ranges
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        Swal.fire({icon:'error', title:'مختصات خارج از محدوده معتبر است'});
+        if (window.showError) {
+          window.showError('مختصات خارج از محدوده معتبر است');
+        }
         return;
     }
 
@@ -517,14 +533,9 @@
     document.getElementById('lat').value = lat.toFixed(6);
     document.getElementById('lng').value = lng.toFixed(6);
 
-    Swal.fire({
-        toast: true,
-        position: 'top',
-        icon: 'success',
-        title: 'موقعیت با موفقیت ثبت شد',
-        showConfirmButton: false,
-        timer: 1300
-    });
+        if (window.showSuccess) {
+          window.showSuccess('موقعیت با موفقیت ثبت شد', 3000);
+        }
   }
 
   // Add event listeners for coordinate input
@@ -585,11 +596,9 @@
           }
         }
         if(!allValid) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'لطفاً مراحل قبلی را تکمیل کنید',
-            text: 'برای رفتن به این مرحله، ابتدا باید مراحل قبلی را به درستی تکمیل کنید.'
-          });
+          if (window.showWarning) {
+            window.showWarning('برای رفتن به این مرحله، ابتدا باید مراحل قبلی را به درستی تکمیل کنید.');
+          }
           return;
         }
       }
@@ -606,12 +615,16 @@
     if(role==='admin' && step===1){
       const hid=document.getElementById('host_id').value;
       if(!hid){ 
-        if(!silent) Swal.fire({icon:'warning',title:'ابتدا میزبان را انتخاب کنید'}); 
+        if(!silent && window.showWarning) {
+          window.showWarning('ابتدا میزبان را انتخاب کنید');
+        }
         return false; 
       }
     }
     if(step===2 && !document.getElementById('lat').value){
-      if(!silent) Swal.fire({icon:'warning',title:'مختصات انتخاب نشده'}); 
+      if(!silent && window.showWarning) {
+        window.showWarning('مختصات انتخاب نشده');
+      }
       return false;
     }
     if(step===4 && role !== 'admin') {
@@ -651,12 +664,8 @@
         const minAdjustmentPercent = parseFloat(document.getElementById('min_price_adjustment').value) || 0;
         
         if (minAdjustmentPercent > commissionPercent) {
-          if (!silent) {
-            Swal.fire({
-              icon: 'error',
-              title: 'خطا در کف تغییر قیمت',
-              text: `کف تغییر قیمت (${minAdjustmentPercent}%) نمی‌تواند بیشتر از درصد کمیسیون (${commissionPercent}%) باشد.`
-            });
+          if (!silent && window.showError) {
+            window.showError(`کف تغییر قیمت (${minAdjustmentPercent}%) نمی‌تواند بیشتر از درصد کمیسیون (${commissionPercent}%) باشد.`);
           }
           return false;
         }
@@ -668,7 +677,9 @@
       const filesLen = inputEl?.files?.length || 0;
       const total = Math.max(pondCount, filesLen);
       if(total>10){ 
-        if(!silent) Swal.fire({icon:'error',title:'حداکثر 10 تصویر'}); 
+        if(!silent && window.showError) {
+          window.showError('حداکثر 10 تصویر');
+        }
         return false; 
       }
     }
@@ -683,7 +694,9 @@
       }
     });
     if(invalid){ 
-      if(!silent) Swal.fire({icon:'error',title:'فیلدهای ضروری خالی است'}); 
+      if(!silent && window.showError) {
+        window.showError('فیلدهای ضروری خالی است');
+      }
       return false; 
     }
     return true;
@@ -846,7 +859,9 @@
       results.style.display='none';
       hostPhone.value='';
       // give a gentle cue and focus name field
-      Swal.fire({toast:true,icon:'info',title:'میزبان پاک شد. دوباره انتخاب کنید',position:'top',timer:1400,showConfirmButton:false});
+      if (window.showInfo) {
+        window.showInfo('میزبان پاک شد. دوباره انتخاب کنید', 3000);
+      }
       setTimeout(()=> hostSearch.focus(), 50);
     }
 
@@ -900,7 +915,12 @@
     // Quick create instantly using phone (+ optional name from search field)
     quickBtn.addEventListener('click', async ()=>{
       const phone = hostPhone.value.trim();
-      if(!phone){ Swal.fire({icon:'warning',title:'ابتدا شماره موبایل را وارد کنید'}); return; }
+      if(!phone){ 
+        if (window.showWarning) {
+          window.showWarning('ابتدا شماره موبایل را وارد کنید');
+        }
+        return; 
+      }
       try{
         // If exists, bind
         const chk=await fetch("{{ route('admin.hosts.lookup') }}?phone="+encodeURIComponent(phone),{headers:{'Accept':'application/json'}});
@@ -913,12 +933,24 @@
       form.append('phone', phone);
       try{
         const resp = await fetch(quickHostUrl,{method:'POST', body: form, headers:{'Accept':'application/json'}});
-        if(resp.ok){ const h=await resp.json(); bindHost(h); Swal.fire({toast:true,icon:'success',title:'میزبان ایجاد شد',position:'top',timer:1200,showConfirmButton:false}); }
+        if(resp.ok){ 
+          const h=await resp.json(); 
+          bindHost(h); 
+          if (window.showSuccess) {
+            window.showSuccess('میزبان ایجاد شد', 3000);
+          }
+        }
         else{
           const d = await resp.json().catch(()=>({message:'خطا'}));
-          Swal.fire({icon:'error',title:'خطا در ایجاد', text: d.message||'لطفاً ورودی‌ها را بررسی کنید'});
+          if (window.showError) {
+            window.showError(d.message||'لطفاً ورودی‌ها را بررسی کنید');
+          }
         }
-      }catch{ Swal.fire({icon:'error',title:'خطا در ارتباط با سرور'}); }
+      }catch{ 
+        if (window.showError) {
+          window.showError('خطا در ارتباط با سرور');
+        }
+      }
     });
     document.getElementById('btnChangeHost').addEventListener('click',()=> clearHost());
   })();
@@ -975,7 +1007,12 @@
   const rulesJsonField=document.getElementById('rules_json');
   let ruleCounter=0;
   addRuleBtn.addEventListener('click',()=>{
-    if(ruleCounter>=20){ Swal.fire({icon:'warning',title:'حداکثر 20 قانون'}); return; }
+    if(ruleCounter>=20){ 
+      if (window.showWarning) {
+        window.showWarning('حداکثر 20 قانون');
+      }
+      return; 
+    }
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td><input type="text" class="form-control form-control-sm rule-text" placeholder="متن قانون" required></td>
@@ -1034,7 +1071,12 @@
   ];
   
   addAmenityBtn.addEventListener('click',()=>{
-    if(amenityCounter>=50){ Swal.fire({icon:'warning',title:'حداکثر 50 امکان'}); return; }
+    if(amenityCounter>=50){ 
+      if (window.showWarning) {
+        window.showWarning('حداکثر 50 امکان');
+      }
+      return; 
+    }
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>
@@ -1175,13 +1217,17 @@
       }
       if (!roomTypesJsonField) {
         e.preventDefault();
-        Swal.fire({icon: 'error', title: 'خطا در فرم', text: 'فیلد room_types_json یافت نشد'});
+        if (window.showError) {
+          window.showError('فیلد room_types_json یافت نشد');
+        }
         return false;
       }
       const roomTypesJson = roomTypesJsonField.value;
       if (!roomTypesJson || roomTypesJson === '[]') {
         e.preventDefault();
-        Swal.fire({icon: 'error', title: 'حداقل یک نوع اتاق باید تعریف شود'});
+        if (window.showError) {
+          window.showError('حداقل یک نوع اتاق باید تعریف شود');
+        }
         return false;
       }
       
@@ -1223,11 +1269,9 @@
     } catch (error) {
       console.error('Form submission error:', error);
       e.preventDefault();
-      Swal.fire({
-        icon: 'error',
-        title: 'خطا در ارسال فرم',
-        text: 'لطفاً خطاهای فرم را بررسی کنید: ' + (error.message || 'خطای نامشخص')
-      });
+      if (window.showError) {
+        window.showError('خطا در ارسال فرم: ' + (error.message || 'خطای نامشخص'));
+      }
       return false;
     }
   });
@@ -1328,11 +1372,9 @@
         minAdjustmentInput.setAttribute('max', maxMinAdjustment);
         if (minAdjustmentPercent > maxMinAdjustment) {
           minAdjustmentInput.value = maxMinAdjustment;
-          Swal.fire({
-            icon: 'warning',
-            title: 'توجه',
-            text: `کف تغییر قیمت نمی‌تواند بیشتر از درصد کمیسیون (${maxMinAdjustment}%) باشد.`
-          });
+          if (window.showWarning) {
+            window.showWarning(`کف تغییر قیمت نمی‌تواند بیشتر از درصد کمیسیون (${maxMinAdjustment}%) باشد.`);
+          }
         }
       }
 
@@ -1652,6 +1694,12 @@
   const roomTypesContainer = document.getElementById('roomTypesContainer');
   // roomTypesJsonField is already defined at top level (line 456)
   const bedsData = @json($beds ?? []);
+  
+  // Debug: Check if bedsData is loaded
+  console.log('Beds Data:', bedsData);
+  if (!bedsData || bedsData.length === 0) {
+    console.warn('No beds data found! Make sure beds are seeded in the database.');
+  }
 
   function getBedCapacity(bedCode) {
     return ['double', 'queen', 'king'].includes(bedCode) ? 2 : 1;
@@ -1730,6 +1778,26 @@
     `;
     roomTypesContainer.appendChild(roomTypeDiv);
     
+    // Populate bed select options after DOM is created (fix for bedsData not being available in template literal)
+    const bedSelect = roomTypeDiv.querySelector('.bed-select');
+    if (bedSelect && bedsData && bedsData.length > 0) {
+      bedsData.forEach(bed => {
+        const option = document.createElement('option');
+        option.value = bed.id;
+        option.setAttribute('data-code', bed.code);
+        option.textContent = bed.title_fa;
+        bedSelect.appendChild(option);
+      });
+    } else if (bedSelect) {
+      // Show warning if no beds available
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'هیچ تختی یافت نشد';
+      option.disabled = true;
+      bedSelect.appendChild(option);
+      console.warn('No beds available in bedsData');
+    }
+    
     // Apply price formatting to area and price fields in this room type (must be after appending to DOM)
     const areaInput = roomTypeDiv.querySelector('.room-type-area');
     const priceInput = roomTypeDiv.querySelector('.room-type-price');
@@ -1787,7 +1855,9 @@
       const bedId = bedSelect.value;
       const quantity = parseInt(bedQuantity.value) || 1;
       if (!bedId) {
-        Swal.fire({icon: 'warning', title: 'لطفاً نوع تخت را انتخاب کنید'});
+        if (window.showWarning) {
+          window.showWarning('لطفاً نوع تخت را انتخاب کنید');
+        }
         return;
       }
       
@@ -1798,11 +1868,9 @@
           const currentTotal = calculateTotalBedCapacity(roomBeds);
           const bedCapacity = getBedCapacity(bedModel.code);
           const roomCapacity = parseInt(capacityInput.value) || 0;
-          Swal.fire({
-            icon: 'warning',
-            title: 'ظرفیت کافی نیست',
-            text: `افزودن این تخت باعث می‌شود مجموع ظرفیت تخت‌ها (${currentTotal + (bedCapacity * quantity)}) از ظرفیت کل اتاق (${roomCapacity}) بیشتر شود.`
-          });
+          if (window.showWarning) {
+            window.showWarning(`افزودن این تخت باعث می‌شود مجموع ظرفیت تخت‌ها (${currentTotal + (bedCapacity * quantity)}) از ظرفیت کل اتاق (${roomCapacity}) بیشتر شود.`);
+          }
         }
         return;
       }
@@ -1823,11 +1891,9 @@
           existing.quantity += quantity;
         } else {
           // Show alert if would exceed capacity
-          Swal.fire({
-            icon: 'warning',
-            title: 'ظرفیت کافی نیست',
-            text: `افزودن این تعداد تخت باعث می‌شود مجموع ظرفیت تخت‌ها (${newTotal}) از ظرفیت کل اتاق (${roomCapacity}) بیشتر شود.`
-          });
+          if (window.showWarning) {
+            window.showWarning(`افزودن این تعداد تخت باعث می‌شود مجموع ظرفیت تخت‌ها (${newTotal}) از ظرفیت کل اتاق (${roomCapacity}) بیشتر شود.`);
+          }
           return;
         }
       } else {
@@ -1950,7 +2016,9 @@
     if (step === 3 && categorySelect.value === 'hotel') {
       const roomTypes = document.querySelectorAll('.room-type-card');
       if (roomTypes.length === 0) {
-        if (!silent) Swal.fire({icon: 'warning', title: 'حداقل یک نوع اتاق باید تعریف شود'});
+        if (!silent && window.showWarning) {
+          window.showWarning('حداقل یک نوع اتاق باید تعریف شود');
+        }
         return false;
       }
       let allValid = true;
@@ -1970,17 +2038,15 @@
         const bedTotal = calculateTotalBedCapacity(beds);
         if (bedTotal > capacity) {
           allValid = false;
-          if (!silent) {
-            Swal.fire({
-              icon: 'error',
-              title: 'خطا در نوع اتاق',
-              text: `مجموع ظرفیت تخت‌ها (${bedTotal}) نمی‌تواند بیشتر از ظرفیت کل (${capacity}) باشد.`
-            });
+          if (!silent && window.showError) {
+            window.showError(`مجموع ظرفیت تخت‌ها (${bedTotal}) نمی‌تواند بیشتر از ظرفیت کل (${capacity}) باشد.`);
           }
         }
       });
       if (!allValid) {
-        if (!silent) Swal.fire({icon: 'error', title: 'لطفاً تمام فیلدهای نوع اتاق را به درستی تکمیل کنید'});
+        if (!silent && window.showError) {
+          window.showError('لطفاً تمام فیلدهای نوع اتاق را به درستی تکمیل کنید');
+        }
         return false;
       }
       syncRoomTypesJson();

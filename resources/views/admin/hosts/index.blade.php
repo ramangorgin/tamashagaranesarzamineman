@@ -96,7 +96,15 @@ document.querySelectorAll('.btn-approve').forEach(b=>b.onclick=()=>ajaxConfirm({
   swal:{title:'تأیید میزبان؟',icon:'question',showCancelButton:true,confirmButtonText:'تأیید'}
 }));
 document.querySelectorAll('.btn-reject').forEach(b=>b.onclick=async()=>{
-  const {value:reason,isConfirmed}=await Swal.fire({title:'علت رد (اختیاری)',input:'text',showCancelButton:true,confirmButtonText:'رد'});
+  const {value:reason,isConfirmed}=await Swal.fire({
+    title:'علت رد (اختیاری)',
+    input:'text',
+    showCancelButton:true,
+    confirmButtonText:'رد',
+    cancelButtonText:'انصراف',
+    confirmButtonColor:'#dc3545',
+    cancelButtonColor:'#6c757d'
+  });
   if(isConfirmed) submitPatch(b.dataset.url,'PATCH',{reason});
 });
 document.querySelectorAll('.btn-delete').forEach(b=>b.onclick=()=>ajaxConfirm({

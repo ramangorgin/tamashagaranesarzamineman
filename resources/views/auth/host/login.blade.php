@@ -15,19 +15,33 @@
 
           <div id="messageBox" class="mb-3">
             @if(session('error'))
-              <div class="alert alert-danger mb-2">{{ session('error') }}</div>
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  if (window.showError) {
+                    window.showError('{{ addslashes(session('error')) }}');
+                  }
+                });
+              </script>
             @endif
             @if(session('success'))
-              <div class="alert alert-success mb-2">{{ session('success') }}</div>
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  if (window.showSuccess) {
+                    window.showSuccess('{{ addslashes(session('success')) }}');
+                  }
+                });
+              </script>
             @endif
             @if($errors->any())
-              <div class="alert alert-danger mb-2">
-                <ul class="mb-0">
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
                   @foreach($errors->all() as $e)
-                    <li>{{ $e }}</li>
+                    if (window.showError) {
+                      window.showError('{{ addslashes($e) }}');
+                    }
                   @endforeach
-                </ul>
-              </div>
+                });
+              </script>
             @endif
           </div>
 

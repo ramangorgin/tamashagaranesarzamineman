@@ -1,20 +1,34 @@
 {{-- پیام‌های خطا --}}
 @if ($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        @foreach ($errors->all() as $error)
+          if (window.showError) {
+            window.showError('{{ addslashes($error) }}');
+          }
+        @endforeach
+      });
+    </script>
 @endif
 
 {{-- پیام موفقیت --}}
 @if (session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.showSuccess) {
+          window.showSuccess('{{ addslashes(session('success')) }}');
+        }
+      });
+    </script>
 @endif
 
 {{-- پیام هشدار --}}
 @if (session('warning'))
-    <div class="alert alert-warning">{{ session('warning') }}</div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.showWarning) {
+          window.showWarning('{{ addslashes(session('warning')) }}');
+        }
+      });
+    </script>
 @endif

@@ -840,8 +840,6 @@
         } else {
           if (window.showError) {
             window.showError(data.message || 'خطا در محاسبه قیمت');
-          } else {
-            alert(data.message || 'خطا در محاسبه قیمت');
           }
         }
       } catch (error) {
@@ -849,8 +847,6 @@
         console.error('Error:', error);
         if (window.showError) {
           window.showError('خطای ارتباط با سرور');
-        } else {
-          alert('خطای ارتباط با سرور');
         }
       }
     });
@@ -899,8 +895,6 @@
         console.error('Error:', error);
         if (window.showError) {
           window.showError('خطای ارتباط با سرور');
-        } else {
-          alert('خطای ارتباط با سرور');
         }
       }
     });
@@ -950,8 +944,6 @@
         console.error('Error:', error);
         if (window.showError) {
           window.showError('خطای ارتباط با سرور');
-        } else {
-          alert('خطای ارتباط با سرور');
         }
       }
     });
@@ -997,8 +989,6 @@
       if (!otpVerified) {
         if (window.showWarning) {
           window.showWarning('لطفا ابتدا شماره موبایل را تایید کنید');
-        } else {
-          alert('لطفا ابتدا شماره موبایل را تایید کنید');
         }
         return;
       }
@@ -1055,8 +1045,6 @@
         } else {
           if (window.showError) {
             window.showError(data.message || 'خطا در محاسبه قیمت');
-          } else {
-            alert(data.message || 'خطا در محاسبه قیمت');
           }
         }
       } catch (error) {
@@ -1064,8 +1052,6 @@
         console.error('Error:', error);
         if (window.showError) {
           window.showError('خطای ارتباط با سرور');
-        } else {
-          alert('خطای ارتباط با سرور');
         }
       }
     });
@@ -1142,8 +1128,6 @@
         } else {
           if (window.showError) {
             window.showError(data.message || 'خطا در ثبت رزرو');
-          } else {
-            alert(data.message || 'خطا در ثبت رزرو');
           }
         }
       } catch (error) {
@@ -1151,8 +1135,6 @@
         console.error('Error:', error);
         if (window.showError) {
           window.showError('خطای ارتباط با سرور');
-        } else {
-          alert('خطای ارتباط با سرور');
         }
       }
     });

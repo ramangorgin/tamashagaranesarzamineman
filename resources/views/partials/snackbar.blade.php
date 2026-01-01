@@ -5,35 +5,38 @@
 <style>
 .snackbar-container {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  bottom: 20px;
   right: 20px;
   z-index: 10000;
   pointer-events: none;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 0.75rem;
   max-width: 400px;
-  margin: 0 auto;
+  width: auto;
 }
 
 .snackbar {
   background: #fff;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   pointer-events: auto;
-  animation: slideInLeft 0.3s ease-out;
-  border-right: 4px solid;
-  min-width: 280px;
+  min-width: 300px;
   max-width: 100%;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  animation: snackbarSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  border-right: 4px solid;
+  position: relative;
 }
 
 .snackbar.snackbar-success {
   border-color: #22c55e;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
 }
 
 .snackbar.snackbar-success .snackbar-icon {
@@ -42,6 +45,7 @@
 
 .snackbar.snackbar-error {
   border-color: #ef4444;
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 }
 
 .snackbar.snackbar-error .snackbar-icon {
@@ -50,6 +54,7 @@
 
 .snackbar.snackbar-warning {
   border-color: #f59e0b;
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
 }
 
 .snackbar.snackbar-warning .snackbar-icon {
@@ -58,6 +63,7 @@
 
 .snackbar.snackbar-info {
   border-color: #3b82f6;
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
 }
 
 .snackbar.snackbar-info .snackbar-icon {
@@ -65,69 +71,87 @@
 }
 
 .snackbar-icon {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   flex-shrink: 0;
+  animation: iconPulse 0.6s ease-out;
 }
 
 .snackbar-content {
   flex: 1;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: #1e293b;
+  font-weight: 500;
 }
 
 .snackbar-close {
-  background: none;
+  background: rgba(0, 0, 0, 0.05);
   border: none;
   color: #64748b;
   font-size: 1.25rem;
   cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
+  padding: 0.25rem;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: color 0.2s;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
 .snackbar-close:hover {
+  background: rgba(0, 0, 0, 0.1);
   color: #1e293b;
+  transform: rotate(90deg);
 }
 
 .snackbar.hiding {
-  animation: slideOutLeft 0.3s ease-in forwards;
+  animation: snackbarSlideOut 0.3s ease-in forwards;
 }
 
-@keyframes slideInLeft {
+@keyframes snackbarSlideIn {
   from {
     opacity: 0;
-    transform: translateX(-100%);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes slideOutLeft {
+@keyframes snackbarSlideOut {
   from {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translateX(-100%);
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+@keyframes iconPulse {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
 /* Mobile Responsive */
 @media (max-width: 576px) {
   .snackbar-container {
-    left: 10px;
+    bottom: 10px;
     right: 10px;
-    top: 10px;
+    left: 10px;
+    max-width: none;
   }
 
   .snackbar {
@@ -136,7 +160,7 @@
   }
 
   .snackbar-content {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
   }
 }
 </style>
@@ -147,8 +171,24 @@
 (function() {
   'use strict';
 
-  const container = document.getElementById('snackbar-container');
-  if (!container) return;
+  // Prevent duplicate messages
+  const messageHistory = new Set();
+  const MESSAGE_TTL = 5000; // 5 seconds
+
+  function getMessageKey(type, message) {
+    return `${type}:${message}`;
+  }
+
+  function getOrCreateContainer() {
+    let container = document.getElementById('snackbar-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'snackbar-container';
+      container.className = 'snackbar-container';
+      document.body.appendChild(container);
+    }
+    return container;
+  }
 
   /**
    * Show a snackbar message
@@ -157,6 +197,23 @@
    * @param {number} duration - Auto-dismiss duration in ms (default: 5000)
    */
   window.showSnackbar = function(type, message, duration = 5000) {
+    if (!message || !message.trim()) return;
+
+    const messageKey = getMessageKey(type, message);
+    
+    // Prevent duplicate messages within TTL
+    if (messageHistory.has(messageKey)) {
+      return;
+    }
+    
+    messageHistory.add(messageKey);
+    
+    // Remove from history after TTL
+    setTimeout(() => {
+      messageHistory.delete(messageKey);
+    }, MESSAGE_TTL);
+
+    const container = getOrCreateContainer();
     const snackbar = document.createElement('div');
     snackbar.className = `snackbar snackbar-${type}`;
 
@@ -169,13 +226,17 @@
 
     snackbar.innerHTML = `
       <i class="bi ${icons[type] || icons.info} snackbar-icon"></i>
-      <div class="snackbar-content">${message}</div>
+      <div class="snackbar-content">${escapeHtml(message)}</div>
       <button type="button" class="snackbar-close" aria-label="بستن">
         <i class="bi bi-x"></i>
       </button>
     `;
 
-    container.appendChild(snackbar);
+    // Insert at the beginning (so newest appears at bottom)
+    container.insertBefore(snackbar, container.firstChild);
+
+    // Force reflow to trigger animation
+    snackbar.offsetHeight;
 
     // Auto-dismiss
     let timeoutId = setTimeout(() => {
@@ -197,12 +258,20 @@
   };
 
   function dismissSnackbar(snackbar) {
+    if (!snackbar || snackbar.classList.contains('hiding')) return;
+    
     snackbar.classList.add('hiding');
     setTimeout(() => {
       if (snackbar.parentNode) {
         snackbar.parentNode.removeChild(snackbar);
       }
     }, 300);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   // Convenience functions
@@ -213,4 +282,3 @@
 })();
 </script>
 @endpush
-

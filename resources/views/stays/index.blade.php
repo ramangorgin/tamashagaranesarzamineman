@@ -264,11 +264,15 @@
     </div>
   </div>
 
-  @if(session('success'))
-    <div class="alert alert-success py-2 mb-3">{{ session('success') }}</div>
-  @endif
+  {{-- Session messages are handled by admin.partials.messages in admin layout --}}
   @if($errors->has('overlap'))
-    <div class="alert alert-danger py-2 mb-3">{{ $errors->first('overlap') }}</div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.showError) {
+          window.showError('{{ $errors->first('overlap') }}');
+        }
+      });
+    </script>
   @endif
 
   <div class="card shadow-sm border-0 rounded-4">
@@ -422,7 +426,8 @@ document.querySelectorAll('.delete-btn').forEach(btn=>{
       showCancelButton:true,
       confirmButtonText:'حذف',
       cancelButtonText:'انصراف',
-      confirmButtonColor:'#dc3545'
+      confirmButtonColor:'#dc3545',
+      cancelButtonColor:'#6c757d'
     }).then(r=>{
       if(r.isConfirmed){
         const f=document.createElement('form');
@@ -435,8 +440,15 @@ document.querySelectorAll('.delete-btn').forEach(btn=>{
 });
 document.querySelectorAll('.btn-approve').forEach(btn=>{
   btn.addEventListener('click',()=>{
-    Swal.fire({title:'تأیید اقامت‌گاه؟',icon:'question',showCancelButton:true,confirmButtonText:'تأیید'})
-    .then(r=>{ if(r.isConfirmed) postPatch(btn.dataset.url); });
+    Swal.fire({
+      title:'تأیید اقامت‌گاه؟',
+      icon:'question',
+      showCancelButton:true,
+      confirmButtonText:'تأیید',
+      cancelButtonText:'انصراف',
+      confirmButtonColor:'#22c55e',
+      cancelButtonColor:'#6c757d'
+    }).then(r=>{ if(r.isConfirmed) postPatch(btn.dataset.url); });
   });
 });
 document.querySelectorAll('.btn-reject').forEach(btn=>{
@@ -447,7 +459,9 @@ document.querySelectorAll('.btn-reject').forEach(btn=>{
       inputPlaceholder:'علت رد...',
       showCancelButton:true,
       confirmButtonText:'رد کردن',
-      confirmButtonColor:'#fd7e14'
+      cancelButtonText:'انصراف',
+      confirmButtonColor:'#fd7e14',
+      cancelButtonColor:'#6c757d'
     });
     if(isConfirmed){ postPatch(btn.dataset.url, {reason}); }
   });
@@ -461,7 +475,9 @@ document.querySelectorAll('.btn-toggle-status').forEach(btn=>{
       icon:'question',
       showCancelButton:true,
       confirmButtonText: action,
-      cancelButtonText:'انصراف'
+      cancelButtonText:'انصراف',
+      confirmButtonColor:'#22c55e',
+      cancelButtonColor:'#6c757d'
     }).then(r=>{ 
       if(r.isConfirmed) postPatch(btn.dataset.url); 
     });
@@ -536,7 +552,9 @@ document.addEventListener('DOMContentLoaded',function(){
   // Form validation functions
   window.validatePeakForm = function() {
     if(!phs?.value || !phe?.value) {
-      alert('لطفا تاریخ‌ها را انتخاب کنید');
+      if (window.showWarning) {
+        window.showWarning('لطفا تاریخ‌ها را انتخاب کنید');
+      }
       return false;
     }
     return true;
@@ -544,7 +562,9 @@ document.addEventListener('DOMContentLoaded',function(){
   
   window.validateDiscountForm = function() {
     if(!dhs?.value || !dhe?.value) {
-      alert('لطفا تاریخ‌ها را انتخاب کنید');
+      if (window.showWarning) {
+        window.showWarning('لطفا تاریخ‌ها را انتخاب کنید');
+      }
       return false;
     }
     return true;
